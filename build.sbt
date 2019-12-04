@@ -1,5 +1,5 @@
-// shadow sbt-scalajs' crossProject and CrossType until Scala.js 1.0.0 is released
-import sbtcrossproject.{CrossType, crossProject}
+// shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.ReleasePlugin.autoImport._
 import com.softwaremill.Publish.Release.updateVersionInDocs
@@ -105,10 +105,8 @@ lazy val browserTestSettings = Seq(
   }
 )
 
-val scalaTestVersion = "3.0.8"
-val scalaTestNativeVersion = "3.2.0-SNAP10"
-val scalaNativeTestInterfaceVersion = "0.3.9"
-val scalaTest = "org.scalatest" %% "scalatest" % scalaTestVersion
+val scalaTestVersion = "3.1.0"
+val scalaNativeTestInterfaceVersion = "0.4.0-M2"
 
 lazy val rootProjectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STTP_NATIVE")) {
   println("[info] STTP_NATIVE defined, including sttp-native in the aggregate projects")
@@ -153,18 +151,18 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .jsSettings(commonJsSettings: _*)
   .nativeSettings(commonNativeSettings: _*)
   .nativeSettings(only2_11settings)
-  .jvmSettings(libraryDependencies ++= Seq(scalaTest % "test"))
+  .jvmSettings(libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % scalaTestVersion % Test))
   .jsSettings(
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "0.9.7",
-      "org.scalatest" %%% "scalatest" % scalaTestVersion % "test"
+      "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
     )
   )
   .jsSettings(browserTestSettings)
   .nativeSettings(
     libraryDependencies ++= Seq(
       "org.scala-native" %%% "test-interface" % scalaNativeTestInterfaceVersion,
-      "org.scalatest" %%% "scalatest" % scalaTestNativeVersion % "test"
+      "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
     )
   )
 

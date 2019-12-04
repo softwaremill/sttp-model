@@ -1,12 +1,11 @@
 package sttp.model.internal.idn
 
-import scala.scalanative.native
-import scala.scalanative.native.stdlib.{free, malloc}
-import scala.scalanative.native.{CString, Ptr, fromCString, sizeof, toCString}
+import scala.scalanative.libc.stdlib.{malloc, free}
+import scala.scalanative.unsafe.{CString, Ptr, Zone, fromCString, sizeof, toCString}
 
 private[model] object IdnApi {
-  def toAscii(input: String): String = native.Zone { implicit z =>
-    val output: Ptr[CString] = malloc(sizeof[CString]).cast[Ptr[CString]]
+  def toAscii(input: String): String = Zone { implicit z =>
+    val output: Ptr[CString] = malloc(sizeof[CString]).asInstanceOf[Ptr[CString]]
     val rc = CIdn.toAscii(toCString(input), output, 0)
     if (rc != 0) {
       val errMsg = CIdn.errorMsg(rc)
@@ -14,7 +13,7 @@ private[model] object IdnApi {
     } else {
       val out = fromCString(!output)
       CIdn.free(!output)
-      free(output.cast[Ptr[Byte]])
+      free(output.asInstanceOf[Ptr[Byte]])
       out
     }
   }

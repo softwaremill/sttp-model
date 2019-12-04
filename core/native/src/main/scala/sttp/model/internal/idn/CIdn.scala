@@ -1,6 +1,6 @@
 package sttp.model.internal.idn
 
-import scala.scalanative.native.{CInt, CString, Ptr, extern, link, name}
+import scala.scalanative.unsafe.{CInt, CString, Ptr, extern, link, name}
 
 @link("idn")
 @extern
