@@ -114,7 +114,7 @@ case class Uri private (
   def param(k: String, v: String): Uri = params(k -> v)
 
   /**
-    * Adds the given parameter with optional value to the query if it present.
+    * Adds the given parameter with an optional value to the query if it is present.
     */
   def param(k: String, v: Option[String]): Uri = v.map(param(k,_)).getOrElse(this)
 
