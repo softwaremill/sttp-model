@@ -338,7 +338,8 @@ object UriInterpolator {
     case object Scheme extends UriBuilder {
       override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
         split(t, Set[Token](SchemeEnd)) match {
-          case Left(tt) => (u.scheme("http"), tt)
+          case Left(_) =>
+            throw new IllegalArgumentException("missing scheme")
           case Right((schemeTokens, _, otherTokens)) =>
             val scheme = tokensToString(schemeTokens)
             (u.scheme(scheme), otherTokens)
