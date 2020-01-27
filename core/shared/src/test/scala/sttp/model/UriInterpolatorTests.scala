@@ -28,8 +28,7 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
     ),
     "scheme" -> List(
       (uri"http${if (secure) "s" else ""}://example.com", s"https://example.com"),
-      (uri"${if (secure) "https" else "http"}://example.com", s"https://example.com"),
-      (uri"example.com?a=$v2", s"http://example.com?a=$v2queryEncoded")
+      (uri"${if (secure) "https" else "http"}://example.com", s"https://example.com")
     ),
     "user info" -> List(
       (uri"http://user:pass@example.com", s"http://user:pass@example.com"),
@@ -57,8 +56,7 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
       (uri"http://192.168.1.2/x", s"http://192.168.1.2/x"),
       (uri"http://${"192.168.1.2"}/x", s"http://192.168.1.2/x"),
       (uri"http://abc/x", s"http://abc/x"),
-      (uri"http://${"abc"}/x", s"http://abc/x"),
-      (uri"abc", s"http://abc")
+      (uri"http://${"abc"}/x", s"http://abc/x")
     ),
     "ipv6" -> List(
       (uri"http://[::1]/x", s"http://[::1]/x"),
@@ -168,6 +166,7 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
   }
 
   val validationTestData = List(
+    ("uri with no scheme", () => uri"example.com", "missing scheme"),
     ("uri with two ports", () => uri"http://example.com:80:80", "port specified multiple times"),
     ("uri with embedded host+port and port", () => uri"http://${"example.com:80"}:80", "port specified multiple times")
   )
