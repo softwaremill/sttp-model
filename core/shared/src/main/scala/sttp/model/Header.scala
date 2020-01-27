@@ -31,6 +31,13 @@ class Header(val name: String, val value: String) {
     case h: Header               => is(h.name) && (value == h.value)
     case _                       => false
   }
+
+  /**
+    *
+    * @return Representation in the format: `[name]: [value]`. If the header is sensitive
+    *         (see [[HeaderNames.SensitiveHeaders]]), the value is omitted.
+    */
+  def toStringSafe: String = s"$name: ${if (HeaderNames.isSensitive(name)) "***" else value}"
 }
 
 object Header {

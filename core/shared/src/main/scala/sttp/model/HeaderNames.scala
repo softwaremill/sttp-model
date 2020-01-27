@@ -71,8 +71,28 @@ trait HeaderNames {
   val XForwardedProto = "X-Forwarded-Proto"
   val XRequestedWith = "X-Requested-With"
 
-  val ContentHeaders: Set[String] = Set(HeaderNames.ContentLength, HeaderNames.ContentType, HeaderNames.ContentMd5)
-  val SensitiveHeaders: Set[String] = Set(HeaderNames.Authorization, HeaderNames.Cookie, HeaderNames.SetCookie)
+  val ContentHeaders: Set[String] = Set(HeaderNames.ContentLength, HeaderNames.ContentType, HeaderNames.ContentMd5).map(_.toLowerCase())
+  val SensitiveHeaders: Set[String] = Set(HeaderNames.Authorization, HeaderNames.Cookie, HeaderNames.SetCookie).map(_.toLowerCase())
+
+  /**
+    * Performs a case-insensitive check, whether this header name is content-related.
+    */
+  def isContent(headerName: String): Boolean = ContentHeaders.contains(headerName.toLowerCase.trim)
+
+  /**
+    * Performs a case-insensitive check, whether this header is content-related.
+    */
+  def isContent(header: Header): Boolean = isContent(header.name)
+
+  /**
+    * Performs a case-insensitive check, whether this header name is sensitive.
+    */
+  def isSensitive(headerName: String): Boolean = SensitiveHeaders.contains(headerName.toLowerCase.trim)
+
+  /**
+    * Performs a case-insensitive check, whether this header is sensitive.
+    */
+  def isSensitive(header: Header): Boolean = isSensitive(header.name)
 }
 
 object HeaderNames extends HeaderNames
