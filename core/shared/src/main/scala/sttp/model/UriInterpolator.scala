@@ -167,15 +167,6 @@ object UriInterpolator {
     object Authority extends Tokenizer {
       private val IpV6InAuthorityPattern = "\\[[0-9a-fA-F:]+\\]".r
 
-      private def ipv6parser(a: String): Option[Vector[Token]] = {
-        a match {
-          case IpV6InAuthorityPattern() =>
-            // removing the [] which are used to surround ipv6 adresses in URLs
-            Some(Vector(StringToken(a.substring(1, a.length - 1))))
-          case _ => None
-        }
-      }
-
       override def tokenize(s: String): (Tokenizer, Vector[Token]) = {
         val (tokenizer, tokens) = tokenizeTerminatedFragment(
           s,
