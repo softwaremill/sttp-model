@@ -229,9 +229,9 @@ object CookieWithMeta {
     var result: Either[String, CookieWithMeta] = Right(CookieWithMeta.notValidated(name, value.getOrElse("")))
     other.map(splitkv).map(t => (t._1.toLowerCase, t._2)).foreach {
       case (k, Some(v)) if k == "expires" =>
-        Try(Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(v))) match {
-          case Success(expires) => result = result.right.map(_.expires(Some(expires)))
-          case Failure(_)       => result = Left(s"Expires cookie attribute is not a valid RFC1123 datetime: $v")
+        parseDatetime(v) match {
+          case Right(expires) => result = result.right.map(_.expires(Some(expires)))
+          case Left(_)        => result = Left(s"Expires cookie attribute is not a valid RFC1123 datetime: $v")
         }
       case (k, Some(v)) if k == "max-age" =>
         Try(v.toLong) match {
@@ -247,4 +247,19 @@ object CookieWithMeta {
 
     result
   }
+
+  //
+
+  private val Rfc850Pattern = "E, dd-MMM-yyyy HH:mm:ss zzz"
+  private val Rfc850Format = DateTimeFormatter.ofPattern(Rfc850Pattern)
+
+  private def parseDatetime(v: String): Either[Unit, Instant] =
+    Try(Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(v))) match {
+      case Success(r) => Right(r)
+      case Failure(_) =>
+        Try(Instant.from(Rfc850Format.parse(v))) match {
+          case Success(r) => Right(r)
+          case Failure(_) => Left(())
+        }
+    }
 }
