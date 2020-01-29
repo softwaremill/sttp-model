@@ -284,8 +284,9 @@ object CookieWithMeta {
     }
 
   private implicit class StringInterpolations(sc: StringContext) {
-    def ci = new {
+    class CaseInsensitiveStringMatcher {
       def unapply(other: String): Boolean = sc.parts.mkString.equalsIgnoreCase(other)
     }
+    def ci: CaseInsensitiveStringMatcher = new CaseInsensitiveStringMatcher
   }
 }
