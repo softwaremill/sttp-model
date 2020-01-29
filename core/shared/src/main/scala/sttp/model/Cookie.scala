@@ -72,7 +72,7 @@ case class CookieValueWithMeta private (
     path: Option[String],
     secure: Boolean,
     httpOnly: Boolean,
-    otherAttributes: Map[String, Option[String]]
+    otherDirectives: Map[String, Option[String]]
 )
 
 object CookieValueWithMeta {
@@ -91,9 +91,9 @@ object CookieValueWithMeta {
       path: Option[String],
       secure: Boolean,
       httpOnly: Boolean,
-      otherAttributes: Map[String, Option[String]]
+      otherDirectives: Map[String, Option[String]]
   ): CookieValueWithMeta =
-    safeApply(value, expires, maxAge, domain, path, secure, httpOnly, otherAttributes).getOrThrow
+    safeApply(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives).getOrThrow
 
   def safeApply(
       value: String,
@@ -103,13 +103,13 @@ object CookieValueWithMeta {
       path: Option[String],
       secure: Boolean,
       httpOnly: Boolean,
-      otherAttributes: Map[String, Option[String]]
+      otherDirectives: Map[String, Option[String]]
   ): Either[String, CookieValueWithMeta] = {
     Validate.all(
       Cookie.validateValue(value),
       path.flatMap(validateAttrValue("path", _)),
       domain.flatMap(validateAttrValue("domain", _))
-    )(notValidated(value, expires, maxAge, domain, path, secure, httpOnly, otherAttributes))
+    )(notValidated(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives))
   }
 
   def notValidated(
@@ -120,9 +120,9 @@ object CookieValueWithMeta {
       path: Option[String],
       secure: Boolean,
       httpOnly: Boolean,
-      otherAttributes: Map[String, Option[String]]
+      otherDirectives: Map[String, Option[String]]
   ): CookieValueWithMeta =
-    new CookieValueWithMeta(value, expires, maxAge, domain, path, secure, httpOnly, otherAttributes)
+    new CookieValueWithMeta(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
 }
 
 /**
@@ -142,7 +142,7 @@ case class CookieWithMeta private (
   def path: Option[String] = valueWithMeta.path
   def secure: Boolean = valueWithMeta.secure
   def httpOnly: Boolean = valueWithMeta.httpOnly
-  def otherAttributes: Map[String, Option[String]] = valueWithMeta.otherAttributes
+  def otherDirectives: Map[String, Option[String]] = valueWithMeta.otherDirectives
 
   def value(v: String): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(value = v))
   def expires(v: Option[Instant]): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(expires = v))
@@ -152,7 +152,7 @@ case class CookieWithMeta private (
   def secure(v: Boolean): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(secure = v))
   def httpOnly(v: Boolean): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(httpOnly = v))
   def otherAttribute(v: (String, Option[String])): CookieWithMeta =
-    copy(valueWithMeta = valueWithMeta.copy(otherAttributes = otherAttributes + v))
+    copy(valueWithMeta = valueWithMeta.copy(otherDirectives = otherDirectives + v))
 
   /**
     * @return Representation of the cookie as in a header value, in the format: `[name]=[value]; [attr]=[value]; ...`.
@@ -166,7 +166,7 @@ case class CookieWithMeta private (
       path.map(p => s"Path=$p"),
       if (secure) Some("Secure") else None,
       if (httpOnly) Some("HttpOnly") else None
-    ) ++ otherAttributes.map {
+    ) ++ otherDirectives.map {
       case (k, Some(v)) => Some(s"$k=$v")
       case (k, None)    => Some(k)
     }
@@ -185,9 +185,9 @@ object CookieWithMeta {
       path: Option[String] = None,
       secure: Boolean = false,
       httpOnly: Boolean = false,
-      otherAttributes: Map[String, Option[String]] = Map.empty
+      otherDirectives: Map[String, Option[String]] = Map.empty
   ): CookieWithMeta =
-    safeApply(name, value, expires, maxAge, domain, path, secure, httpOnly, otherAttributes).getOrThrow
+    safeApply(name, value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives).getOrThrow
 
   def safeApply(
       name: String,
@@ -198,13 +198,13 @@ object CookieWithMeta {
       path: Option[String] = None,
       secure: Boolean = false,
       httpOnly: Boolean = false,
-      otherAttributes: Map[String, Option[String]] = Map.empty
+      otherDirectives: Map[String, Option[String]] = Map.empty
   ): Either[String, CookieWithMeta] = {
     Cookie.validateName(name) match {
       case Some(e) => Left(e)
       case None =>
         CookieValueWithMeta
-          .safeApply(value, expires, maxAge, domain, path, secure, httpOnly, otherAttributes)
+          .safeApply(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
           .right
           .map { v =>
             notValidated(name, v)
@@ -221,11 +221,11 @@ object CookieWithMeta {
       path: Option[String] = None,
       secure: Boolean = false,
       httpOnly: Boolean = false,
-      otherAttributes: Map[String, Option[String]] = Map.empty
+      otherDirectives: Map[String, Option[String]] = Map.empty
   ): CookieWithMeta =
     notValidated(
       name,
-      CookieValueWithMeta.notValidated(value, expires, maxAge, domain, path, secure, httpOnly, otherAttributes)
+      CookieValueWithMeta.notValidated(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
     )
 
   def notValidated(

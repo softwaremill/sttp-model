@@ -35,7 +35,7 @@ class CookieTest extends AnyFlatSpec with Matchers {
       CookieWithMeta.unsafeApply(
         "x",
         "y",
-        otherAttributes = Map(
+        otherDirectives = Map(
           "Version" -> Some("1"),
           "Something-Else" -> None
         )
@@ -63,7 +63,7 @@ class CookieTest extends AnyFlatSpec with Matchers {
     CookieWithMeta.unsafeApply(
       "x",
       "y",
-      otherAttributes = Map(
+      otherDirectives = Map(
         "Version" -> Some("1"),
         "Something-Else" -> None
       )
