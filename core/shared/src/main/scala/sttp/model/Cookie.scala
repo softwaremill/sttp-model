@@ -71,7 +71,8 @@ case class CookieValueWithMeta private (
     domain: Option[String],
     path: Option[String],
     secure: Boolean,
-    httpOnly: Boolean
+    httpOnly: Boolean,
+    otherAttributes: Map[String, Option[String]]
 )
 
 object CookieValueWithMeta {
@@ -89,9 +90,10 @@ object CookieValueWithMeta {
       domain: Option[String],
       path: Option[String],
       secure: Boolean,
-      httpOnly: Boolean
+      httpOnly: Boolean,
+      otherAttributes: Map[String, Option[String]]
   ): CookieValueWithMeta =
-    safeApply(value, expires, maxAge, domain, path, secure, httpOnly).getOrThrow
+    safeApply(value, expires, maxAge, domain, path, secure, httpOnly, otherAttributes).getOrThrow
 
   def safeApply(
       value: String,
@@ -100,13 +102,14 @@ object CookieValueWithMeta {
       domain: Option[String],
       path: Option[String],
       secure: Boolean,
-      httpOnly: Boolean
+      httpOnly: Boolean,
+      otherAttributes: Map[String, Option[String]]
   ): Either[String, CookieValueWithMeta] = {
     Validate.all(
       Cookie.validateValue(value),
       path.flatMap(validateAttrValue("path", _)),
       domain.flatMap(validateAttrValue("domain", _))
-    )(notValidated(value, expires, maxAge, domain, path, secure, httpOnly))
+    )(notValidated(value, expires, maxAge, domain, path, secure, httpOnly, otherAttributes))
   }
 
   def notValidated(
@@ -116,8 +119,10 @@ object CookieValueWithMeta {
       domain: Option[String],
       path: Option[String],
       secure: Boolean,
-      httpOnly: Boolean
-  ): CookieValueWithMeta = new CookieValueWithMeta(value, expires, maxAge, domain, path, secure, httpOnly)
+      httpOnly: Boolean,
+      otherAttributes: Map[String, Option[String]]
+  ): CookieValueWithMeta =
+    new CookieValueWithMeta(value, expires, maxAge, domain, path, secure, httpOnly, otherAttributes)
 }
 
 /**
@@ -137,6 +142,7 @@ case class CookieWithMeta private (
   def path: Option[String] = valueWithMeta.path
   def secure: Boolean = valueWithMeta.secure
   def httpOnly: Boolean = valueWithMeta.httpOnly
+  def otherAttributes: Map[String, Option[String]] = valueWithMeta.otherAttributes
 
   def value(v: String): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(value = v))
   def expires(v: Option[Instant]): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(expires = v))
@@ -145,6 +151,8 @@ case class CookieWithMeta private (
   def path(v: Option[String]): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(path = v))
   def secure(v: Boolean): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(secure = v))
   def httpOnly(v: Boolean): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(httpOnly = v))
+  def otherAttribute(v: (String, Option[String])): CookieWithMeta =
+    copy(valueWithMeta = valueWithMeta.copy(otherAttributes = otherAttributes + v))
 
   /**
     * @return Representation of the cookie as in a header value, in the format: `[name]=[value]; [attr]=[value]; ...`.
@@ -158,7 +166,10 @@ case class CookieWithMeta private (
       path.map(p => s"Path=$p"),
       if (secure) Some("Secure") else None,
       if (httpOnly) Some("HttpOnly") else None
-    )
+    ) ++ otherAttributes.map {
+      case (k, Some(v)) => Some(s"$k=$v")
+      case (k, None)    => Some(k)
+    }
 
     components.flatten.mkString("; ")
   }
@@ -173,9 +184,10 @@ object CookieWithMeta {
       domain: Option[String] = None,
       path: Option[String] = None,
       secure: Boolean = false,
-      httpOnly: Boolean = false
+      httpOnly: Boolean = false,
+      otherAttributes: Map[String, Option[String]] = Map.empty
   ): CookieWithMeta =
-    safeApply(name, value, expires, maxAge, domain, path, secure, httpOnly).getOrThrow
+    safeApply(name, value, expires, maxAge, domain, path, secure, httpOnly, otherAttributes).getOrThrow
 
   def safeApply(
       name: String,
@@ -185,14 +197,18 @@ object CookieWithMeta {
       domain: Option[String] = None,
       path: Option[String] = None,
       secure: Boolean = false,
-      httpOnly: Boolean = false
+      httpOnly: Boolean = false,
+      otherAttributes: Map[String, Option[String]] = Map.empty
   ): Either[String, CookieWithMeta] = {
     Cookie.validateName(name) match {
       case Some(e) => Left(e)
       case None =>
-        CookieValueWithMeta.safeApply(value, expires, maxAge, domain, path, secure, httpOnly).right.map { v =>
-          notValidated(name, v)
-        }
+        CookieValueWithMeta
+          .safeApply(value, expires, maxAge, domain, path, secure, httpOnly, otherAttributes)
+          .right
+          .map { v =>
+            notValidated(name, v)
+          }
     }
   }
 
@@ -204,9 +220,13 @@ object CookieWithMeta {
       domain: Option[String] = None,
       path: Option[String] = None,
       secure: Boolean = false,
-      httpOnly: Boolean = false
+      httpOnly: Boolean = false,
+      otherAttributes: Map[String, Option[String]] = Map.empty
   ): CookieWithMeta =
-    notValidated(name, CookieValueWithMeta.notValidated(value, expires, maxAge, domain, path, secure, httpOnly))
+    notValidated(
+      name,
+      CookieValueWithMeta.notValidated(value, expires, maxAge, domain, path, secure, httpOnly, otherAttributes)
+    )
 
   def notValidated(
       name: String,
@@ -227,22 +247,22 @@ object CookieWithMeta {
     val (first, other) = (components.head, components.tail)
     val (name, value) = splitkv(first)
     var result: Either[String, CookieWithMeta] = Right(CookieWithMeta.notValidated(name, value.getOrElse("")))
-    other.map(splitkv).map(t => (t._1.toLowerCase, t._2)).foreach {
-      case (k, Some(v)) if k == "expires" =>
+    other.map(splitkv).map(t => (t._1, t._2)).foreach {
+      case (ci"expires", Some(v)) =>
         parseDatetime(v) match {
           case Right(expires) => result = result.right.map(_.expires(Some(expires)))
-          case Left(_)        => result = Left(s"Expires cookie attribute is not a valid RFC1123 datetime: $v")
+          case Left(_)        => result = Left(s"Expires cookie attribute is not a valid RFC1123 or RFC850 datetime: $v")
         }
-      case (k, Some(v)) if k == "max-age" =>
+      case (ci"max-age", Some(v)) =>
         Try(v.toLong) match {
           case Success(maxAge) => result = result.right.map(_.maxAge(Some(maxAge)))
           case Failure(_)      => result = Left(s"Max-Age cookie attribute is not a number: $v")
         }
-      case (k, v) if k == "domain"   => result = result.right.map(_.domain(Some(v.getOrElse(""))))
-      case (k, v) if k == "path"     => result = result.right.map(_.path(Some(v.getOrElse(""))))
-      case (k, _) if k == "secure"   => result = result.right.map(_.secure(true))
-      case (k, _) if k == "httponly" => result = result.right.map(_.httpOnly(true))
-      case (k, v)                    => result = Left(s"Unknown cookie attribute: $k=${v.getOrElse("")}")
+      case (ci"domain", v)   => result = result.right.map(_.domain(Some(v.getOrElse(""))))
+      case (ci"path", v)     => result = result.right.map(_.path(Some(v.getOrElse(""))))
+      case (ci"secure", _)   => result = result.right.map(_.secure(true))
+      case (ci"httponly", _) => result = result.right.map(_.httpOnly(true))
+      case (k, v)            => result = result.right.map(_.otherAttribute((k, v)))
     }
 
     result
@@ -262,4 +282,10 @@ object CookieWithMeta {
           case Failure(_) => Left(())
         }
     }
+
+  private implicit class StringInterpolations(sc: StringContext) {
+    def ci = new {
+      def unapply(other: String): Boolean = sc.parts.mkString.equalsIgnoreCase(other)
+    }
+  }
 }
