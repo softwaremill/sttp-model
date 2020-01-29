@@ -30,6 +30,16 @@ class CookieTest extends AnyFlatSpec with Matchers {
         "y",
         Some(ZonedDateTime.of(2020, 1, 27, 16, 10, 25, 0, ZoneId.of("GMT")).toInstant)
       )
+    ),
+    "x=y; Version=1; Something-Else" -> Right(
+      CookieWithMeta.unsafeApply(
+        "x",
+        "y",
+        otherDirectives = Map(
+          "Version" -> Some("1"),
+          "Something-Else" -> None
+        )
+      )
     )
   )
 
@@ -49,7 +59,15 @@ class CookieTest extends AnyFlatSpec with Matchers {
       Some(ZonedDateTime.of(2018, 10, 5, 14, 28, 0, 0, ZoneId.of("GMT")).toInstant),
       secure = true,
       httpOnly = true
-    ) -> "user_id=5; Expires=Fri, 5 Oct 2018 14:28:00 GMT; Secure; HttpOnly"
+    ) -> "user_id=5; Expires=Fri, 5 Oct 2018 14:28:00 GMT; Secure; HttpOnly",
+    CookieWithMeta.unsafeApply(
+      "x",
+      "y",
+      otherDirectives = Map(
+        "Version" -> Some("1"),
+        "Something-Else" -> None
+      )
+    ) -> "x=y; Version=1; Something-Else"
   )
 
   for ((cookie, expectedResult) <- serializeCookieData) {
