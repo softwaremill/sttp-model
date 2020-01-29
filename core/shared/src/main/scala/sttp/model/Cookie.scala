@@ -76,11 +76,11 @@ case class CookieValueWithMeta private (
 )
 
 object CookieValueWithMeta {
-  private val AllowedAttrValueCharacters = s"""[^;${Rfc2616.CTL}]*""".r
+  private val AllowedDirectiveValueCharacters = s"""[^;${Rfc2616.CTL}]*""".r
 
-  private[model] def validateAttrValue(attrName: String, value: String): Option[String] = {
-    if (AllowedAttrValueCharacters.unapplySeq(value).isEmpty) {
-      Some(s"Value of attribute $attrName name can contain any characters except ; and control characters")
+  private[model] def validateDirectiveValue(directiveName: String, value: String): Option[String] = {
+    if (AllowedDirectiveValueCharacters.unapplySeq(value).isEmpty) {
+      Some(s"Value of directive $directiveName name can contain any characters except ; and control characters")
     } else None
   }
   def unsafeApply(
@@ -107,8 +107,8 @@ object CookieValueWithMeta {
   ): Either[String, CookieValueWithMeta] = {
     Validate.all(
       Cookie.validateValue(value),
-      path.flatMap(validateAttrValue("path", _)),
-      domain.flatMap(validateAttrValue("domain", _))
+      path.flatMap(validateDirectiveValue("path", _)),
+      domain.flatMap(validateDirectiveValue("domain", _))
     )(notValidated(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives))
   }
 
@@ -126,7 +126,7 @@ object CookieValueWithMeta {
 }
 
 /**
-  * A cookie name-value pair with attributes.
+  * A cookie name-value pair with directives.
   *
   * All `String` values should be already encoded (if necessary), as when serialised, they end up unmodified in the
   * header.
@@ -151,11 +151,11 @@ case class CookieWithMeta private (
   def path(v: Option[String]): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(path = v))
   def secure(v: Boolean): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(secure = v))
   def httpOnly(v: Boolean): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(httpOnly = v))
-  def otherAttribute(v: (String, Option[String])): CookieWithMeta =
+  def otherDirective(v: (String, Option[String])): CookieWithMeta =
     copy(valueWithMeta = valueWithMeta.copy(otherDirectives = otherDirectives + v))
 
   /**
-    * @return Representation of the cookie as in a header value, in the format: `[name]=[value]; [attr]=[value]; ...`.
+    * @return Representation of the cookie as in a header value, in the format: `[name]=[value]; [directive]=[value]; ...`.
     */
   override def toString: String = {
     val components = List(
@@ -235,7 +235,7 @@ object CookieWithMeta {
 
   // https://tools.ietf.org/html/rfc6265#section-4.1.1
   /**
-    * Parse the cookie, represented as a header value (in the format: `[name]=[value]; [attr]=[value]; ...`).
+    * Parse the cookie, represented as a header value (in the format: `[name]=[value]; [directive]=[value]; ...`).
     */
   def parse(s: String): Either[String, CookieWithMeta] = {
     def splitkv(kv: String): (String, Option[String]) = kv.split("=", 2).map(_.trim) match {
@@ -251,18 +251,18 @@ object CookieWithMeta {
       case (ci"expires", Some(v)) =>
         parseDatetime(v) match {
           case Right(expires) => result = result.right.map(_.expires(Some(expires)))
-          case Left(_)        => result = Left(s"Expires cookie attribute is not a valid RFC1123 or RFC850 datetime: $v")
+          case Left(_)        => result = Left(s"Expires cookie directive is not a valid RFC1123 or RFC850 datetime: $v")
         }
       case (ci"max-age", Some(v)) =>
         Try(v.toLong) match {
           case Success(maxAge) => result = result.right.map(_.maxAge(Some(maxAge)))
-          case Failure(_)      => result = Left(s"Max-Age cookie attribute is not a number: $v")
+          case Failure(_)      => result = Left(s"Max-Age cookie directive is not a number: $v")
         }
       case (ci"domain", v)   => result = result.right.map(_.domain(Some(v.getOrElse(""))))
       case (ci"path", v)     => result = result.right.map(_.path(Some(v.getOrElse(""))))
       case (ci"secure", _)   => result = result.right.map(_.secure(true))
       case (ci"httponly", _) => result = result.right.map(_.httpOnly(true))
-      case (k, v)            => result = result.right.map(_.otherAttribute((k, v)))
+      case (k, v)            => result = result.right.map(_.otherDirective((k, v)))
     }
 
     result
