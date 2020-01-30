@@ -22,17 +22,17 @@ object Method extends Methods {
     * effect while leaving the server in the same state.
     * @see https://developer.mozilla.org/en-US/docs/Glossary/Idempotent
     */
-  def isIdempotent(m: Method): Boolean = {
-    m == Method.HEAD || m == Method.TRACE || m == Method.GET || m == Method.PUT || m == Method.OPTIONS || m == Method.DELETE
-  }
+  def isIdempotent(m: Method): Boolean = idempotent.contains(m)
 
   /**
     * An HTTP method is safe if it doesn't alter the state of the server.
     * @see https://developer.mozilla.org/en-US/docs/Glossary/safe
     */
-  def isSafe(m: Method): Boolean = {
-    m == Method.HEAD || m == Method.GET || m == Method.OPTIONS
-  }
+  def isSafe(m: Method): Boolean = safe.contains(m)
+
+  private val idempotent: Set[Method] =
+    Set(Method.HEAD, Method.TRACE, Method.GET, Method.PUT, Method.OPTIONS, Method.DELETE)
+  private val safe: Set[Method] = Set(Method.HEAD, Method.GET, Method.OPTIONS)
 }
 
 trait Methods {
