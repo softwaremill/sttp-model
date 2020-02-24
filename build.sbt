@@ -1,5 +1,3 @@
-// shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.ReleasePlugin.autoImport._
 import com.softwaremill.Publish.Release.updateVersionInDocs
@@ -105,7 +103,7 @@ lazy val browserTestSettings = Seq(
   }
 )
 
-val scalaTestVersion = "3.1.0"
+val scalaTestVersion = "3.1.1"
 val scalaNativeTestInterfaceVersion = "0.4.0-M2"
 
 lazy val rootProjectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STTP_NATIVE")) {
@@ -154,7 +152,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .jvmSettings(libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % scalaTestVersion % Test))
   .jsSettings(
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "0.9.7",
+      "org.scala-js" %%% "scalajs-dom" % "1.0.0",
       "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
     )
   )
