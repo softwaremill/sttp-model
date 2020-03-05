@@ -15,7 +15,7 @@ sttp is a family of Scala HTTP-related projects, and currently includes:
 Add the following dependency:
 
 ```scala
-"com.softwaremill.sttp.model" %% "core" % "1.0.0"
+"com.softwaremill.sttp.model" %% "core" % "1.0.1"
 ```
 
 sttp model is available for Scala 2.11, 2.12, 2.13, Scala.JS and Scala Native.
