@@ -105,7 +105,7 @@ lazy val browserTestSettings = Seq(
   }
 )
 
-val scalaTestVersion = "3.1.0"
+val scalaTestVersion = "3.1.1"
 val scalaNativeTestInterfaceVersion = "0.4.0-M2"
 
 lazy val rootProjectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STTP_NATIVE")) {
