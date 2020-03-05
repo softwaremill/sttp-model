@@ -2,6 +2,7 @@ package sttp.model
 
 import java.time.{Instant, ZoneId}
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 import sttp.model.internal.{Rfc2616, Validate}
 import sttp.model.internal.Validate._
@@ -271,7 +272,7 @@ object CookieWithMeta {
   //
 
   private val Rfc850Pattern = "E, dd-MMM-yyyy HH:mm:ss zzz"
-  private val Rfc850Format = DateTimeFormatter.ofPattern(Rfc850Pattern)
+  private val Rfc850Format = DateTimeFormatter.ofPattern(Rfc850Pattern, Locale.US)
 
   private def parseDatetime(v: String): Either[Unit, Instant] =
     Try(Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(v))) match {
