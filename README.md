@@ -53,8 +53,8 @@ Most classes contain both serialisation & parsing functionality, following these
 
 [Javadocs](https://www.javadoc.io/doc/com.softwaremill.sttp.model/core_2.12/latest/sttp/model/index.html)
 
-The docs for sttp client contain documentation for the model classes: [overview](https://sttp.readthedocs.io/en/latest/model/model.html),
-[uri interpolator](https://sttp.readthedocs.io/en/latest/model/uri.html).
+The docs for sttp client contain documentation for the model classes: [overview](https://sttp.softwaremill.com/en/latest/model/model.html),
+[uri interpolator](https://sttp.softwaremill.com/en/latest/model/uri.html).
 
 ## Contributing
 
