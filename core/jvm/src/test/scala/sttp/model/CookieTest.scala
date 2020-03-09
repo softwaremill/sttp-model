@@ -24,6 +24,7 @@ class CookieTest extends AnyFlatSpec with Matchers {
     ),
     "" -> Right(CookieWithMeta.unsafeApply("", "")),
     "x=y; Max-Age=z" -> Left("Max-Age cookie directive is not a number: z"),
+    // #8: day name doesn't match actual value
     "x=y; Expires=Thu, 01-Jan-2114 00:00:10 GMT" -> Right(
       CookieWithMeta.unsafeApply(
         "x",
