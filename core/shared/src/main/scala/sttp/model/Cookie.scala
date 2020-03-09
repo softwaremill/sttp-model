@@ -269,16 +269,25 @@ object CookieWithMeta {
     result
   }
 
-  //
+  private val Rfc850DatetimePattern = "dd-MMM-yyyy HH:mm:ss zzz"
+  private val Rfc850DatetimeFormat = DateTimeFormatter.ofPattern(Rfc850DatetimePattern, Locale.US)
 
-  private val Rfc850Pattern = "E, dd-MMM-yyyy HH:mm:ss zzz"
-  private val Rfc850Format = DateTimeFormatter.ofPattern(Rfc850Pattern, Locale.US)
+  val Rfc850WeekDays = Set("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+  private def parseRfc850DateTime(v: String): Instant = {
+    val expiresParts = v.split(", ")
+    if(expiresParts.length !=2 )
+      throw new Exception("There must be exactly one \", \"")
+    if(!Rfc850WeekDays.contains(expiresParts(0)))
+      throw new Exception("String must start with name of the days of the week")
+    Instant.from(Rfc850DatetimeFormat.parse(expiresParts(1)))
+  }
 
   private def parseDatetime(v: String): Either[Unit, Instant] =
     Try(Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(v))) match {
       case Success(r) => Right(r)
       case Failure(_) =>
-        Try(Instant.from(Rfc850Format.parse(v))) match {
+        Try(parseRfc850DateTime(v)) match {
           case Success(r) => Right(r)
           case Failure(_) => Left(())
         }
