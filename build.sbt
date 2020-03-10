@@ -154,7 +154,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .jvmSettings(libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % scalaTestVersion % Test))
   .jsSettings(
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "0.9.7",
+      "org.scala-js" %%% "scalajs-dom" % "1.0.0",
       "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
     )
   )
