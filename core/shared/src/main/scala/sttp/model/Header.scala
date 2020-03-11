@@ -83,6 +83,8 @@ object Header {
   def cookie(firstCookie: Cookie, otherCookies: Cookie*): Header =
     Header.notValidated(HeaderNames.Cookie, (firstCookie +: otherCookies).map(_.toString).mkString("; "))
   def etag(tag: String): Header = Header.notValidated(HeaderNames.Etag, tag)
+  def location(uri: String): Header = Header.notValidated(HeaderNames.Location, uri)
+  def location(uri: Uri): Header = Header.notValidated(HeaderNames.Location, uri.toString)
   def proxyAuthorization(authType: String, credentials: String): Header =
     Header.notValidated(HeaderNames.ProxyAuthorization, s"$authType $credentials")
   def setCookie(cookie: CookieWithMeta): Header = Header.notValidated(HeaderNames.SetCookie, cookie.toString)
