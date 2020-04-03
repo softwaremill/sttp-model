@@ -24,3 +24,8 @@ core/native/local.sbt
 
 # Scala Native
 lowered.hnir
+
+# Bloop / Metals
+.bloop/
+.metals/
+project/metals.sbt

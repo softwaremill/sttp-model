@@ -84,27 +84,28 @@ object CookieValueWithMeta {
       Some(s"Value of directive $directiveName name can contain any characters except ; and control characters")
     } else None
   }
+
   def unsafeApply(
       value: String,
-      expires: Option[Instant],
-      maxAge: Option[Long],
-      domain: Option[String],
-      path: Option[String],
-      secure: Boolean,
-      httpOnly: Boolean,
-      otherDirectives: Map[String, Option[String]]
+      expires: Option[Instant] = None,
+      maxAge: Option[Long] = None,
+      domain: Option[String] = None,
+      path: Option[String] = None,
+      secure: Boolean = false,
+      httpOnly: Boolean = false,
+      otherDirectives: Map[String, Option[String]] = Map.empty
   ): CookieValueWithMeta =
     safeApply(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives).getOrThrow
 
   def safeApply(
       value: String,
-      expires: Option[Instant],
-      maxAge: Option[Long],
-      domain: Option[String],
-      path: Option[String],
-      secure: Boolean,
-      httpOnly: Boolean,
-      otherDirectives: Map[String, Option[String]]
+      expires: Option[Instant] = None,
+      maxAge: Option[Long] = None,
+      domain: Option[String] = None,
+      path: Option[String] = None,
+      secure: Boolean = false,
+      httpOnly: Boolean = false,
+      otherDirectives: Map[String, Option[String]] = Map.empty
   ): Either[String, CookieValueWithMeta] = {
     Validate.all(
       Cookie.validateValue(value),
