@@ -1,5 +1,6 @@
 package sttp.model
 
+import scala.collection.immutable.Seq
 import Part._
 
 /**
@@ -10,7 +11,7 @@ case class Part[T](
     body: T,
     otherDispositionParams: Map[String, String],
     headers: Seq[Header]
-) {
+) extends HasHeaders {
   def dispositionParam(k: String, v: String): Part[T] = copy(otherDispositionParams = otherDispositionParams + (k -> v))
 
   def fileName(v: String): Part[T] = dispositionParam(FileNameDispositionParam, v)
@@ -18,7 +19,6 @@ case class Part[T](
 
   def contentType(v: MediaType): Part[T] = header(Header.contentType(v), replaceExisting = true)
   def contentType(v: String): Part[T] = header(Header.notValidated(HeaderNames.ContentType, v), replaceExisting = true)
-  def contentType: Option[String] = header(HeaderNames.ContentType)
 
   /**
     * Adds the given header to the end of the headers sequence.
@@ -36,8 +36,6 @@ case class Part[T](
     */
   def header(k: String, v: String, replaceExisting: Boolean): Part[T] =
     header(Header.notValidated(k, v), replaceExisting)
-
-  def header(k: String): Option[String] = headers.find(_.name == k).map(_.value)
 
   def contentDispositionHeaderValue: String = {
     def encode(s: String): String = new String(s.getBytes("utf-8"), "iso-8859-1")
