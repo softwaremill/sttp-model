@@ -147,6 +147,9 @@ case class Uri private (
     case KeyValue(k, v, _, _) => k -> v
   }
 
+  /**
+    * Adds the given query segment.
+    */
   def querySegment(qf: QuerySegment): Uri =
     this.copy(querySegments = querySegments :+ qf)
 
