@@ -1,5 +1,7 @@
 package sttp.model
 
+import java.nio.charset.Charset
+
 import internal.Validate._
 import java.util.regex.Pattern
 
@@ -7,6 +9,7 @@ import sttp.model.internal.Validate
 import sttp.model.internal.Rfc2616._
 
 case class MediaType private (mainType: String, subType: String, charset: Option[String]) {
+  def charset(c: Charset): MediaType = charset(c.name())
   def charset(c: String): MediaType = copy(charset = Some(c))
   def noCharset: MediaType = copy(charset = None)
 
