@@ -126,8 +126,8 @@ case class Uri(
   /**
     * Adds the given parameters to the query.
     */
-  def params(mqp: MultiQueryParams): Uri = {
-    this.copy(querySegments = querySegments ++ QuerySegment.fromMultiQueryParams(mqp))
+  def params(mqp: QueryParams): Uri = {
+    this.copy(querySegments = querySegments ++ QuerySegment.fromQueryParams(mqp))
   }
 
   /**
@@ -141,7 +141,7 @@ case class Uri(
 
   def paramsMap: Map[String, String] = paramsSeq.toMap
 
-  def multiParams: MultiQueryParams = MultiQueryParams.fromSeq(paramsSeq)
+  def params: QueryParams = QueryParams.fromSeq(paramsSeq)
 
   def paramsSeq: Seq[(String, String)] = querySegments.collect {
     case KeyValue(k, v, _, _) => k -> v
@@ -512,7 +512,7 @@ object Uri extends UriInterpolator {
       */
     case class Plain(v: String, encoding: Encoding = QuerySegmentEncoding.Standard) extends QuerySegment
 
-    private[model] def fromMultiQueryParams(mqp: MultiQueryParams): Iterable[QuerySegment] = {
+    private[model] def fromQueryParams(mqp: QueryParams): Iterable[QuerySegment] = {
       mqp.toMultiSeq.flatMap {
         case (k, vs) =>
           vs match {

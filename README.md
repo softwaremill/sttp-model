@@ -31,7 +31,7 @@ Available model classes include:
 * `Header`
 * `HeaderNames`
 * `Cookie`
-* `MultiQueryParams`
+* `QueryParams`
 * `Part`
 
 Most classes contain both serialisation & parsing functionality, following these conventions:

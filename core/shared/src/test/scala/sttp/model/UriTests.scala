@@ -144,27 +144,27 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
   test("should have multi params") {
     val uriAsString = "https://sub.example.com:8080?p1=v1&p2=v2&p1=v3&p2=v4"
     val expectedParams = Map("p1" -> List("v1", "v3"), "p2" -> List("v2", "v4"))
-    uri"$uriAsString".multiParams.toMultiMap should be(expectedParams)
+    uri"$uriAsString".params.toMultiMap should be(expectedParams)
   }
 
   test("should have no multi params") {
     val uriAsString = "https://sub.example.com:8080"
-    uri"$uriAsString".multiParams.toMultiMap should be(Map())
+    uri"$uriAsString".params.toMultiMap should be(Map())
   }
 
   test("should have empty multi params") {
     val uriAsString = "https://sub.example.com:8080?p1&p2"
-    uri"$uriAsString".multiParams.toMultiMap should be(Map())
+    uri"$uriAsString".params.toMultiMap should be(Map())
   }
 
   test("should have multi params with empty string values") {
     val uriAsString = "https://sub.example.com:8080?p1=&p2="
-    uri"$uriAsString".multiParams.toMultiMap should be(Map("p1" -> List(""), "p2" -> List("")))
+    uri"$uriAsString".params.toMultiMap should be(Map("p1" -> List(""), "p2" -> List("")))
   }
 
   test("should have multi params with only values") {
     val uriAsString = "https://sub.example.com:8080?=v1&=v2"
-    uri"$uriAsString".multiParams.toMultiMap should be(Map("" -> List("v1", "v2")))
+    uri"$uriAsString".params.toMultiMap should be(Map("" -> List("v1", "v2")))
   }
 
   val validationTestData = List(

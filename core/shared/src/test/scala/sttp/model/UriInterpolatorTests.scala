@@ -129,7 +129,7 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
       (uri"http://example.com?x=y&${Map("a" -> Some("b"))}", s"http://example.com?x=y&a=b"),
       (uri"http://example.com?x=y&${Seq("a" -> None)}", s"http://example.com?x=y"),
       (
-        uri"http://example.com?${MultiQueryParams.fromMultiSeq(List("x" -> List("1", "2"), "y" -> Nil))}",
+        uri"http://example.com?${QueryParams.fromMultiSeq(List("x" -> List("1", "2"), "y" -> Nil))}",
         s"http://example.com?x=1&x=2&y"
       )
     ),
