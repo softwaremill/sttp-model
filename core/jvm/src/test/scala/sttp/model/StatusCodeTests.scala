@@ -9,7 +9,7 @@ class StatusCodeTests extends AnyFlatSpec with Matchers {
   }
 
   it should "validate status codes" in {
-    StatusCode.safeApply(8) shouldBe 'left
+    StatusCode.safeApply(8) shouldBe Symbol("left")
     StatusCode.safeApply(200) shouldBe Right(StatusCode.Ok)
   }
 

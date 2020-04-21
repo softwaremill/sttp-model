@@ -16,7 +16,7 @@ import scala.util.{Failure, Success, Try}
   * The `name` and `value` should be already encoded (if necessary), as when serialised, they end up unmodified in
   * the header.
   */
-case class Cookie private (name: String, value: String) {
+case class Cookie(name: String, value: String) {
   /**
     * @return Representation of the cookie as in a header value, in the format: `[name]=[value]`.
     */
@@ -43,7 +43,8 @@ object Cookie {
     Validate.all(validateName(name), validateValue(value))(new Cookie(name, value))
   }
 
-  def notValidated(name: String, value: String): Cookie = new Cookie(name, value)
+  @deprecated("use apply")
+  def notValidated(name: String, value: String): Cookie = Cookie(name, value)
 
   /**
     * Parse the cookie, represented as a header value (in the format: `[name]=[value]`).
@@ -65,7 +66,7 @@ object Cookie {
   def toString(cs: List[Cookie]): String = cs.map(_.toString).mkString("; ")
 }
 
-case class CookieValueWithMeta private (
+case class CookieValueWithMeta(
     value: String,
     expires: Option[Instant],
     maxAge: Option[Long],
@@ -111,9 +112,10 @@ object CookieValueWithMeta {
       Cookie.validateValue(value),
       path.flatMap(validateDirectiveValue("path", _)),
       domain.flatMap(validateDirectiveValue("domain", _))
-    )(notValidated(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives))
+    )(apply(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives))
   }
 
+  @deprecated("use apply")
   def notValidated(
       value: String,
       expires: Option[Instant] = None,
@@ -124,7 +126,7 @@ object CookieValueWithMeta {
       httpOnly: Boolean = false,
       otherDirectives: Map[String, Option[String]] = Map.empty
   ): CookieValueWithMeta =
-    new CookieValueWithMeta(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
+    CookieValueWithMeta(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
 }
 
 /**
@@ -209,11 +211,28 @@ object CookieWithMeta {
           .safeApply(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
           .right
           .map { v =>
-            notValidated(name, v)
+            apply(name, v)
           }
     }
   }
 
+  def apply(
+      name: String,
+      value: String,
+      expires: Option[Instant] = None,
+      maxAge: Option[Long] = None,
+      domain: Option[String] = None,
+      path: Option[String] = None,
+      secure: Boolean = false,
+      httpOnly: Boolean = false,
+      otherDirectives: Map[String, Option[String]] = Map.empty
+  ): CookieWithMeta =
+    apply(
+      name,
+      CookieValueWithMeta(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
+    )
+
+  @deprecated("use apply")
   def notValidated(
       name: String,
       value: String,
@@ -225,15 +244,13 @@ object CookieWithMeta {
       httpOnly: Boolean = false,
       otherDirectives: Map[String, Option[String]] = Map.empty
   ): CookieWithMeta =
-    notValidated(
-      name,
-      CookieValueWithMeta.notValidated(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
-    )
+    apply(name, value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
 
+  @deprecated("use apply")
   def notValidated(
       name: String,
       valueWithMeta: CookieValueWithMeta
-  ): CookieWithMeta = new CookieWithMeta(name, valueWithMeta)
+  ): CookieWithMeta = CookieWithMeta(name, valueWithMeta)
 
   // https://tools.ietf.org/html/rfc6265#section-4.1.1
   /**
@@ -248,7 +265,7 @@ object CookieWithMeta {
     val components = s.split(";").map(_.trim)
     val (first, other) = (components.head, components.tail)
     val (name, value) = splitkv(first)
-    var result: Either[String, CookieWithMeta] = Right(CookieWithMeta.notValidated(name, value.getOrElse("")))
+    var result: Either[String, CookieWithMeta] = Right(CookieWithMeta.apply(name, value.getOrElse("")))
     other.map(splitkv).map(t => (t._1, t._2)).foreach {
       case (ci"expires", Some(v)) =>
         parseDatetime(v) match {

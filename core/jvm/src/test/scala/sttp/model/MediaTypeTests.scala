@@ -35,8 +35,8 @@ class MediaTypeTests extends AnyFlatSpec with Matchers {
   }
 
   it should "validate media types" in {
-    MediaType.safeApply("text", "p=lain") shouldBe 'left
-    MediaType.safeApply("text", "plain", Some("UTF=8")) shouldBe 'left
+    MediaType.safeApply("text", "p=lain") shouldBe Symbol("left")
+    MediaType.safeApply("text", "plain", Some("UTF=8")) shouldBe Symbol("left")
     MediaType.safeApply("text", "plain") shouldBe Right(MediaType.TextPlain)
   }
 

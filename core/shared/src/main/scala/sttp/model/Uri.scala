@@ -27,7 +27,7 @@ import sttp.model.internal.Rfc3986.encode
   * required, they need to be added manually as part of the plain query
   * segment.
   */
-case class Uri private (
+case class Uri(
     scheme: String,
     userInfo: Option[UserInfo],
     hostSegment: Segment,
@@ -116,7 +116,7 @@ case class Uri private (
   /**
     * Adds the given parameter with an optional value to the query if it is present.
     */
-  def param(k: String, v: Option[String]): Uri = v.map(param(k,_)).getOrElse(this)
+  def param(k: String, v: Option[String]): Uri = v.map(param(k, _)).getOrElse(this)
 
   /**
     * Adds the given parameters to the query.
@@ -219,7 +219,7 @@ case class Uri private (
 /**
   * `safeApply` methods return a validation error if the scheme contains illegal characers or if the host is empty.
   * `unsafeApply` throws an [[IllegalArgumentException]] if there's a validation error
-  * `notValidated` doesn't perform any validation.
+  * `apply` doesn't perform any validation.
   */
 object Uri extends UriInterpolator {
   private val AllowedSchemeCharacters = "[a-zA-Z][a-zA-Z0-9+-.]*".r
@@ -283,7 +283,7 @@ object Uri extends UriInterpolator {
       fragmentSegment: Option[Segment]
   ): Either[String, Uri] =
     Validate.all(validateScheme(scheme), validateHost(hostSegment.v))(
-      notValidated(scheme, userInfo, hostSegment, port, pathSegments, querySegments, fragmentSegment)
+      apply(scheme, userInfo, hostSegment, port, pathSegments, querySegments, fragmentSegment)
     )
 
   //
@@ -343,22 +343,22 @@ object Uri extends UriInterpolator {
 
   //
 
-  def notValidated(host: String): Uri =
-    notValidated("http", None, HostSegment(host), None, Vector.empty, Vector.empty, None)
-  def notValidated(host: String, port: Int): Uri =
-    notValidated("http", None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
-  def notValidated(host: String, port: Int, path: Seq[String]): Uri =
-    notValidated("http", None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
-  def notValidated(scheme: String, host: String): Uri =
-    notValidated(scheme, None, HostSegment(host), None, Vector.empty, Vector.empty, None)
-  def notValidated(scheme: String, host: String, port: Int): Uri =
-    notValidated(scheme, None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
-  def notValidated(scheme: String, host: String, port: Int, path: Seq[String]): Uri =
-    notValidated(scheme, None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
-  def notValidated(scheme: String, host: String, path: Seq[String]): Uri =
-    notValidated(scheme, None, HostSegment(host), None, path.map(PathSegment(_)), Vector.empty, None)
-  def notValidated(scheme: String, host: String, path: Seq[String], fragment: Option[String]): Uri =
-    notValidated(
+  def apply(host: String): Uri =
+    apply("http", None, HostSegment(host), None, Vector.empty, Vector.empty, None)
+  def apply(host: String, port: Int): Uri =
+    apply("http", None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
+  def apply(host: String, port: Int, path: Seq[String]): Uri =
+    apply("http", None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
+  def apply(scheme: String, host: String): Uri =
+    apply(scheme, None, HostSegment(host), None, Vector.empty, Vector.empty, None)
+  def apply(scheme: String, host: String, port: Int): Uri =
+    apply(scheme, None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
+  def apply(scheme: String, host: String, port: Int, path: Seq[String]): Uri =
+    apply(scheme, None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
+  def apply(scheme: String, host: String, path: Seq[String]): Uri =
+    apply(scheme, None, HostSegment(host), None, path.map(PathSegment(_)), Vector.empty, None)
+  def apply(scheme: String, host: String, path: Seq[String], fragment: Option[String]): Uri =
+    apply(
       scheme,
       None,
       HostSegment(host),
@@ -367,6 +367,60 @@ object Uri extends UriInterpolator {
       Vector.empty,
       fragment.map(FragmentSegment(_))
     )
+  def apply(
+      scheme: String,
+      userInfo: Option[UserInfo],
+      host: String,
+      port: Option[Int],
+      path: Seq[String],
+      querySegments: Seq[QuerySegment],
+      fragment: Option[String]
+  ): Uri =
+    apply(
+      scheme,
+      userInfo,
+      HostSegment(host),
+      port,
+      path.map(PathSegment(_)),
+      querySegments,
+      fragment.map(FragmentSegment(_))
+    )
+
+  //
+
+  @deprecated("use apply")
+  def notValidated(host: String): Uri =
+    apply("http", None, HostSegment(host), None, Vector.empty, Vector.empty, None)
+  @deprecated("use apply")
+  def notValidated(host: String, port: Int): Uri =
+    apply("http", None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
+  @deprecated("use apply")
+  def notValidated(host: String, port: Int, path: Seq[String]): Uri =
+    apply("http", None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
+  @deprecated("use apply")
+  def notValidated(scheme: String, host: String): Uri =
+    apply(scheme, None, HostSegment(host), None, Vector.empty, Vector.empty, None)
+  @deprecated("use apply")
+  def notValidated(scheme: String, host: String, port: Int): Uri =
+    apply(scheme, None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
+  @deprecated("use apply")
+  def notValidated(scheme: String, host: String, port: Int, path: Seq[String]): Uri =
+    apply(scheme, None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
+  @deprecated("use apply")
+  def notValidated(scheme: String, host: String, path: Seq[String]): Uri =
+    apply(scheme, None, HostSegment(host), None, path.map(PathSegment(_)), Vector.empty, None)
+  @deprecated("use apply")
+  def notValidated(scheme: String, host: String, path: Seq[String], fragment: Option[String]): Uri =
+    apply(
+      scheme,
+      None,
+      HostSegment(host),
+      None,
+      path.map(PathSegment(_)),
+      Vector.empty,
+      fragment.map(FragmentSegment(_))
+    )
+  @deprecated("use apply")
   def notValidated(
       scheme: String,
       userInfo: Option[UserInfo],
@@ -376,7 +430,7 @@ object Uri extends UriInterpolator {
       querySegments: Seq[QuerySegment],
       fragment: Option[String]
   ): Uri =
-    notValidated(
+    apply(
       scheme,
       userInfo,
       HostSegment(host),
@@ -385,6 +439,7 @@ object Uri extends UriInterpolator {
       querySegments,
       fragment.map(FragmentSegment(_))
     )
+  @deprecated("use apply")
   def notValidated(
       scheme: String,
       userInfo: Option[UserInfo],
@@ -393,7 +448,7 @@ object Uri extends UriInterpolator {
       pathSegments: Seq[Segment],
       querySegments: Seq[QuerySegment],
       fragmentSegment: Option[Segment]
-  ) = new Uri(scheme, userInfo, hostSegment, port, pathSegments, querySegments, fragmentSegment)
+  ) = apply(scheme, userInfo, hostSegment, port, pathSegments, querySegments, fragmentSegment)
 
   //
 

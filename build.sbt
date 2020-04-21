@@ -7,8 +7,7 @@ import com.softwaremill.Publish.Release.updateVersionInDocs
 val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.11"
 val scala2_13 = "2.13.1"
-
-val silencerVersion = "1.4.4"
+val scala3 = "0.22.0-RC1"
 
 lazy val is2_11 = settingKey[Boolean]("Is the scala version 2.11.")
 
@@ -34,10 +33,6 @@ val commonSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
     commitNextVersion,
     pushChanges
   ),
-  libraryDependencies ++= Seq(
-    compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
-    "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
-  ),
   is2_11 := scalaVersion.value.startsWith("2.11.")
 )
 
@@ -57,7 +52,8 @@ val commonJvmJsSettings = commonSettings ++ Seq(
 )
 
 val commonJvmSettings = commonJvmJsSettings ++ Seq(
-  scalacOptions ++= Seq("-target:jvm-1.8")
+  scalacOptions ++= Seq("-target:jvm-1.8"),
+  crossScalaVersions += scala3
 )
 
 val commonJsSettings = commonJvmJsSettings ++ Seq(

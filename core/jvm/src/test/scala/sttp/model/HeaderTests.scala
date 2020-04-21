@@ -9,8 +9,8 @@ class HeaderTests extends AnyFlatSpec with Matchers {
   }
 
   it should "validate status codes" in {
-    Header.safeApply("Aut ho", "a bc") shouldBe 'left
-    Header.safeApply(HeaderNames.Authorization, "xy z") shouldBe 'right
+    Header.safeApply("Aut ho", "a bc") shouldBe Symbol("left")
+    Header.safeApply(HeaderNames.Authorization, "xy z") shouldBe Symbol("right")
   }
 
   it should "throw exceptions on invalid headers" in {
