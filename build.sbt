@@ -53,7 +53,12 @@ val commonJvmJsSettings = commonSettings ++ Seq(
 
 val commonJvmSettings = commonJvmJsSettings ++ Seq(
   scalacOptions ++= Seq("-target:jvm-1.8"),
-  crossScalaVersions += scala3
+  crossScalaVersions += scala3,
+  sources in (Compile, doc) := {
+    val scalaV = scalaVersion.value
+    val current = (sources in (Compile, doc)).value
+    if (scalaV == scala3) Seq() else current
+  }
 )
 
 val commonJsSettings = commonJvmJsSettings ++ Seq(
@@ -165,4 +170,3 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 lazy val coreNative = core.native
-
