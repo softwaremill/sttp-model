@@ -18,7 +18,7 @@ case class Part[T](
   def fileName: Option[String] = otherDispositionParams.get(FileNameDispositionParam)
 
   def contentType(v: MediaType): Part[T] = header(Header.contentType(v), replaceExisting = true)
-  def contentType(v: String): Part[T] = header(Header.notValidated(HeaderNames.ContentType, v), replaceExisting = true)
+  def contentType(v: String): Part[T] = header(Header(HeaderNames.ContentType, v), replaceExisting = true)
 
   /**
     * Adds the given header to the end of the headers sequence.
@@ -28,14 +28,14 @@ case class Part[T](
     val current = if (replaceExisting) headers.filterNot(_.is(h.name)) else headers
     this.copy(headers = current :+ h)
   }
-  def header(k: String, v: String): Part[T] = header(Header.notValidated(k, v))
+  def header(k: String, v: String): Part[T] = header(Header(k, v))
 
   /**
     * Adds the given header to the end of the headers sequence.
     * @param replaceExisting If there's already a header with the same name, should it be dropped?
     */
   def header(k: String, v: String, replaceExisting: Boolean): Part[T] =
-    header(Header.notValidated(k, v), replaceExisting)
+    header(Header(k, v), replaceExisting)
 
   def contentDispositionHeaderValue: String = {
     def encode(s: String): String = new String(s.getBytes("utf-8"), "iso-8859-1")

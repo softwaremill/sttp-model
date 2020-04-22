@@ -4,7 +4,7 @@ import internal.Validate._
 import sttp.model.internal.Validate
 import sttp.model.internal.Rfc2616.validateToken
 
-case class Method private (method: String) extends AnyVal {
+case class Method(method: String) extends AnyVal {
   override def toString: String = method
 }
 
@@ -14,8 +14,9 @@ object Method extends Methods {
     */
   def unsafeApply(method: String): Method = safeApply(method).getOrThrow
   def safeApply(method: String): Either[String, Method] =
-    Validate.all(validateToken("Method", method))(notValidated(method))
-  def notValidated(method: String) = new Method(method)
+    Validate.all(validateToken("Method", method))(apply(method))
+  @deprecated("use apply")
+  def notValidated(method: String): Method = apply(method)
 
   /**
     * An HTTP method is idempotent if an identical request can be made once or several times in a row with the same
@@ -36,13 +37,13 @@ object Method extends Methods {
 }
 
 trait Methods {
-  val GET: Method = Method.notValidated("GET")
-  val HEAD: Method = Method.notValidated("HEAD")
-  val POST: Method = Method.notValidated("POST")
-  val PUT: Method = Method.notValidated("PUT")
-  val DELETE: Method = Method.notValidated("DELETE")
-  val OPTIONS: Method = Method.notValidated("OPTIONS")
-  val PATCH: Method = Method.notValidated("PATCH")
-  val CONNECT: Method = Method.notValidated("CONNECT")
-  val TRACE: Method = Method.notValidated("TRACE")
+  val GET: Method = Method("GET")
+  val HEAD: Method = Method("HEAD")
+  val POST: Method = Method("POST")
+  val PUT: Method = Method("PUT")
+  val DELETE: Method = Method("DELETE")
+  val OPTIONS: Method = Method("OPTIONS")
+  val PATCH: Method = Method("PATCH")
+  val CONNECT: Method = Method("CONNECT")
+  val TRACE: Method = Method("TRACE")
 }

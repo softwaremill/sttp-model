@@ -18,7 +18,7 @@ class HeaderTests extends AnyFlatSpec with Matchers {
   }
 
   it should "create unvalidated instances" in {
-    Header.notValidated("Aut ho", "a bc").toString shouldBe "Aut ho: a bc"
+    Header("Aut ho", "a bc").toString shouldBe "Aut ho: a bc"
   }
 
   it should "return a safe string description of a sensitive header" in {
