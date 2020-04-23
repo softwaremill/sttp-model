@@ -19,6 +19,8 @@ case class Part[T](
 
   def contentType(v: MediaType): Part[T] = header(Header.contentType(v), replaceExisting = true)
   def contentType(v: String): Part[T] = header(Header(HeaderNames.ContentType, v), replaceExisting = true)
+  // enumerate all variants so that overload resolution works correctly
+  override def contentType: Option[String] = super.contentType
 
   /**
     * Adds the given header to the end of the headers sequence.
@@ -36,6 +38,9 @@ case class Part[T](
     */
   def header(k: String, v: String, replaceExisting: Boolean): Part[T] =
     header(Header(k, v), replaceExisting)
+
+  // enumerate all variants so that overload resolution works correctly
+  override def header(h: String): Option[String] = super.header(h)
 
   def contentDispositionHeaderValue: String = {
     def encode(s: String): String = new String(s.getBytes("utf-8"), "iso-8859-1")
