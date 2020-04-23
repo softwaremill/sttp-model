@@ -23,6 +23,9 @@ case class Cookie(name: String, value: String) {
   override def toString: String = s"$name=$value"
 }
 
+/**
+  * For a description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
+  */
 object Cookie {
   // see: https://stackoverflow.com/questions/1969232/allowed-characters-in-cookies/1969339
   private val AllowedValueCharacters = s"[^${Rfc2616.CTL}]*".r

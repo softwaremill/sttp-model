@@ -217,9 +217,9 @@ case class Uri(
 }
 
 /**
-  * `safeApply` methods return a validation error if the scheme contains illegal characers or if the host is empty.
-  * `unsafeApply` throws an [[IllegalArgumentException]] if there's a validation error
-  * `apply` doesn't perform any validation.
+  * For a general description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
+  *
+  * The `safeApply` methods return a validation error if the scheme contains illegal characters or if the host is empty.
   */
 object Uri extends UriInterpolator {
   private val AllowedSchemeCharacters = "[a-zA-Z][a-zA-Z0-9+-.]*".r

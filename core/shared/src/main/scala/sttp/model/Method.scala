@@ -8,6 +8,9 @@ case class Method(method: String) extends AnyVal {
   override def toString: String = method
 }
 
+/**
+  * For a description of the behavior of `apply`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
+  */
 object Method extends Methods {
   /**
     * @throws IllegalArgumentException If the method value is not a valid token.

@@ -12,6 +12,9 @@ class StatusCode(val code: Int) extends AnyVal {
   override def toString: String = code.toString
 }
 
+/**
+  * For a description of the behavior of `apply`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
+  */
 object StatusCode extends StatusCodes {
   /**
     * @throws IllegalArgumentException If the status code is out of range.

@@ -40,6 +40,9 @@ class Header(val name: String, val value: String) {
   def toStringSafe: String = s"$name: ${if (HeaderNames.isSensitive(name)) "***" else value}"
 }
 
+/**
+  * For a description of the behavior of `apply`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
+  */
 object Header {
   def unapply(h: Header): Option[(String, String)] = Some((h.name, h.value))
 
