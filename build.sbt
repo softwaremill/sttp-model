@@ -1,12 +1,10 @@
-// shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.ReleasePlugin.autoImport._
 import com.softwaremill.Publish.Release.updateVersionInDocs
 
 val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.11"
-val scala2_13 = "2.13.1"
+val scala2_13 = "2.13.2"
 val scala3 = "0.22.0-RC1"
 
 lazy val is2_11 = settingKey[Boolean]("Is the scala version 2.11.")
