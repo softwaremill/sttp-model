@@ -5,7 +5,7 @@ import com.softwaremill.Publish.Release.updateVersionInDocs
 val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.11"
 val scala2_13 = "2.13.2"
-val scala3 = "0.22.0"
+val scala3 = "0.23.0"
 
 lazy val is2_11 = settingKey[Boolean]("Is the scala version 2.11.")
 
@@ -104,7 +104,7 @@ lazy val browserTestSettings = Seq(
   }
 )
 
-val scalaTestVersion = "3.1.1"
+val scalaTestVersion = "3.1.2"
 val scalaNativeTestInterfaceVersion = "0.4.0-M2"
 
 lazy val rootProjectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STTP_NATIVE")) {
