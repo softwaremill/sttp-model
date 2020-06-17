@@ -4,7 +4,7 @@ package sttp.model
   * Represents query parameters, where each parameter can have 0, 1, or more values.
   * All query parameters are assumed to be decoded.
   */
-class QueryParams(ps: Seq[(String, Seq[String])]) {
+case class QueryParams(ps: Seq[(String, Seq[String])]) {
   def toMap: Map[String, String] = toSeq.toMap
   def toMultiMap: Map[String, Seq[String]] = ps.toMap
   def toSeq: Seq[(String, String)] = ps.flatMap { case (k, vs) => vs.map((k, _)) }
