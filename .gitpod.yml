@@ -5,4 +5,6 @@ vscode:
     - scalameta.metals@1.9.0:PtE/gdeE1YPL6It4tEfqpg==
 tasks:
   - init: source ./gitpod_init.sh
-  - command: source ./gitpod_command.sh
+ports:
+  - port: 8212
+    onOpen: ignore
