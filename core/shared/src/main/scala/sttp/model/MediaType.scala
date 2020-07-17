@@ -91,6 +91,7 @@ object MediaType extends MediaTypes {
 // https://www.iana.org/assignments/media-types/media-types.xhtml
 trait MediaTypes {
   val ApplicationGzip: MediaType = MediaType("application", "gzip")
+  val ApplicationZip: MediaType = MediaType("application", "zip")
   val ApplicationJson: MediaType = MediaType("application", "json")
   val ApplicationOctetStream: MediaType = MediaType("application", "octet-stream")
   val ApplicationPdf: MediaType = MediaType("application", "pdf")
