@@ -24,6 +24,6 @@ cs fetch org.scalameta:metals_2.12:$METALS_VERSION --cache=$METALS_DIR/coursier
 cs fetch org.scalameta:scalafmt-cli_2.12:2.4.2 --cache=$METALS_DIR/coursier 
 
 sbt -Dbloop.export-jar-classifiers=sources bloopInstall
-bloop compile --cascade root
+bloop compile --cascade rootProject
 
 echo "export PATH=\$PATH:/usr/local/openjdk-8/bin:$APPS_DIR" >> ~/.bashrc
