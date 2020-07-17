@@ -26,3 +26,5 @@ cs fetch org.scalameta:scalafmt-cli_2.12:2.4.2 --cache=$METALS_DIR/coursier
 sbt -Dbloop.export-jar-classifiers=sources bloopInstall
 
 echo "export PATH=\$PATH:/usr/local/openjdk-11/bin:$APPS_DIR" >> ~/.bashrc
+
+bloop test rootProject -w --propagate
