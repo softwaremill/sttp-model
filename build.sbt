@@ -5,7 +5,7 @@ import com.softwaremill.Publish.Release.updateVersionInDocs
 val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.11"
 val scala2_13 = "2.13.3"
-val scala3 = "0.24.0"
+val scala3 = "0.26.0-RC1"
 
 lazy val is2_11 = settingKey[Boolean]("Is the scala version 2.11.")
 
@@ -104,7 +104,7 @@ lazy val browserTestSettings = Seq(
   }
 )
 
-val scalaTestVersion = "3.2.0"
+val scalaTestVersion = "3.2.1"
 val scalaNativeTestInterfaceVersion = "0.4.0-M2"
 
 lazy val rootProjectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STTP_NATIVE")) {
@@ -153,7 +153,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .jvmSettings(libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % scalaTestVersion % Test))
   .jsSettings(
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "1.0.0",
+      "org.scala-js" %%% "scalajs-dom" % "1.1.0",
       "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
     )
   )
