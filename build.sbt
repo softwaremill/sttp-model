@@ -1,6 +1,4 @@
 import com.softwaremill.Publish.Release.updateVersionInDocs
-import sbt.Keys.publishArtifact
-import sbt.internal.ProjectMatrix
 import sbtrelease.ReleasePlugin.autoImport._
 import sbtrelease.ReleaseStateTransformations._
 
@@ -97,19 +95,19 @@ lazy val browserTestSettings = Seq(
 val scalaTestVersion = "3.2.1"
 val scalaNativeTestInterfaceVersion = "0.4.0-M2"
 
-lazy val coreProjectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STTP_NATIVE")) {
+lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STTP_NATIVE")) {
   println("[info] STTP_NATIVE defined, including sttp-native in the aggregate projects")
-  core.projectRefs
+  model.projectRefs
 } else {
   println("[info] STTP_NATIVE *not* defined, *not* including sttp-native in the aggregate projects")
   List(
-    core.jvm(scala2_11),
-    core.jvm(scala2_12),
-    core.jvm(scala2_13),
-    core.jvm(scala3),
-    core.js(scala2_11),
-    core.js(scala2_12),
-    core.js(scala2_13)
+    model.jvm(scala2_11),
+    model.jvm(scala2_12),
+    model.jvm(scala2_13),
+    model.jvm(scala3),
+    model.js(scala2_11),
+    model.js(scala2_12),
+    model.js(scala2_13)
   )
 }
 
@@ -118,11 +116,11 @@ val compileAndTest = "compile->compile;test->test"
 lazy val rootProject = (project in file("."))
   .settings(commonSettings: _*)
   .settings(skip in publish := true, name := "sttp-shared")
-  .aggregate(coreProjectAggregates: _*)
+  .aggregate(projectAggregates: _*)
 
-lazy val core = (projectMatrix in file("core"))
+lazy val model = (projectMatrix in file("model"))
   .settings(
-    name := "core"
+    name := "model"
   )
   .jvmPlatform(
     scalaVersions = List(scala2_11, scala2_12, scala2_13, scala3),
