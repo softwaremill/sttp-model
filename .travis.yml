@@ -4,11 +4,6 @@ addons:
 jdk:
   - openjdk11
 dist: bionic
-scala:
-  - 2.12.11
-  - 2.11.12
-  - 2.13.3
-  - 0.26.0-RC1
 before_cache:
   - du -h -d 1 $HOME/.ivy2/
   - du -h -d 2 $HOME/.sbt/
@@ -33,5 +28,4 @@ before_script:
   - mkdir -p chromedriver && unzip chromedriver_linux64.zip -d chromedriver/
   - export PATH="$PATH:$PWD/chromedriver/"
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION rootJVM/test && xvfb-run sbt ++$TRAVIS_SCALA_VERSION rootJS/test
-  - if [[ ($TRAVIS_SCALA_VERSION =~ ^2.11.*) ]]; then sbt rootNative/test; fi
+  - sbt test
