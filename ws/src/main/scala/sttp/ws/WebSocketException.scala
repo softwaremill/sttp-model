@@ -1,4 +1,4 @@
-package sttp.model.ws
+package sttp.ws
 
 trait WebSocketException
 
