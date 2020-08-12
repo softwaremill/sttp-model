@@ -22,5 +22,4 @@ package object capabilities {
     * Used only as a type parameter, without implementations.
     */
   trait WebSockets
-
 }
