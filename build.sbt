@@ -108,10 +108,17 @@ val scalaNativeTestInterfaceVersion = "0.4.0-M2"
 
 lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STTP_NATIVE")) {
   println("[info] STTP_NATIVE defined, including sttp-native in the aggregate projects")
-  model.projectRefs ++ monad.projectRefs ++ ws.projectRefs
+  core.projectRefs ++ model.projectRefs
 } else {
   println("[info] STTP_NATIVE *not* defined, *not* including sttp-native in the aggregate projects")
   List(
+    core.jvm(scala2_11),
+    core.jvm(scala2_12),
+    core.jvm(scala2_13),
+    core.jvm(scala3),
+    core.js(scala2_11),
+    core.js(scala2_12),
+    core.js(scala2_13),
     model.jvm(scala2_11),
     model.jvm(scala2_12),
     model.jvm(scala2_13),
@@ -119,20 +126,6 @@ lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STT
     model.js(scala2_11),
     model.js(scala2_12),
     model.js(scala2_13),
-    monad.jvm(scala2_11),
-    monad.jvm(scala2_12),
-    monad.jvm(scala2_13),
-    monad.jvm(scala3),
-    monad.js(scala2_11),
-    monad.js(scala2_12),
-    monad.js(scala2_13),
-    ws.jvm(scala2_11),
-    ws.jvm(scala2_12),
-    ws.jvm(scala2_13),
-    ws.jvm(scala3),
-    ws.js(scala2_11),
-    ws.js(scala2_12),
-    ws.js(scala2_13)
   )
 }
 
@@ -142,6 +135,23 @@ lazy val rootProject = (project in file("."))
   .settings(commonSettings: _*)
   .settings(skip in publish := true, name := "sttp-shared")
   .aggregate(projectAggregates: _*)
+
+lazy val core = (projectMatrix in file("core"))
+  .settings(
+    name := "core"
+  )
+  .jvmPlatform(
+    scalaVersions = List(scala2_11, scala2_12, scala2_13, scala3),
+    settings = commonJvmSettings
+  )
+  .jsPlatform(
+    scalaVersions = List(scala2_11, scala2_12, scala2_13),
+    settings =  commonJsSettings ++ browserTestSettings
+  )
+  .nativePlatform(
+    scalaVersions = List(scala2_11),
+    settings = commonNativeSettings
+  )
 
 lazy val model = (projectMatrix in file("model"))
   .settings(
@@ -159,38 +169,3 @@ lazy val model = (projectMatrix in file("model"))
     scalaVersions = List(scala2_11),
     settings = commonNativeSettings
   )
-
-lazy val monad = (projectMatrix in file("monad"))
-  .settings(
-    name := "monad"
-  )
-  .jvmPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13, scala3),
-    settings = commonJvmSettings
-  )
-  .jsPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13),
-    settings =  commonJsSettings ++ browserTestSettings
-  )
-  .nativePlatform(
-    scalaVersions = List(scala2_11),
-    settings = commonNativeSettings
-  )
-
-lazy val ws = (projectMatrix in file("ws"))
-  .settings(
-    name := "ws"
-  )
-  .jvmPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13, scala3),
-    settings = commonJvmSettings
-  )
-  .jsPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13),
-    settings =  commonJsSettings ++ browserTestSettings
-  )
-  .nativePlatform(
-    scalaVersions = List(scala2_11),
-    settings = commonNativeSettings
-  )
-  .dependsOn(model, monad)
