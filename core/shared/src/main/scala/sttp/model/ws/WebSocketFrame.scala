@@ -3,8 +3,8 @@ package sttp.model.ws
 sealed trait WebSocketFrame
 
 object WebSocketFrame {
-  trait Incoming extends WebSocketFrame
-  trait Data[T] extends Incoming {
+  sealed trait Incoming extends WebSocketFrame
+  sealed trait Data[T] extends Incoming {
     def payload: T
     def finalFragment: Boolean
     def rsv: Option[Int]
