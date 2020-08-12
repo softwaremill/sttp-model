@@ -44,7 +44,10 @@ val commonJvmSettings = commonSettings ++ Seq(
     // https://github.com/lampepfl/dotty/pull/7775
     if (isDotty.value) current ++ List("-language:implicitConversions", "-Ykind-projector") else current
   },
-  ideSkipProject := (scalaVersion.value != scala2_13)
+  ideSkipProject := (scalaVersion.value != scala2_13),
+  libraryDependencies ++= Seq(
+    "org.scalatest" %% "scalatest" % scalaTestVersion % Test
+  )
 )
 
 val commonJsSettings = commonSettings ++ Seq(
@@ -61,12 +64,20 @@ val commonJsSettings = commonSettings ++ Seq(
         s"-P:scalajs:mapSourceURI:$dir->$url/v${version.value}/"
       }
   },
-  ideSkipProject := true
+  ideSkipProject := true,
+  libraryDependencies ++= Seq(
+    "org.scala-js" %%% "scalajs-dom" % "1.1.0",
+    "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
+  )
 )
 
 val commonNativeSettings = commonSettings ++ Seq(
   nativeLinkStubs := true,
-  ideSkipProject := true
+  ideSkipProject := true,
+  libraryDependencies ++= Seq(
+    "org.scala-native" %%% "test-interface" % scalaNativeTestInterfaceVersion,
+    "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
+  )
 )
 
 // run JS tests inside Chrome, due to jsdom not supporting fetch
@@ -97,7 +108,7 @@ val scalaNativeTestInterfaceVersion = "0.4.0-M2"
 
 lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STTP_NATIVE")) {
   println("[info] STTP_NATIVE defined, including sttp-native in the aggregate projects")
-  model.projectRefs
+  model.projectRefs ++ monad.projectRefs ++ ws.projectRefs
 } else {
   println("[info] STTP_NATIVE *not* defined, *not* including sttp-native in the aggregate projects")
   List(
@@ -107,7 +118,21 @@ lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STT
     model.jvm(scala3),
     model.js(scala2_11),
     model.js(scala2_12),
-    model.js(scala2_13)
+    model.js(scala2_13),
+    monad.jvm(scala2_11),
+    monad.jvm(scala2_12),
+    monad.jvm(scala2_13),
+    monad.jvm(scala3),
+    monad.js(scala2_11),
+    monad.js(scala2_12),
+    monad.js(scala2_13),
+    ws.jvm(scala2_11),
+    ws.jvm(scala2_12),
+    ws.jvm(scala2_13),
+    ws.jvm(scala3),
+    ws.js(scala2_11),
+    ws.js(scala2_12),
+    ws.js(scala2_13)
   )
 }
 
@@ -124,33 +149,48 @@ lazy val model = (projectMatrix in file("model"))
   )
   .jvmPlatform(
     scalaVersions = List(scala2_11, scala2_12, scala2_13, scala3),
-    settings = {
-      commonJvmSettings ++ List(
-        libraryDependencies ++= Seq(
-          "org.scalatest" %% "scalatest" % scalaTestVersion % Test
-        )
-      )
-    }
+    settings = commonJvmSettings
   )
   .jsPlatform(
     scalaVersions = List(scala2_11, scala2_12, scala2_13),
-    settings = {
-      commonJsSettings ++ browserTestSettings ++ List(
-        libraryDependencies ++= Seq(
-          "org.scala-js" %%% "scalajs-dom" % "1.1.0",
-          "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
-        )
-      )
-    }
+    settings = commonJsSettings ++ browserTestSettings
   )
   .nativePlatform(
     scalaVersions = List(scala2_11),
-    settings = {
-      commonNativeSettings ++ List(
-        libraryDependencies ++= Seq(
-          "org.scala-native" %%% "test-interface" % scalaNativeTestInterfaceVersion,
-          "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
-        )
-      )
-    }
+    settings = commonNativeSettings
   )
+
+lazy val monad = (projectMatrix in file("monad"))
+  .settings(
+    name := "monad"
+  )
+  .jvmPlatform(
+    scalaVersions = List(scala2_11, scala2_12, scala2_13, scala3),
+    settings = commonJvmSettings
+  )
+  .jsPlatform(
+    scalaVersions = List(scala2_11, scala2_12, scala2_13),
+    settings =  commonJsSettings ++ browserTestSettings
+  )
+  .nativePlatform(
+    scalaVersions = List(scala2_11),
+    settings = commonNativeSettings
+  )
+
+lazy val ws = (projectMatrix in file("ws"))
+  .settings(
+    name := "ws"
+  )
+  .jvmPlatform(
+    scalaVersions = List(scala2_11, scala2_12, scala2_13, scala3),
+    settings = commonJvmSettings
+  )
+  .jsPlatform(
+    scalaVersions = List(scala2_11, scala2_12, scala2_13),
+    settings =  commonJsSettings ++ browserTestSettings
+  )
+  .nativePlatform(
+    scalaVersions = List(scala2_11),
+    settings = commonNativeSettings
+  )
+  .dependsOn(model, monad)
