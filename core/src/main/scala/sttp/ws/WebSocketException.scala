@@ -1,7 +1,7 @@
 package sttp.ws
 
-trait WebSocketException
+abstract class WebSocketException(msg: String) extends Exception(msg)
 
-class WebSocketClosed() extends Exception with WebSocketException
+class WebSocketClosed() extends WebSocketException(null)
 
-class WebSocketBufferFull() extends Exception with WebSocketException
+class WebSocketBufferFull(capacity: Int) extends WebSocketException(s"Buffered $capacity messages")
