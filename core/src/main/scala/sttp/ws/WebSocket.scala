@@ -13,16 +13,16 @@ trait WebSocket[F[_]] {
     * After receiving a close frame, no further interactions with the web socket should happen. Subsequent invocations
     * of `receive`, as well as `send`, will fail with the [[WebSocketClosed]] exception.
     */
-  def receive: F[WebSocketFrame]
+  def receive(): F[WebSocketFrame]
   def send(f: WebSocketFrame, isContinuation: Boolean = false): F[Unit]
-  def isOpen: F[Boolean]
+  def isOpen(): F[Boolean]
 
   /**
     * Receive a single data frame, ignoring others. The frame might be a fragment.
     * @param pongOnPing Should a [[WebSocketFrame.Pong]] be sent when a [[WebSocketFrame.Ping]] is received.
     */
   def receiveDataFrame(pongOnPing: Boolean = true): F[Either[WebSocketFrame.Close, WebSocketFrame.Data[_]]] =
-    receive.flatMap {
+    receive().flatMap {
       case close: WebSocketFrame.Close => (Left(close): Either[WebSocketFrame.Close, WebSocketFrame.Data[_]]).unit
       case d: WebSocketFrame.Data[_]   => (Right(d): Either[WebSocketFrame.Close, WebSocketFrame.Data[_]]).unit
       case WebSocketFrame.Ping(payload) if pongOnPing =>
@@ -89,7 +89,7 @@ trait WebSocket[F[_]] {
   /**
     * Idempotent when used sequentially.
     */
-  def close: F[Unit] = send(WebSocketFrame.close)
+  def close(): F[Unit] = send(WebSocketFrame.close)
 
   implicit def monad: MonadError[F]
 }
