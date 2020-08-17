@@ -1,5 +1,6 @@
 package sttp.ws
 
+import sttp.model.Headers
 import sttp.monad.MonadError
 import sttp.monad.syntax._
 
@@ -92,6 +93,8 @@ trait WebSocket[F[_]] {
     * Idempotent when used sequentially.
     */
   def close(): F[Unit] = send(WebSocketFrame.close)
+
+  def upgradeHeaders: Headers
 
   implicit def monad: MonadError[F]
 }

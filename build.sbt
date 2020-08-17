@@ -118,7 +118,7 @@ lazy val browserTestSettings = Seq(
 
 lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STTP_NATIVE")) {
   println("[info] STTP_NATIVE defined, including sttp-native in the aggregate projects")
-  core.projectRefs ++ model.projectRefs ++ akka.projectRefs ++ fs2.projectRefs ++ monix.projectRefs ++ zio.projectRefs
+  core.projectRefs ++ model.projectRefs ++ ws.projectRefs ++ akka.projectRefs ++ fs2.projectRefs ++ monix.projectRefs ++ zio.projectRefs
 } else {
   println("[info] STTP_NATIVE *not* defined, *not* including sttp-native in the aggregate projects")
   List(
@@ -136,6 +136,13 @@ lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STT
     model.js(scala2_11),
     model.js(scala2_12),
     model.js(scala2_13),
+    ws.jvm(scala2_11),
+    ws.jvm(scala2_12),
+    ws.jvm(scala2_13),
+    ws.jvm(scala3),
+    ws.js(scala2_11),
+    ws.js(scala2_12),
+    ws.js(scala2_13),
     akka.jvm(scala2_12),
     akka.jvm(scala2_13),
     fs2.jvm(scala2_11),
@@ -149,7 +156,7 @@ lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STT
     zio.jvm(scala2_11),
     zio.jvm(scala2_12),
     zio.jvm(scala2_13),
-    zio.jvm(scala3),
+    zio.jvm(scala3)
   )
 }
 
@@ -193,6 +200,24 @@ lazy val model = (projectMatrix in file("model"))
     scalaVersions = List(scala2_11),
     settings = commonNativeSettings
   )
+
+lazy val ws = (projectMatrix in file("ws"))
+  .settings(
+    name := "ws"
+  )
+  .jvmPlatform(
+    scalaVersions = List(scala2_11, scala2_12, scala2_13, scala3),
+    settings = commonJvmSettings
+  )
+  .jsPlatform(
+    scalaVersions = List(scala2_11, scala2_12, scala2_13),
+    settings = commonJsSettings ++ browserTestSettings
+  )
+  .nativePlatform(
+    scalaVersions = List(scala2_11),
+    settings = commonNativeSettings
+  )
+  .dependsOn(core, model)
 
 lazy val akka = (projectMatrix in file("akka"))
   .settings(
