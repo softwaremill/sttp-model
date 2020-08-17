@@ -25,6 +25,16 @@ class WebSocketStub[S](
     * received in reaction to [[WebSocket.send]] being invoked.
     */
   def thenRespond(
+      addReceived: WebSocketFrame => List[WebSocketFrame]
+  ): WebSocketStub[Unit] = thenRespondWith(f => addReceived(f).map(Try(_)))
+
+  /**
+    * Creates a stub that has the same initial receive frames, but replaces the function that adds responses to be
+    * received in reaction to [[WebSocket.send]] being invoked.
+    *
+    * More powerful version of [[thenRespond()]] which allows receiving to fail with an exception.
+    */
+  def thenRespondWith(
       addReceived: WebSocketFrame => List[Try[WebSocketFrame]]
   ): WebSocketStub[Unit] =
     new WebSocketStub(
@@ -37,10 +47,26 @@ class WebSocketStub[S](
     * Creates a stub that has the same initial responses, but replaces the function that adds responses to be
     * received in reaction to [[WebSocket.send]] being invoked.
     *
-    * More powerful version of [[thenRespond]], as the given function can additionally use state and implement stateful
+    * More powerful version of [[thenRespond()]], as the given function can additionally use state and implement stateful
     * logic for computing response messages.
     */
   def thenRespondS[S2](initial: S2)(
+      onSend: (S2, WebSocketFrame) => (S2, List[WebSocketFrame])
+  ): WebSocketStub[S2] = thenRespondWithS(initial) { (s, f) =>
+    val (s2, lf) = onSend(s, f)
+    (s2, lf.map(Try(_)))
+  }
+
+  /**
+    * Creates a stub that has the same initial responses, but replaces the function that adds responses to be
+    * received in reaction to [[WebSocket.send]] being invoked.
+    *
+    * More powerful version of:
+    * - [[thenRespond()]], as the given function can additionally use state and implement stateful
+    * logic for computing response messages.
+    * - [[thenRespondS()]] which allows receiving to fail with an exception.
+    */
+  def thenRespondWithS[S2](initial: S2)(
       onSend: (S2, WebSocketFrame) => (S2, List[Try[WebSocketFrame]])
   ): WebSocketStub[S2] = new WebSocketStub(initialResponses, initial, onSend)
 
@@ -98,7 +124,7 @@ object WebSocketStub {
     * More messages can be enqueued to be returned by the stub in response to [[WebSocket.send]] by subsequently
     * calling one of the [[WebSocketStub.thenRespond]] methods.
     */
-  def withInitialReceiveFrames(
+  def initialReceiveWith(
       events: List[Try[WebSocketFrame]]
   ): WebSocketStub[Unit] = {
     new WebSocketStub(events, (), (_, _) => ((), List.empty))
@@ -109,10 +135,10 @@ object WebSocketStub {
     * More messages can be enqueued to be returned by the stub in response to [[WebSocket.send]] by subsequently
     * calling one of the [[WebSocketStub.thenRespond]] methods.
     */
-  def withInitialReceive(
+  def initialReceive(
       messages: List[WebSocketFrame.Incoming]
   ): WebSocketStub[Unit] = {
-    withInitialReceiveFrames(messages.map(m => Success(m)))
+    initialReceiveWith(messages.map(m => Success(m)))
   }
 
   /**
@@ -120,5 +146,5 @@ object WebSocketStub {
     * More messages can be enqueued to be returned by the stub in response to [[WebSocket.send]] by subsequently
     * calling one of the [[WebSocketStub.thenRespond]] methods.
     */
-  def withNoInitialReceive: WebSocketStub[Unit] = withInitialReceiveFrames(List.empty)
+  def noInitialReceive: WebSocketStub[Unit] = initialReceiveWith(List.empty)
 }
