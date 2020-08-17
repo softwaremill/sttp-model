@@ -93,7 +93,7 @@ class WebSocketStub[S](
                 _isOpen = false
                 monad.error(e)
               case None =>
-                monad.error(new Exception("Unexpected 'receive', no more prepared responses."))
+                monad.error(new IllegalStateException("Unexpected 'receive', no more prepared responses."))
             }
           } else {
             monad.error(new WebSocketClosed())
@@ -136,7 +136,7 @@ object WebSocketStub {
     * calling one of the [[WebSocketStub.thenRespond]] methods.
     */
   def initialReceive(
-      messages: List[WebSocketFrame.Incoming]
+      messages: List[WebSocketFrame]
   ): WebSocketStub[Unit] = {
     initialReceiveWith(messages.map(m => Success(m)))
   }
