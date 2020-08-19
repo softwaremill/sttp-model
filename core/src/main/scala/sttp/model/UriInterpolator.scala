@@ -6,6 +6,7 @@ import scala.annotation.tailrec
 
 trait UriInterpolator {
   implicit class UriContext(val sc: StringContext) {
+
     /**
       * Parse the given string (with embedded expressions) as an uri.
       *
@@ -513,12 +514,13 @@ object UriInterpolator {
 
     private def anyToString(a: Any): String = anyToStringOpt(a).getOrElse("")
 
-    private def anyToStringOpt(a: Any): Option[String] = a match {
-      case None    => None
-      case null    => None
-      case Some(x) => Some(x.toString)
-      case x       => Some(x.toString)
-    }
+    private def anyToStringOpt(a: Any): Option[String] =
+      a match {
+        case None    => None
+        case null    => None
+        case Some(x) => Some(x.toString)
+        case x       => Some(x.toString)
+      }
 
     /*
     #102: the + sign should be decoded into a space only when it's part of the query. Otherwise, it should be
@@ -533,11 +535,12 @@ object UriInterpolator {
       collection-valued token should be expanded.
        */
 
-      def isValueToken(t: Token) = t match {
-        case ExpressionToken(_) => true
-        case StringToken(_)     => true
-        case _                  => false
-      }
+      def isValueToken(t: Token) =
+        t match {
+          case ExpressionToken(_) => true
+          case StringToken(_)     => true
+          case _                  => false
+        }
 
       @tailrec
       def doToSeq(ts: Vector[Token], acc: Vector[String]): Seq[String] = {
@@ -568,18 +571,18 @@ object UriInterpolator {
       doToSeq(tokens, Vector.empty)
     }
 
-    private def tokensToStringOpt(t: Vector[Token], decodePlusAsSpace: Boolean = false): Option[String] = t match {
-      case Vector()                   => None
-      case Vector(ExpressionToken(e)) => anyToStringOpt(e)
-      case _                          => Some(tokensToString(t, decodePlusAsSpace))
-    }
+    private def tokensToStringOpt(t: Vector[Token], decodePlusAsSpace: Boolean = false): Option[String] =
+      t match {
+        case Vector()                   => None
+        case Vector(ExpressionToken(e)) => anyToStringOpt(e)
+        case _                          => Some(tokensToString(t, decodePlusAsSpace))
+      }
 
     private def tokensToString(t: Vector[Token], decodePlusAsSpace: Boolean = false): String =
       t.collect {
-          case StringToken(s)     => decode(s, decodePlusAsSpace)
-          case ExpressionToken(e) => anyToString(e)
-        }
-        .mkString("")
+        case StringToken(s)     => decode(s, decodePlusAsSpace)
+        case ExpressionToken(e) => anyToString(e)
+      }.mkString("")
 
     private def split[T](v: Vector[T], sep: Set[T]): Either[Vector[T], (Vector[T], T, Vector[T])] = {
       val i = v.indexWhere(sep.contains)

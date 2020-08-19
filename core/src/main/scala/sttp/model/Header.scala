@@ -16,6 +16,7 @@ import scala.util.hashing.MurmurHash3
   * the header.
   */
 class Header(val name: String, val value: String) {
+
   /**
     * Check if the name of this header is the same as the given one. The names are compared in a case-insensitive way.
     */
@@ -26,14 +27,14 @@ class Header(val name: String, val value: String) {
     */
   override def toString: String = s"$name: $value"
   override def hashCode(): Int = MurmurHash3.mixLast(name.toLowerCase.hashCode, value.hashCode)
-  override def equals(that: Any): Boolean = that match {
-    case h: AnyRef if this.eq(h) => true
-    case h: Header               => is(h.name) && (value == h.value)
-    case _                       => false
-  }
+  override def equals(that: Any): Boolean =
+    that match {
+      case h: AnyRef if this.eq(h) => true
+      case h: Header               => is(h.name) && (value == h.value)
+      case _                       => false
+    }
 
   /**
-    *
     * @return Representation in the format: `[name]: [value]`. If the header is sensitive
     *         (see [[HeaderNames.SensitiveHeaders]]), the value is omitted.
     */

@@ -20,6 +20,7 @@ case class MediaType(mainType: String, subType: String, charset: Option[String] 
   * For a description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
   */
 object MediaType extends MediaTypes {
+
   /**
     * @throws IllegalArgumentException If the main type or subt type contain illegal characters.
     */
