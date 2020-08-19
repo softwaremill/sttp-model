@@ -19,9 +19,9 @@ def dependenciesFor(version: String)(deps: (Option[(Long, Long)] => ModuleID)*):
   deps.map(_.apply(CrossVersion.partialVersion(version)))
 
 val commonSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
-  organization := "com.softwaremill.sttp.shared",
+  organization := "com.softwaremill.sttp.model",
   scmInfo := Some(
-    ScmInfo(url("https://github.com/softwaremill/sttp-shared"), "scm:git@github.com:softwaremill/sttp-shared.git")
+    ScmInfo(url("https://github.com/softwaremill/sttp-model"), "scm:git@github.com:softwaremill/sttp-model.git")
   ),
   // cross-release doesn't work when subprojects have different cross versions
   // work-around from https://github.com/sbt/sbt-release/issues/214
@@ -73,7 +73,7 @@ val commonJsSettings = commonSettings ++ Seq(
     else
       Seq {
         val dir = project.base.toURI.toString.replaceFirst("[^/]+/?$", "")
-        val url = "https://raw.githubusercontent.com/softwaremill/sttp-shared"
+        val url = "https://raw.githubusercontent.com/softwaremill/sttp-model"
         s"-P:scalajs:mapSourceURI:$dir->$url/v${version.value}/"
       }
   },
@@ -118,7 +118,7 @@ lazy val browserTestSettings = Seq(
 
 lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STTP_NATIVE")) {
   println("[info] STTP_NATIVE defined, including sttp-native in the aggregate projects")
-  core.projectRefs ++ model.projectRefs ++ ws.projectRefs ++ akka.projectRefs ++ fs2.projectRefs ++ monix.projectRefs ++ zio.projectRefs
+  core.projectRefs
 } else {
   println("[info] STTP_NATIVE *not* defined, *not* including sttp-native in the aggregate projects")
   List(
@@ -128,35 +128,7 @@ lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STT
     core.jvm(scala3),
     core.js(scala2_11),
     core.js(scala2_12),
-    core.js(scala2_13),
-    model.jvm(scala2_11),
-    model.jvm(scala2_12),
-    model.jvm(scala2_13),
-    model.jvm(scala3),
-    model.js(scala2_11),
-    model.js(scala2_12),
-    model.js(scala2_13),
-    ws.jvm(scala2_11),
-    ws.jvm(scala2_12),
-    ws.jvm(scala2_13),
-    ws.jvm(scala3),
-    ws.js(scala2_11),
-    ws.js(scala2_12),
-    ws.js(scala2_13),
-    akka.jvm(scala2_12),
-    akka.jvm(scala2_13),
-    fs2.jvm(scala2_11),
-    fs2.jvm(scala2_12),
-    fs2.jvm(scala2_13),
-    monix.jvm(scala2_11),
-    monix.jvm(scala2_12),
-    monix.jvm(scala2_13),
-    monix.js(scala2_12),
-    monix.js(scala2_13),
-    zio.jvm(scala2_11),
-    zio.jvm(scala2_12),
-    zio.jvm(scala2_13),
-    zio.jvm(scala3)
+    core.js(scala2_13)
   )
 }
 
@@ -164,7 +136,7 @@ val compileAndTest = "compile->compile;test->test"
 
 lazy val rootProject = (project in file("."))
   .settings(commonSettings: _*)
-  .settings(skip in publish := true, name := "sttp-shared")
+  .settings(skip in publish := true, name := "sttp-model")
   .aggregate(projectAggregates: _*)
 
 lazy val core = (projectMatrix in file("core"))
@@ -183,89 +155,3 @@ lazy val core = (projectMatrix in file("core"))
     scalaVersions = List(scala2_11),
     settings = commonNativeSettings
   )
-
-lazy val model = (projectMatrix in file("model"))
-  .settings(
-    name := "model"
-  )
-  .jvmPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13, scala3),
-    settings = commonJvmSettings
-  )
-  .jsPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13),
-    settings = commonJsSettings ++ browserTestSettings
-  )
-  .nativePlatform(
-    scalaVersions = List(scala2_11),
-    settings = commonNativeSettings
-  )
-
-lazy val ws = (projectMatrix in file("ws"))
-  .settings(
-    name := "ws"
-  )
-  .jvmPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13, scala3),
-    settings = commonJvmSettings
-  )
-  .jsPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13),
-    settings = commonJsSettings ++ browserTestSettings
-  )
-  .nativePlatform(
-    scalaVersions = List(scala2_11),
-    settings = commonNativeSettings
-  )
-  .dependsOn(core, model)
-
-lazy val akka = (projectMatrix in file("akka"))
-  .settings(
-    name := "akka"
-  )
-  .jvmPlatform(
-    scalaVersions = List(scala2_12, scala2_13),
-    settings = commonJvmSettings ++ Seq(
-      libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.6.8" % "provided"
-    )
-  )
-  .dependsOn(core)
-
-lazy val fs2 = (projectMatrix in file("fs2"))
-  .settings(
-    name := "fs2",
-    libraryDependencies ++= dependenciesFor(scalaVersion.value)(
-      "co.fs2" %% "fs2-io" % fs2Version(_)
-    )
-  )
-  .jvmPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13),
-    settings = commonJvmSettings
-  )
-  .dependsOn(core)
-
-lazy val monix = (projectMatrix in file("monix"))
-  .settings(
-    name := "monix",
-    libraryDependencies += "io.monix" %%% "monix" % "3.2.2"
-  )
-  .jvmPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13),
-    settings = commonJvmSettings
-  )
-  .jsPlatform(
-    scalaVersions = List(scala2_12, scala2_13),
-    settings = commonJsSettings ++ browserTestSettings
-  )
-  .dependsOn(core)
-
-lazy val zio = (projectMatrix in file("zio"))
-  .settings(
-    name := "zio",
-    libraryDependencies ++= Seq("dev.zio" %% "zio-streams" % zioVersion, "dev.zio" %% "zio" % zioVersion)
-  )
-  .jvmPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13, scala3),
-    settings = commonJvmSettings
-  )
-  .dependsOn(core)
