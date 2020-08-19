@@ -36,6 +36,7 @@ case class Uri(
     querySegments: Seq[QuerySegment],
     fragmentSegment: Option[Segment]
 ) {
+
   /**
     * Replace the scheme. Does not validate the new scheme value.
     */
@@ -143,9 +144,10 @@ case class Uri(
 
   def params: QueryParams = QueryParams.fromSeq(paramsSeq)
 
-  def paramsSeq: Seq[(String, String)] = querySegments.collect {
-    case KeyValue(k, v, _, _) => k -> v
-  }
+  def paramsSeq: Seq[(String, String)] =
+    querySegments.collect {
+      case KeyValue(k, v, _, _) => k -> v
+    }
 
   /**
     * Adds the given query segment.
@@ -479,6 +481,7 @@ object Uri extends UriInterpolator {
 
   sealed trait QuerySegment
   object QuerySegment {
+
     /**
       * @param keyEncoding See [[Plain.encoding]]
       * @param valueEncoding See [[Plain.encoding]]
@@ -540,6 +543,7 @@ object Uri extends UriInterpolator {
   }
 
   object QuerySegmentEncoding {
+
     /**
       * Encodes all reserved characters using [[java.net.URLEncoder.encode()]].
       */

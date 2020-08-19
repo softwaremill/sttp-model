@@ -17,6 +17,7 @@ import scala.util.{Failure, Success, Try}
   * the header.
   */
 case class Cookie(name: String, value: String) {
+
   /**
     * @return Representation of the cookie as in a header value, in the format: `[name]=[value]`.
     */
@@ -260,10 +261,11 @@ object CookieWithMeta {
     * Parse the cookie, represented as a header value (in the format: `[name]=[value]; [directive]=[value]; ...`).
     */
   def parse(s: String): Either[String, CookieWithMeta] = {
-    def splitkv(kv: String): (String, Option[String]) = kv.split("=", 2).map(_.trim) match {
-      case Array(v1)     => (v1, None)
-      case Array(v1, v2) => (v1, Some(v2))
-    }
+    def splitkv(kv: String): (String, Option[String]) =
+      kv.split("=", 2).map(_.trim) match {
+        case Array(v1)     => (v1, None)
+        case Array(v1, v2) => (v1, Some(v2))
+      }
 
     val components = s.split(";").map(_.trim)
     val (first, other) = (components.head, components.tail)
