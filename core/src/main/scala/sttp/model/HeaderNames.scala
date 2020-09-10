@@ -89,13 +89,24 @@ trait HeaderNames {
   /**
     * Performs a case-insensitive check, whether this header name is sensitive.
     */
-  def isSensitive(headerName: String, sensitiveHeaders: Set[String] = SensitiveHeaders): Boolean =
+  def isSensitive(headerName: String): Boolean = isSensitive(headerName, SensitiveHeaders)
+
+  /**
+    * Performs a case-insensitive check, whether this header name is sensitive.
+    */
+  def isSensitive(headerName: String, sensitiveHeaders: Set[String]): Boolean =
     sensitiveHeaders.map(_.toLowerCase()).contains(headerName.toLowerCase.trim)
 
   /**
     * Performs a case-insensitive check, whether this header is sensitive.
     */
-  def isSensitive(header: Header, sensitiveHeaders: Set[String] = SensitiveHeaders): Boolean =
+  def isSensitive(header: Header): Boolean =
+    isSensitive(header.name, SensitiveHeaders)
+
+  /**
+    * Performs a case-insensitive check, whether this header is sensitive.
+    */
+  def isSensitive(header: Header, sensitiveHeaders: Set[String]): Boolean =
     isSensitive(header.name, sensitiveHeaders)
 }
 
