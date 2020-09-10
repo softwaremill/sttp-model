@@ -1,5 +1,6 @@
 package sttp.model
 
+import sttp.model.HeaderNames.SensitiveHeaders
 import sttp.model.internal.Validate
 import sttp.model.internal.Rfc2616.validateToken
 import sttp.model.internal.Validate._
@@ -38,7 +39,8 @@ class Header(val name: String, val value: String) {
     * @return Representation in the format: `[name]: [value]`. If the header is sensitive
     *         (see [[HeaderNames.SensitiveHeaders]]), the value is omitted.
     */
-  def toStringSafe: String = s"$name: ${if (HeaderNames.isSensitive(name)) "***" else value}"
+  def toStringSafe(sensitiveHeaders: Set[String] = SensitiveHeaders): String =
+    s"$name: ${if (HeaderNames.isSensitive(name, sensitiveHeaders)) "***" else value}"
 }
 
 /**

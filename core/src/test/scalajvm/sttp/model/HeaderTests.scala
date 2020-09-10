@@ -24,6 +24,6 @@ class HeaderTests extends AnyFlatSpec with Matchers {
   it should "return a safe string description of a sensitive header" in {
     val h = Header.authorization("bearer", "123")
     h.toString shouldBe "Authorization: bearer 123"
-    h.toStringSafe shouldBe "Authorization: ***"
+    h.toStringSafe() shouldBe "Authorization: ***"
   }
 }
