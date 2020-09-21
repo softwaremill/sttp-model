@@ -65,6 +65,7 @@ object Header {
 
   //
 
+  def accept(mediaType: MediaType, additionalMediaTypes: MediaType*): Header = accept(s"${(mediaType::additionalMediaTypes.toList).map(_.noCharset).mkString(", ")}")
   def accept(mediaRanges: String): Header = Header(HeaderNames.Accept, mediaRanges)
   def acceptCharset(charsetRanges: String): Header = Header(HeaderNames.AcceptCharset, charsetRanges)
   def acceptEncoding(encodingRanges: String): Header = Header(HeaderNames.AcceptEncoding, encodingRanges)
