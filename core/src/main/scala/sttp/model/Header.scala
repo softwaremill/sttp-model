@@ -58,9 +58,6 @@ object Header {
     Validate.all(validateToken("Header name", name))(apply(name, value))
   }
 
-  @deprecated("use apply")
-  def notValidated(name: String, value: String): Header = apply(name, value)
-
   def apply(name: String, value: String): Header = new Header(name, value)
 
   //

@@ -19,8 +19,6 @@ object Method extends Methods {
   def unsafeApply(method: String): Method = safeApply(method).getOrThrow
   def safeApply(method: String): Either[String, Method] =
     Validate.all(validateToken("Method", method))(apply(method))
-  @deprecated("use apply")
-  def notValidated(method: String): Method = apply(method)
 
   /**
     * An HTTP method is idempotent if an identical request can be made once or several times in a row with the same

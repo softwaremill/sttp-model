@@ -35,9 +35,6 @@ object MediaType extends MediaTypes {
       apply(mainType, subType, charset)
     )
   }
-  @deprecated("use apply)")
-  def notValidated(mainType: String, subType: String, charset: Option[String] = None): MediaType =
-    apply(mainType, subType, charset)
 
   // based on https://github.com/square/okhttp/blob/20cd3a0/okhttp/src/main/java/okhttp3/MediaType.kt#L94
   private val TOKEN = "([a-zA-Z0-9-!#$%&'*+.^_`{|}~]+)"

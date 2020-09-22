@@ -25,8 +25,6 @@ object StatusCode extends StatusCodes {
     if (code < 100 || code > 599) Left(s"Status code outside of the allowed range 100-599: $code")
     else Right(apply(code))
   }
-  @deprecated("use apply")
-  def notValidated(code: Int): StatusCode = apply(code)
   def apply(code: Int): StatusCode = new StatusCode(code)
 }
 

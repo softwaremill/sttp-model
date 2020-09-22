@@ -47,9 +47,6 @@ object Cookie {
     Validate.all(validateName(name), validateValue(value))(new Cookie(name, value))
   }
 
-  @deprecated("use apply")
-  def notValidated(name: String, value: String): Cookie = Cookie(name, value)
-
   /**
     * Parse the cookie, represented as a header value (in the format: `[name]=[value]`).
     */
@@ -118,19 +115,6 @@ object CookieValueWithMeta {
       domain.flatMap(validateDirectiveValue("domain", _))
     )(apply(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives))
   }
-
-  @deprecated("use apply")
-  def notValidated(
-      value: String,
-      expires: Option[Instant] = None,
-      maxAge: Option[Long] = None,
-      domain: Option[String] = None,
-      path: Option[String] = None,
-      secure: Boolean = false,
-      httpOnly: Boolean = false,
-      otherDirectives: Map[String, Option[String]] = Map.empty
-  ): CookieValueWithMeta =
-    CookieValueWithMeta(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
 }
 
 /**
@@ -235,26 +219,6 @@ object CookieWithMeta {
       name,
       CookieValueWithMeta(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
     )
-
-  @deprecated("use apply")
-  def notValidated(
-      name: String,
-      value: String,
-      expires: Option[Instant] = None,
-      maxAge: Option[Long] = None,
-      domain: Option[String] = None,
-      path: Option[String] = None,
-      secure: Boolean = false,
-      httpOnly: Boolean = false,
-      otherDirectives: Map[String, Option[String]] = Map.empty
-  ): CookieWithMeta =
-    apply(name, value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
-
-  @deprecated("use apply")
-  def notValidated(
-      name: String,
-      valueWithMeta: CookieValueWithMeta
-  ): CookieWithMeta = CookieWithMeta(name, valueWithMeta)
 
   // https://tools.ietf.org/html/rfc6265#section-4.1.1
   /**
