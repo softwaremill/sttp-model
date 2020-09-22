@@ -399,6 +399,8 @@ object Uri extends UriInterpolator {
       case Failure(t: Throwable) => throw t
     }
 
+  def unsafeParse(uri: String): Uri = uri"$uri"
+
   case class Segment(v: String, encoding: Encoding) {
     def encoded: String = encoding(v)
   }
