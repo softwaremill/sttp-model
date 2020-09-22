@@ -135,8 +135,8 @@ case class Uri(
     * Adds the given parameters to the query.
     */
   def params(ps: (String, String)*): Uri = {
-    this.copy(querySegments = querySegments ++ ps.map {
-      case (k, v) => KeyValue(k, v)
+    this.copy(querySegments = querySegments ++ ps.map { case (k, v) =>
+      KeyValue(k, v)
     })
   }
 
@@ -145,8 +145,8 @@ case class Uri(
   def params: QueryParams = QueryParams.fromSeq(paramsSeq)
 
   def paramsSeq: Seq[(String, String)] =
-    querySegments.collect {
-      case KeyValue(k, v, _, _) => k -> v
+    querySegments.collect { case KeyValue(k, v, _, _) =>
+      k -> v
     }
 
   /**
@@ -390,70 +390,6 @@ object Uri extends UriInterpolator {
 
   //
 
-  @deprecated("use apply")
-  def notValidated(host: String): Uri =
-    apply("http", None, HostSegment(host), None, Vector.empty, Vector.empty, None)
-  @deprecated("use apply")
-  def notValidated(host: String, port: Int): Uri =
-    apply("http", None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
-  @deprecated("use apply")
-  def notValidated(host: String, port: Int, path: Seq[String]): Uri =
-    apply("http", None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
-  @deprecated("use apply")
-  def notValidated(scheme: String, host: String): Uri =
-    apply(scheme, None, HostSegment(host), None, Vector.empty, Vector.empty, None)
-  @deprecated("use apply")
-  def notValidated(scheme: String, host: String, port: Int): Uri =
-    apply(scheme, None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
-  @deprecated("use apply")
-  def notValidated(scheme: String, host: String, port: Int, path: Seq[String]): Uri =
-    apply(scheme, None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
-  @deprecated("use apply")
-  def notValidated(scheme: String, host: String, path: Seq[String]): Uri =
-    apply(scheme, None, HostSegment(host), None, path.map(PathSegment(_)), Vector.empty, None)
-  @deprecated("use apply")
-  def notValidated(scheme: String, host: String, path: Seq[String], fragment: Option[String]): Uri =
-    apply(
-      scheme,
-      None,
-      HostSegment(host),
-      None,
-      path.map(PathSegment(_)),
-      Vector.empty,
-      fragment.map(FragmentSegment(_))
-    )
-  @deprecated("use apply")
-  def notValidated(
-      scheme: String,
-      userInfo: Option[UserInfo],
-      host: String,
-      port: Option[Int],
-      path: Seq[String],
-      querySegments: Seq[QuerySegment],
-      fragment: Option[String]
-  ): Uri =
-    apply(
-      scheme,
-      userInfo,
-      HostSegment(host),
-      port,
-      path.map(PathSegment(_)),
-      querySegments,
-      fragment.map(FragmentSegment(_))
-    )
-  @deprecated("use apply")
-  def notValidated(
-      scheme: String,
-      userInfo: Option[UserInfo],
-      hostSegment: Segment,
-      port: Option[Int],
-      pathSegments: Seq[Segment],
-      querySegments: Seq[QuerySegment],
-      fragmentSegment: Option[Segment]
-  ) = apply(scheme, userInfo, hostSegment, port, pathSegments, querySegments, fragmentSegment)
-
-  //
-
   def apply(javaUri: URI): Uri = uri"${javaUri.toString}"
 
   def parse(uri: String): Either[String, Uri] =
@@ -516,12 +452,11 @@ object Uri extends UriInterpolator {
     case class Plain(v: String, encoding: Encoding = QuerySegmentEncoding.Standard) extends QuerySegment
 
     private[model] def fromQueryParams(mqp: QueryParams): Iterable[QuerySegment] = {
-      mqp.toMultiSeq.flatMap {
-        case (k, vs) =>
-          vs match {
-            case Seq() => List(Value(k))
-            case s     => s.map(v => KeyValue(k, v))
-          }
+      mqp.toMultiSeq.flatMap { case (k, vs) =>
+        vs match {
+          case Seq() => List(Value(k))
+          case s     => s.map(v => KeyValue(k, v))
+        }
       }
     }
   }
