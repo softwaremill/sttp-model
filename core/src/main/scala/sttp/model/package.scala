@@ -7,6 +7,8 @@ package sttp
   *     for an uri this will be `http://...`, for a header `[name]: [value]`, etc.
   *   - `[SthCompanionObject].parse(serialized: String): Either[String, Sth]`: returns an error message or an instance of
   *     the model class
+  *   - `[SthCompanionObject].unsafeParse(serialized: String): Sth`: returns an instance of the model class or in
+  *     case of an error, *throws an exception*.
   *   - `[SthCompanionObject].unsafeApply(values)`: creates an instance of the model class; validates the input values and in
   *     case of an error, *throws an exception*. An error could be e.g. that the input values contain characters outside of
   *     the allowed range

@@ -61,6 +61,8 @@ object Cookie {
     Validate.sequence(cs)
   }
 
+  def unsafeParse(s: String): List[Cookie] = parse(s).getOrThrow
+
   /**
     * @return Representation of the cookies as in a header value, in the format: `[name]=[value]; [name]=[value]; ...`.
     */
@@ -255,6 +257,8 @@ object CookieWithMeta {
 
     result
   }
+
+  def unsafeParse(s: String): CookieWithMeta = parse(s).getOrThrow
 
   private val Rfc850DatetimePattern = "dd-MMM-yyyy HH:mm:ss zzz"
   private val Rfc850DatetimeFormat = DateTimeFormatter.ofPattern(Rfc850DatetimePattern, Locale.US)

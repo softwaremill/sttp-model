@@ -84,6 +84,8 @@ object MediaType extends MediaTypes {
 
     Right(MediaType(mainType, subType, charset))
   }
+
+  def unsafeParse(s: String): MediaType = parse(s).getOrThrow
 }
 
 // https://www.iana.org/assignments/media-types/media-types.xhtml
