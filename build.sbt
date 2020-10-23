@@ -5,7 +5,7 @@ import sbtrelease.ReleaseStateTransformations._
 val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.11"
 val scala2_13 = "2.13.3"
-val scala3 = "0.26.0-RC1"
+val scala3 = "0.27.0-RC1"
 
 val scalaTestVersion = "3.2.2"
 val scalaNativeTestInterfaceVersion = "0.4.0-M2"
