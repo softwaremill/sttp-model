@@ -12,8 +12,7 @@ import scala.collection.immutable.Seq
 import scala.util.{Failure, Success, Try}
 import sttp.model.internal.Rfc3986.encode
 
-/**
-  * A [[https://en.wikipedia.org/wiki/Uniform_Resource_Identifier URI]].
+/** A [[https://en.wikipedia.org/wiki/Uniform_Resource_Identifier URI]].
   * All components (scheme, host, query, ...) are stored decoded, and
   * become encoded upon serialization (using [[toString]]).
   *
@@ -37,8 +36,7 @@ case class Uri(
     fragmentSegment: Option[Segment]
 ) {
 
-  /**
-    * Replace the scheme. Does not validate the new scheme value.
+  /** Replace the scheme. Does not validate the new scheme value.
     */
   def scheme(s: String): Uri = this.copy(scheme = s)
 
@@ -48,13 +46,11 @@ case class Uri(
   def userInfo(username: String, password: String): Uri =
     this.copy(userInfo = Some(UserInfo(username, Some(password))))
 
-  /**
-    * Replace the host. Does not validate the new host value if it's nonempty.
+  /** Replace the host. Does not validate the new host value if it's nonempty.
     */
   def host(h: String): Uri = hostSegment(HostSegment(h))
 
-  /**
-    * Replace the host. Does not validate the new host value if it's nonempty.
+  /** Replace the host. Does not validate the new host value if it's nonempty.
     */
   def hostSegment(s: Segment): Uri = this.copy(hostSegment = s)
 
@@ -68,8 +64,7 @@ case class Uri(
 
   //
 
-  /**
-    * Replace path with the given single-segment path.
+  /** Replace path with the given single-segment path.
     */
   def path(p: String): Uri = {
     // removing the leading slash, as it is added during serialization anyway
@@ -78,30 +73,25 @@ case class Uri(
     path(ps)
   }
 
-  /**
-    * Replace path with the given path segments.
+  /** Replace path with the given path segments.
     */
   def path(p1: String, p2: String, ps: String*): Uri =
     path(p1 :: p2 :: ps.toList)
 
-  /**
-    * Replace path with the given path segments.
+  /** Replace path with the given path segments.
     */
   def path(ps: scala.collection.Seq[String]): Uri =
     pathSegments(ps.toList.map(PathSegment(_)))
 
-  /**
-    * Replace path with the given path segment.
+  /** Replace path with the given path segment.
     */
   def pathSegment(s: Segment): Uri = pathSegments(List(s))
 
-  /**
-    * Replace path with the given path segment.
+  /** Replace path with the given path segment.
     */
   def pathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = pathSegments(s1 :: s2 :: ss.toList)
 
-  /**
-    * Replace path with the given path segments.
+  /** Replace path with the given path segments.
     */
   def pathSegments(ss: scala.collection.Seq[Segment]): Uri = this.copy(pathSegments = ss.toList)
 
@@ -109,30 +99,25 @@ case class Uri(
 
   //
 
-  /**
-    * Adds the given parameter to the query.
+  /** Adds the given parameter to the query.
     */
   def param(k: String, v: String): Uri = params(k -> v)
 
-  /**
-    * Adds the given parameter with an optional value to the query if it is present.
+  /** Adds the given parameter with an optional value to the query if it is present.
     */
   def param(k: String, v: Option[String]): Uri = v.map(param(k, _)).getOrElse(this)
 
-  /**
-    * Adds the given parameters to the query.
+  /** Adds the given parameters to the query.
     */
   def params(ps: Map[String, String]): Uri = params(ps.toSeq: _*)
 
-  /**
-    * Adds the given parameters to the query.
+  /** Adds the given parameters to the query.
     */
   def params(mqp: QueryParams): Uri = {
     this.copy(querySegments = querySegments ++ QuerySegment.fromQueryParams(mqp))
   }
 
-  /**
-    * Adds the given parameters to the query.
+  /** Adds the given parameters to the query.
     */
   def params(ps: (String, String)*): Uri = {
     this.copy(querySegments = querySegments ++ ps.map { case (k, v) =>
@@ -149,26 +134,22 @@ case class Uri(
       k -> v
     }
 
-  /**
-    * Adds the given query segment.
+  /** Adds the given query segment.
     */
   def querySegment(qf: QuerySegment): Uri =
     this.copy(querySegments = querySegments :+ qf)
 
   //
 
-  /**
-    * Replace the fragment.
+  /** Replace the fragment.
     */
   def fragment(f: String): Uri = fragment(Some(f))
 
-  /**
-    * Replace the fragment.
+  /** Replace the fragment.
     */
   def fragment(f: Option[String]): Uri = fragmentSegment(f.map(FragmentSegment(_)))
 
-  /**
-    * Replace the fragment.
+  /** Replace the fragment.
     */
   def fragmentSegment(s: Option[Segment]): Uri = this.copy(fragmentSegment = s)
 
@@ -218,8 +199,7 @@ case class Uri(
   }
 }
 
-/**
-  * For a general description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
+/** For a general description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
   *
   * The `safeApply` methods return a validation error if the scheme contains illegal characters or if the host is empty.
   */
@@ -420,8 +400,7 @@ object Uri extends UriInterpolator {
   sealed trait QuerySegment
   object QuerySegment {
 
-    /**
-      * @param keyEncoding See [[Plain.encoding]]
+    /** @param keyEncoding See [[Plain.encoding]]
       * @param valueEncoding See [[Plain.encoding]]
       */
     case class KeyValue(
@@ -431,13 +410,11 @@ object Uri extends UriInterpolator {
         valueEncoding: Encoding = QuerySegmentEncoding.Standard
     ) extends QuerySegment
 
-    /**
-      * A query fragment which contains only the value, without a key.
+    /** A query fragment which contains only the value, without a key.
       */
     case class Value(v: String, relaxedEncoding: Encoding = QuerySegmentEncoding.Standard) extends QuerySegment
 
-    /**
-      * A query fragment which will be inserted into the query, without and
+    /** A query fragment which will be inserted into the query, without and
       * preceding or following separators. Allows constructing query strings
       * which are not (only) &-separated key-value pairs.
       *
@@ -481,25 +458,21 @@ object Uri extends UriInterpolator {
 
   object QuerySegmentEncoding {
 
-    /**
-      * Encodes all reserved characters using [[java.net.URLEncoder.encode()]].
+    /** Encodes all reserved characters using [[java.net.URLEncoder.encode()]].
       */
     val All: Encoding = UriCompatibility.encodeQuery(_, "UTF-8")
 
-    /**
-      * Encodes only the `&` and `=` reserved characters, which are usually
+    /** Encodes only the `&` and `=` reserved characters, which are usually
       * used to separate query parameter names and values.
       */
     val Standard: Encoding = encode(Rfc3986.QueryNoStandardDelims, spaceAsPlus = true, encodePlus = true)
 
-    /**
-      * Doesn't encode any of the reserved characters, leaving intact all
+    /** Doesn't encode any of the reserved characters, leaving intact all
       * characters allowed in the query string as defined by RFC3986.
       */
     val Relaxed: Encoding = encode(Rfc3986.Query, spaceAsPlus = true)
 
-    /**
-      * Doesn't encode any of the reserved characters, leaving intact all
+    /** Doesn't encode any of the reserved characters, leaving intact all
       * characters allowed in the query string as defined by RFC3986 as well
       * as the characters `[` and `]`. These brackets aren't legal in the
       * query part of the URI, but some servers use them unencoded. See

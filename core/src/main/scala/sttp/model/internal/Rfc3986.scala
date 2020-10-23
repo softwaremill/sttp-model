@@ -16,8 +16,7 @@ object Rfc3986 {
   val QueryNoStandardDelims: Set[Char] = Query -- Set('&', '=')
   val QueryWithBrackets: Set[Char] = Query ++ Set('[', ']')
 
-  /**
-    * @param spaceAsPlus In the query, space is encoded as a `+`. In other
+  /** @param spaceAsPlus In the query, space is encoded as a `+`. In other
     * contexts, it should be %-encoded as `%20`.
     * @param encodePlus Should `+` (which is the encoded form of space
     * in the query) be %-encoded.

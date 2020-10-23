@@ -1,7 +1,6 @@
 package sttp
 
-/**
-  * Most model classes contain both serialisation & parsing functionality, following these conventions:
+/** Most model classes contain both serialisation & parsing functionality, following these conventions:
   *
   *   - `.toString` returns a representation of the model class in a format as in an HTTP request/response. For example,
   *     for an uri this will be `http://...`, for a header `[name]: [value]`, etc.

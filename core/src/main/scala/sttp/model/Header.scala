@@ -7,8 +7,7 @@ import sttp.model.internal.Validate._
 
 import scala.util.hashing.MurmurHash3
 
-/**
-  * An HTTP header. The [[name]] property is case-insensitive during equality checks.
+/** An HTTP header. The [[name]] property is case-insensitive during equality checks.
   *
   * To compare if two headers have the same name, use the [[is]] method, which does a case-insensitive check,
   * instead of comparing the [[name]] property.
@@ -18,13 +17,11 @@ import scala.util.hashing.MurmurHash3
   */
 class Header(val name: String, val value: String) {
 
-  /**
-    * Check if the name of this header is the same as the given one. The names are compared in a case-insensitive way.
+  /** Check if the name of this header is the same as the given one. The names are compared in a case-insensitive way.
     */
   def is(otherName: String): Boolean = name.equalsIgnoreCase(otherName)
 
-  /**
-    * @return Representation in the format: `[name]: [value]`.
+  /** @return Representation in the format: `[name]: [value]`.
     */
   override def toString: String = s"$name: $value"
   override def hashCode(): Int = MurmurHash3.mixLast(name.toLowerCase.hashCode, value.hashCode)
@@ -35,22 +32,19 @@ class Header(val name: String, val value: String) {
       case _                       => false
     }
 
-  /**
-    * @return Representation in the format: `[name]: [value]`. If the header is sensitive
+  /** @return Representation in the format: `[name]: [value]`. If the header is sensitive
     *         (see [[HeaderNames.SensitiveHeaders]]), the value is omitted.
     */
   def toStringSafe(sensitiveHeaders: Set[String] = SensitiveHeaders): String =
     s"$name: ${if (HeaderNames.isSensitive(name, sensitiveHeaders)) "***" else value}"
 }
 
-/**
-  * For a description of the behavior of `apply`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
+/** For a description of the behavior of `apply`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
   */
 object Header {
   def unapply(h: Header): Option[(String, String)] = Some((h.name, h.value))
 
-  /**
-    * @throws IllegalArgumentException If the header name contains illegal characters.
+  /** @throws IllegalArgumentException If the header name contains illegal characters.
     */
   def unsafeApply(name: String, value: String): Header = safeApply(name, value).getOrThrow
 
@@ -62,7 +56,9 @@ object Header {
 
   //
 
-  def accept(mediaType: MediaType, additionalMediaTypes: MediaType*): Header = accept(s"${(mediaType::additionalMediaTypes.toList).map(_.noCharset).mkString(", ")}")
+  def accept(mediaType: MediaType, additionalMediaTypes: MediaType*): Header = accept(
+    s"${(mediaType :: additionalMediaTypes.toList).map(_.noCharset).mkString(", ")}"
+  )
   def accept(mediaRanges: String): Header = Header(HeaderNames.Accept, mediaRanges)
   def acceptCharset(charsetRanges: String): Header = Header(HeaderNames.AcceptCharset, charsetRanges)
   def acceptEncoding(encodingRanges: String): Header = Header(HeaderNames.AcceptEncoding, encodingRanges)

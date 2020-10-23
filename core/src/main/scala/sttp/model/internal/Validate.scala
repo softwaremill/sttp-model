@@ -9,13 +9,13 @@ object Validate {
   }
 
   def sequence[T](results: List[Either[String, T]]): Either[String, List[T]] = {
-    results.collectFirst {
-      case Left(e) => e
+    results.collectFirst { case Left(e) =>
+      e
     } match {
       case Some(e) => Left(e)
       case None =>
-        Right(results.collect {
-          case Right(c) => c
+        Right(results.collect { case Right(c) =>
+          c
         })
     }
   }

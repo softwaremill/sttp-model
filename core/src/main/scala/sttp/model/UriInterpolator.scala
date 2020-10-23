@@ -7,8 +7,7 @@ import scala.annotation.tailrec
 trait UriInterpolator {
   implicit class UriContext(val sc: StringContext) {
 
-    /**
-      * Parse the given string (with embedded expressions) as an uri.
+    /** Parse the given string (with embedded expressions) as an uri.
       *
       * Any values embedded in the URI using the `${...}` syntax will be URL-encoded, taking into account the context.
       * Parts of the URI given as literal strings (not embedded values), are assumed to be URL-encoded and thus will be
@@ -53,9 +52,8 @@ object UriInterpolator {
     val startingUri = Uri.unsafeApply("-")
 
     val (uri, leftTokens) =
-      builders.foldLeft((startingUri, tokens)) {
-        case ((u, t), builder) =>
-          builder.fromTokens(u, t)
+      builders.foldLeft((startingUri, tokens)) { case ((u, t), builder) =>
+        builder.fromTokens(u, t)
       }
 
     if (leftTokens.nonEmpty) {
@@ -211,8 +209,7 @@ object UriInterpolator {
         (this, Vector(StringToken(s)))
     }
 
-    /**
-      * Tokenize the given string up to any of the given terminator characters
+    /** Tokenize the given string up to any of the given terminator characters
       * by splitting it using the given separators and translating each
       * separator to a token.
       *
@@ -485,8 +482,7 @@ object UriInterpolator {
       }
     }
 
-    /**
-      * Parse a prefix of tokens `t` into a component of a URI. The component
+    /** Parse a prefix of tokens `t` into a component of a URI. The component
       * is only present in the tokens if there's a `startingToken`; otherwise
       * the component is skipped.
       *
@@ -604,8 +600,7 @@ object UriInterpolator {
     private def decode(s: String, decodePlusAsSpace: Boolean): String = Rfc3986.decode(decodePlusAsSpace)(s)
   }
 
-  /**
-    * After tokenizing, there might be extra empty string tokens
+  /** After tokenizing, there might be extra empty string tokens
     * (`StringToken("")`) before and after expressions. For example,
     * `key=$value` will tokenize to:
     *

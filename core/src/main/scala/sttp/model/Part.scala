@@ -3,8 +3,7 @@ package sttp.model
 import scala.collection.immutable.Seq
 import Part._
 
-/**
-  * A decoded representation of a multipart part.
+/** A decoded representation of a multipart part.
   */
 case class Part[+T](
     name: String,
@@ -22,8 +21,7 @@ case class Part[+T](
   // enumerate all variants so that overload resolution works correctly
   override def contentType: Option[String] = super.contentType
 
-  /**
-    * Adds the given header to the end of the headers sequence.
+  /** Adds the given header to the end of the headers sequence.
     * @param replaceExisting If there's already a header with the same name, should it be dropped?
     */
   def header(h: Header, replaceExisting: Boolean = false): Part[T] = {
@@ -32,8 +30,7 @@ case class Part[+T](
   }
   def header(k: String, v: String): Part[T] = header(Header(k, v))
 
-  /**
-    * Adds the given header to the end of the headers sequence.
+  /** Adds the given header to the end of the headers sequence.
     * @param replaceExisting If there's already a header with the same name, should it be dropped?
     */
   def header(k: String, v: String, replaceExisting: Boolean): Part[T] =
