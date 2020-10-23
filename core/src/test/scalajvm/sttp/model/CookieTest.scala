@@ -59,7 +59,13 @@ class CookieTest extends AnyFlatSpec with Matchers {
 
   val serializeCookieData = List(
     CookieWithMeta
-      .unsafeApply("x", "y", maxAge = Some(123), domain = Some("example.com"), path = Some("/x/z/y")) -> "x=y; Max-Age=123; Domain=example.com; Path=/x/z/y",
+      .unsafeApply(
+        "x",
+        "y",
+        maxAge = Some(123),
+        domain = Some("example.com"),
+        path = Some("/x/z/y")
+      ) -> "x=y; Max-Age=123; Domain=example.com; Path=/x/z/y",
     CookieWithMeta.unsafeApply("x", """"a"""") -> """x="a"""",
     CookieWithMeta.unsafeApply(
       "user_id",
