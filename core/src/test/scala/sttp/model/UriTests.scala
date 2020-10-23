@@ -51,7 +51,15 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
     Uri.unsafeApply("http", None, "example.com", None, List("key=value"), Nil, None) ->
       "http://example.com/key=value",
     Uri.unsafeApply("2001:db8::ff00:42:8329", 8080) -> "http://[2001:db8::ff00:42:8329]:8080",
-    Uri.unsafeApply("http", None, HS("example.com"), None, List(Segment("a b", identity)), Nil, None) -> "http://example.com/a b"
+    Uri.unsafeApply(
+      "http",
+      None,
+      HS("example.com"),
+      None,
+      List(Segment("a b", identity)),
+      Nil,
+      None
+    ) -> "http://example.com/a b"
   )
 
   for {
@@ -74,13 +82,18 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
   for {
     (path, expected) <- pathTestData
   } {
-    test(s"$path should parse as $expected") {
-      testUri.path(path).path.toList should be(expected)
+    test(s"whole path: $path, should parse as: $expected") {
+      testUri.withWholePath(path).path.toList should be(expected)
     }
   }
 
   val querySegmentsTestData = List(
-    List(QS.KeyValue("k1", "v1"), QS.KeyValue("k2", "v2"), QS.KeyValue("k3", "v3"), QS.KeyValue("k4", "v4")) -> "k1=v1&k2=v2&k3=v3&k4=v4",
+    List(
+      QS.KeyValue("k1", "v1"),
+      QS.KeyValue("k2", "v2"),
+      QS.KeyValue("k3", "v3"),
+      QS.KeyValue("k4", "v4")
+    ) -> "k1=v1&k2=v2&k3=v3&k4=v4",
     List(
       QS.KeyValue("k1", "v1"),
       QS.KeyValue("k2", "v2"),
@@ -165,6 +178,16 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
   test("should have multi params with only values") {
     val uriAsString = "https://sub.example.com:8080?=v1&=v2"
     uri"$uriAsString".params.toMultiMap should be(Map("" -> List("v1", "v2")))
+  }
+
+  test("should replace or append path") {
+    uri"http://example.org/x/y".addPath("z").path shouldBe List("x", "y", "z")
+    uri"http://example.org/x/y".withPath("z").path shouldBe List("z")
+  }
+
+  test("should replace or append query parameter") {
+    uri"http://example.org?x=1".addParam("y", "2").paramsMap shouldBe Map("x" -> "1", "y" -> "2")
+    uri"http://example.org?x=1".withParam("y", "2").paramsMap shouldBe Map("y" -> "2")
   }
 
   val validationTestData = List(

@@ -36,8 +36,7 @@ case class Uri(
     fragmentSegment: Option[Segment]
 ) {
 
-  /** Replace the scheme. Does not validate the new scheme value.
-    */
+  /** Replace the scheme. Does not validate the new scheme value. */
   def scheme(s: String): Uri = this.copy(scheme = s)
 
   def userInfo(username: String): Uri =
@@ -46,12 +45,10 @@ case class Uri(
   def userInfo(username: String, password: String): Uri =
     this.copy(userInfo = Some(UserInfo(username, Some(password))))
 
-  /** Replace the host. Does not validate the new host value if it's nonempty.
-    */
+  /** Replace the host. Does not validate the new host value if it's nonempty. */
   def host(h: String): Uri = hostSegment(HostSegment(h))
 
-  /** Replace the host. Does not validate the new host value if it's nonempty.
-    */
+  /** Replace the host. Does not validate the new host value if it's nonempty. */
   def hostSegment(s: Segment): Uri = this.copy(hostSegment = s)
 
   def host: String = hostSegment.v
@@ -64,66 +61,104 @@ case class Uri(
 
   //
 
-  /** Replace path with the given single-segment path.
+  /** Replace path with the given single-segment path. */
+  @deprecated(message = "Use addPath, withPath or withWholePath", since = "1.2.0")
+  def path(p: String): Uri = withWholePath(p)
+
+  /** Replace path with the given path segments. */
+  @deprecated(message = "Use addPath, withPath or withWholePath", since = "1.2.0")
+  def path(p1: String, p2: String, ps: String*): Uri = withPath(p1 :: p2 :: ps.toList)
+
+  /** Replace path with the given path segments. */
+  @deprecated(message = "Use addPath, withPath or withWholePath", since = "1.2.0")
+  def path(ps: scala.collection.Seq[String]): Uri = withPath(ps)
+
+  /** Replace path with the given path segment. */
+  @deprecated(message = "Use addPath, withPath or withWholePath", since = "1.2.0")
+  def pathSegment(s: Segment): Uri = withPathSegment(s)
+
+  /** Replace path with the given path segment. */
+  @deprecated(message = "Use addPath, withPath or withWholePath", since = "1.2.0")
+  def pathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = withPathSegments(s1, s2, ss: _*)
+
+  /** Replace path with the given path segments. */
+  @deprecated(message = "Use addPath, withPath or withWholePath", since = "1.2.0")
+  def pathSegments(ss: scala.collection.Seq[Segment]): Uri = withPathSegments(ss.toList)
+
+  def addPath(p: String): Uri = addPath(List(p))
+  def addPath(p: String, ps: String*): Uri = addPath(p :: ps.toList)
+  def addPath(ps: scala.collection.Seq[String]): Uri = addPathSegments(ps.toList.map(PathSegment(_)))
+  def addPathSegment(s: Segment): Uri = addPathSegments(List(s))
+  def addPathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = addPathSegments(s1 :: s2 :: ss.toList)
+  def addPathSegments(ss: scala.collection.Seq[Segment]): Uri = this.copy(pathSegments = pathSegments ++ ss.toList)
+
+  /** Replace the whole path with the given one. Leading `/` will be removed, if present, and the path will be
+    * split into segments on `/`.
     */
-  def path(p: String): Uri = {
+  def withWholePath(p: String): Uri = {
     // removing the leading slash, as it is added during serialization anyway
     val pWithoutLeadingSlash = if (p.startsWith("/")) p.substring(1) else p
     val ps = pWithoutLeadingSlash.split("/", -1).toList
-    path(ps)
+    withPath(ps)
   }
-
-  /** Replace path with the given path segments.
-    */
-  def path(p1: String, p2: String, ps: String*): Uri =
-    path(p1 :: p2 :: ps.toList)
-
-  /** Replace path with the given path segments.
-    */
-  def path(ps: scala.collection.Seq[String]): Uri =
-    pathSegments(ps.toList.map(PathSegment(_)))
-
-  /** Replace path with the given path segment.
-    */
-  def pathSegment(s: Segment): Uri = pathSegments(List(s))
-
-  /** Replace path with the given path segment.
-    */
-  def pathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = pathSegments(s1 :: s2 :: ss.toList)
-
-  /** Replace path with the given path segments.
-    */
-  def pathSegments(ss: scala.collection.Seq[Segment]): Uri = this.copy(pathSegments = ss.toList)
+  def withPath(p: String, ps: String*): Uri = withPath(p :: ps.toList)
+  def withPath(ps: scala.collection.Seq[String]): Uri = withPathSegments(ps.toList.map(PathSegment(_)))
+  def withPathSegment(s: Segment): Uri = withPathSegments(List(s))
+  def withPathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = withPathSegments(s1 :: s2 :: ss.toList)
+  def withPathSegments(ss: scala.collection.Seq[Segment]): Uri = this.copy(pathSegments = ss.toList)
 
   def path: Seq[String] = pathSegments.map(_.v)
 
   //
 
-  /** Adds the given parameter to the query.
-    */
-  def param(k: String, v: String): Uri = params(k -> v)
+  /** Adds the given parameter to the query. */
+  @deprecated(message = "Use addParam or withParam", since = "1.2.0")
+  def param(k: String, v: String): Uri = addParam(k, v)
 
-  /** Adds the given parameter with an optional value to the query if it is present.
-    */
-  def param(k: String, v: Option[String]): Uri = v.map(param(k, _)).getOrElse(this)
+  /** Adds the given parameter with an optional value to the query if it is present. */
+  @deprecated(message = "Use addParam or withParam", since = "1.2.0")
+  def param(k: String, v: Option[String]): Uri = addParam(k, v)
 
-  /** Adds the given parameters to the query.
-    */
-  def params(ps: Map[String, String]): Uri = params(ps.toSeq: _*)
+  /** Adds the given parameters to the query. */
+  @deprecated(message = "Use addParam or withParam", since = "1.2.0")
+  def params(ps: Map[String, String]): Uri = addParams(ps)
 
-  /** Adds the given parameters to the query.
-    */
-  def params(mqp: QueryParams): Uri = {
+  /** Adds the given parameters to the query. */
+  @deprecated(message = "Use addParam or withParam", since = "1.2.0")
+  def params(mqp: QueryParams): Uri = addParams(mqp)
+
+  /** Adds the given parameters to the query. */
+  @deprecated(message = "Use addParam or withParam", since = "1.2.0")
+  def params(ps: (String, String)*): Uri = addParams(ps: _*)
+
+  def addParam(k: String, v: String): Uri = addParams(k -> v)
+  def addParam(k: String, v: Option[String]): Uri = v.map(addParam(k, _)).getOrElse(this)
+  def addParams(ps: Map[String, String]): Uri = addParams(ps.toSeq: _*)
+  def addParams(mqp: QueryParams): Uri = {
     this.copy(querySegments = querySegments ++ QuerySegment.fromQueryParams(mqp))
   }
-
-  /** Adds the given parameters to the query.
-    */
-  def params(ps: (String, String)*): Uri = {
+  def addParams(ps: (String, String)*): Uri = {
     this.copy(querySegments = querySegments ++ ps.map { case (k, v) =>
       KeyValue(k, v)
     })
   }
+
+  /** Replace query with the given single parameter. */
+  def withParam(k: String, v: String): Uri = withParams(k -> v)
+
+  /** Replace query with the given single optional parameter. */
+  def withParam(k: String, v: Option[String]): Uri = v.map(withParam(k, _)).getOrElse(this)
+
+  /** Replace query with the given parameters. */
+  def withParams(ps: Map[String, String]): Uri = withParams(ps.toSeq: _*)
+
+  /** Replace query with the given parameters. */
+  def withParams(mqp: QueryParams): Uri = this.copy(querySegments = QuerySegment.fromQueryParams(mqp).toList)
+
+  /** Replace query with the given parameters. */
+  def withParams(ps: (String, String)*): Uri = this.copy(querySegments = ps.map { case (k, v) =>
+    KeyValue(k, v)
+  }.toList)
 
   def paramsMap: Map[String, String] = paramsSeq.toMap
 
