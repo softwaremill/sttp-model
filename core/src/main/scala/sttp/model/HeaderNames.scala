@@ -52,6 +52,7 @@ trait HeaderNames {
   val ProxyAuthorization = "Proxy-Authorization"
   val Range = "Range"
   val Referer = "Referer"
+  val RemoteAddress = "Remote-Address"
   val RetryAfter = "Retry-After"
   val Server = "Server"
   val SetCookie = "Set-Cookie"
@@ -69,6 +70,7 @@ trait HeaderNames {
   val XForwardedHost = "X-Forwarded-Host"
   val XForwardedPort = "X-Forwarded-Port"
   val XForwardedProto = "X-Forwarded-Proto"
+  val XRealIp = "X-Real-Ip"
   val XRequestedWith = "X-Requested-With"
 
   val ContentHeaders: Set[String] =
