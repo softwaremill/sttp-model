@@ -41,12 +41,15 @@ case class Part[+T](
 
   def contentDispositionHeaderValue: String = {
     def encode(s: String): String = new String(s.getBytes("utf-8"), "iso-8859-1")
-    "form-data; " + dispositionParams.map { case (k, v) => s"""$k="${encode(v)}"""" }.mkString("; ")
+    "form-data; " + orderedDispositionParams.map { case (k, v) => s"""$k="${encode(v)}"""" }.mkString("; ")
   }
+
+  def dispositionParams: Map[String, String] = orderedDispositionParams.toMap
 
   // some servers require 'name' disposition parameter to be first
   // see: https://stackoverflow.com/questions/20261088/certain-order-of-fields-in-content-disposition-with-jersey-client
-  def dispositionParams: Map[String, String] = Map(NameDispositionParam -> name) ++ otherDispositionParams
+  def orderedDispositionParams: List[(String, String)] = (NameDispositionParam -> name) :: otherDispositionParams.toList
+
 }
 
 object Part {
