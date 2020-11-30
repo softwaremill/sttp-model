@@ -18,7 +18,7 @@ Add the following dependency:
 "com.softwaremill.sttp.model" %% "core" % "1.2.0-RC5"
 ```
 
-sttp model is available for Scala 2.11, 2.12, 2.13, Scala.JS, Scala Native and Dotty 0.23.
+sttp model is available for Scala 2.11, 2.12, 2.13, 3.0.0-Mx, Scala.JS and Scala Native.
 
 ## Project content
 

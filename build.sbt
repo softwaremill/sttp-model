@@ -4,11 +4,15 @@ import sbtrelease.ReleaseStateTransformations._
 
 val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.11"
-val scala2_13 = "2.13.3"
-val scala3 = "0.27.0-RC1"
+val scala2_13 = "2.13.4"
+val scala2 = List(scala2_11, scala2_12, scala2_13)
+val dotty = "0.27.0-RC1"
+val scala3 = List(dotty, "3.0.0-M1", "3.0.0-M2")
 
-val scalaTestVersion = "3.2.2"
+def scalaTestVersion(scalaVersion: String): String = if (scalaVersion == dotty) "3.2.2" else "3.2.3"
 val scalaNativeTestInterfaceVersion = "0.4.0-M2"
+
+excludeLintKeys in Global ++= Set(ideSkipProject)
 
 def dependenciesFor(version: String)(deps: (Option[(Long, Long)] => ModuleID)*): Seq[ModuleID] =
   deps.map(_.apply(CrossVersion.partialVersion(version)))
@@ -41,7 +45,7 @@ val commonSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   sources in (Compile, doc) := {
     val scalaV = scalaVersion.value
     val current = (sources in (Compile, doc)).value
-    if (scalaV == scala3) Seq() else current
+    if (scala3.contains(scalaV)) Seq() else current
   }
 )
 
@@ -54,7 +58,7 @@ val commonJvmSettings = commonSettings ++ Seq(
   },
   ideSkipProject := (scalaVersion.value != scala2_13),
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % scalaTestVersion % Test
+    "org.scalatest" %% "scalatest" % scalaTestVersion(scalaVersion.value) % Test
   )
 )
 
@@ -75,7 +79,7 @@ val commonJsSettings = commonSettings ++ Seq(
   ideSkipProject := true,
   libraryDependencies ++= Seq(
     "org.scala-js" %%% "scalajs-dom" % "1.1.0",
-    "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
+    "org.scalatest" %%% "scalatest" % scalaTestVersion(scalaVersion.value) % Test
   )
 )
 
@@ -84,7 +88,7 @@ val commonNativeSettings = commonSettings ++ Seq(
   ideSkipProject := true,
   libraryDependencies ++= Seq(
     "org.scala-native" %%% "test-interface" % scalaNativeTestInterfaceVersion,
-    "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
+    "org.scalatest" %%% "scalatest" % scalaTestVersion(scalaVersion.value) % Test
   )
 )
 
@@ -155,15 +159,10 @@ lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STT
   core.projectRefs
 } else {
   println("[info] STTP_NATIVE *not* defined, *not* including sttp-native in the aggregate projects")
-  List(
-    core.jvm(scala2_11),
-    core.jvm(scala2_12),
-    core.jvm(scala2_13),
-    core.jvm(scala3),
-    core.js(scala2_11),
-    core.js(scala2_12),
-    core.js(scala2_13)
-  )
+
+  scala3.map(core.jvm(_): ProjectReference) ++
+    scala2.map(core.jvm(_): ProjectReference) ++
+    scala2.map(core.js(_): ProjectReference)
 }
 
 val compileAndTest = "compile->compile;test->test"
@@ -178,11 +177,11 @@ lazy val core = (projectMatrix in file("core"))
     name := "core"
   )
   .jvmPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13, scala3),
+    scalaVersions = scala2 ++ scala3,
     settings = commonJvmSettings
   )
   .jsPlatform(
-    scalaVersions = List(scala2_11, scala2_12, scala2_13),
+    scalaVersions = scala2,
     settings = commonJsSettings ++ browserTestSettings
   )
   .nativePlatform(
