@@ -6,6 +6,7 @@ addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.6.0")
 val sbtSoftwareMillVersion = "1.9.15-SNAPSHOT"
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-common" % sbtSoftwareMillVersion)
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-publish" % sbtSoftwareMillVersion)
+addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-browser-test-js" % sbtSoftwareMillVersion)
 
 addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.4.6")
 
