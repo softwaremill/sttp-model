@@ -9,7 +9,7 @@ val scala2_12 = "2.12.11"
 val scala2_13 = "2.13.4"
 val scala2 = List(scala2_11, scala2_12, scala2_13)
 val dotty = "0.27.0-RC1"
-val scala3 = List(dotty, "3.0.0-M1", "3.0.0-M2")
+val scala3 = List(dotty, "3.0.0-M1")
 
 def scalaTestVersion(scalaVersion: String): String = if (scalaVersion == dotty) "3.2.2" else "3.2.3"
 val scalaNativeTestInterfaceVersion = "0.4.0-M2"
