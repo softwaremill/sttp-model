@@ -30,7 +30,7 @@ jobs:
     - name: Install libidn11-dev
       run: sudo apt-get install libidn11-dev
     - name: Compile
-      run: sbt -v compile compileDocs
+      run: sbt -v compile
     - name: Test
       run: sbt -v test
     - name: Cleanup
