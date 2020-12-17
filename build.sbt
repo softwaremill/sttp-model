@@ -1,17 +1,12 @@
-import com.softwaremill.Publish.Release.updateVersionInDocs
-import sbtrelease.ReleasePlugin.autoImport._
-import sbtrelease.ReleaseStateTransformations._
-// run JS tests inside Chrome, due to jsdom not supporting fetch
 import com.softwaremill.SbtSoftwareMillBrowserTestJS._
 
 val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.11"
 val scala2_13 = "2.13.4"
 val scala2 = List(scala2_11, scala2_12, scala2_13)
-val dotty = "0.27.0-RC1"
-val scala3 = List(dotty, "3.0.0-M1")
+val scala3 = List("3.0.0-M1", "3.0.0-M2")
 
-def scalaTestVersion(scalaVersion: String): String = if (scalaVersion == dotty) "3.2.2" else "3.2.3"
+val scalaTestVersion = "3.2.3"
 val scalaNativeTestInterfaceVersion = "0.4.0-M2"
 
 excludeLintKeys in Global ++= Set(ideSkipProject)
@@ -21,28 +16,6 @@ def dependenciesFor(version: String)(deps: (Option[(Long, Long)] => ModuleID)*):
 
 val commonSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "com.softwaremill.sttp.model",
-  scmInfo := Some(
-    ScmInfo(url("https://github.com/softwaremill/sttp-model"), "scm:git@github.com:softwaremill/sttp-model.git")
-  ),
-  // cross-release doesn't work when subprojects have different cross versions
-  // work-around from https://github.com/sbt/sbt-release/issues/214
-  releaseCrossBuild := false,
-  releaseProcess := Seq(
-    checkSnapshotDependencies,
-    inquireVersions,
-    // publishing locally so that the pgp password prompt is displayed early
-    // in the process
-    releaseStepCommandAndRemaining("publishLocalSigned"),
-    releaseStepCommandAndRemaining("clean"),
-    releaseStepCommandAndRemaining("test"),
-    setReleaseVersion,
-    updateVersionInDocs(organization.value),
-    commitReleaseVersion,
-    tagRelease,
-    releaseStepCommandAndRemaining("publishSigned"),
-    releaseStepCommand("sonatypeBundleRelease"),
-    pushChanges
-  ),
   // doc generation is broken in dotty
   sources in (Compile, doc) := {
     val scalaV = scalaVersion.value
@@ -60,28 +33,15 @@ val commonJvmSettings = commonSettings ++ Seq(
   },
   ideSkipProject := (scalaVersion.value != scala2_13),
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % scalaTestVersion(scalaVersion.value) % Test
+    "org.scalatest" %% "scalatest" % scalaTestVersion % Test
   )
 )
 
 val commonJsSettings = commonSettings ++ Seq(
-  // https://github.com/scalaz/scalaz/pull/1734#issuecomment-385627061
-  scalaJSLinkerConfig ~= {
-    _.withBatchMode(System.getenv("CONTINUOUS_INTEGRATION") == "true")
-  },
-  scalacOptions in Compile ++= {
-    if (isSnapshot.value) Seq.empty
-    else
-      Seq {
-        val dir = project.base.toURI.toString.replaceFirst("[^/]+/?$", "")
-        val url = "https://raw.githubusercontent.com/softwaremill/sttp-model"
-        s"-P:scalajs:mapSourceURI:$dir->$url/v${version.value}/"
-      }
-  },
   ideSkipProject := true,
   libraryDependencies ++= Seq(
     "org.scala-js" %%% "scalajs-dom" % "1.1.0",
-    "org.scalatest" %%% "scalatest" % scalaTestVersion(scalaVersion.value) % Test
+    "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
   )
 )
 
@@ -90,7 +50,7 @@ val commonNativeSettings = commonSettings ++ Seq(
   ideSkipProject := true,
   libraryDependencies ++= Seq(
     "org.scala-native" %%% "test-interface" % scalaNativeTestInterfaceVersion,
-    "org.scalatest" %%% "scalatest" % scalaTestVersion(scalaVersion.value) % Test
+    "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
   )
 )
 
@@ -122,7 +82,7 @@ lazy val core = (projectMatrix in file("core"))
   )
   .jsPlatform(
     scalaVersions = scala2,
-    settings = commonJsSettings ++ browserTestSettings
+    settings = commonJsSettings ++ browserChromeTestSettings
   )
   .nativePlatform(
     scalaVersions = List(scala2_11),

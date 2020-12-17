@@ -613,12 +613,10 @@ object UriInterpolator {
     @tailrec
     def doRemove(t: Vector[Token], acc: Vector[Token]): Vector[Token] =
       t match {
-        case StringToken("") +: (e: ExpressionToken) +: tail =>
-          doRemove(e +: tail, acc)
-        case (e: ExpressionToken) +: StringToken("") +: tail =>
-          doRemove(tail, acc :+ e)
-        case v +: tail => doRemove(tail, acc :+ v)
-        case Vector()  => acc
+        case StringToken("") +: (e: ExpressionToken) +: tail => doRemove(e +: tail, acc)
+        case (e: ExpressionToken) +: StringToken("") +: tail => doRemove(tail, acc :+ e)
+        case v +: tail                                       => doRemove(tail, acc :+ v)
+        case _ /* empty */                                   => acc
       }
 
     doRemove(tokens, Vector.empty)
