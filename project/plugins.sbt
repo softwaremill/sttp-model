@@ -8,6 +8,6 @@ addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-common" % s
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-publish" % sbtSoftwareMillVersion)
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-browser-test-js" % sbtSoftwareMillVersion)
 
-addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.5.0")
+addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.5.1")
 
 addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.1.0")
