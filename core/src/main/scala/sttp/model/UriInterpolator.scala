@@ -419,7 +419,7 @@ object UriInterpolator {
         fromStartingToken(u, t, PathStart, Set[Token](QueryStart, FragmentStart), pathFromTokens)
 
       private def pathFromTokens(u: Uri, tokens: Vector[Token]): Uri = {
-        u.path(tokensToStringSeq(tokens))
+        u.addPath(tokensToStringSeq(tokens))
       }
     }
 
