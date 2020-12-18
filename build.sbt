@@ -26,11 +26,6 @@ val commonSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
 
 val commonJvmSettings = commonSettings ++ Seq(
   scalacOptions ++= Seq("-target:jvm-1.8"),
-  scalacOptions := {
-    val current = scalacOptions.value
-    // https://github.com/lampepfl/dotty/pull/7775
-    if (isDotty.value) current ++ List("-language:implicitConversions", "-Ykind-projector") else current
-  },
   ideSkipProject := (scalaVersion.value != scala2_13),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % scalaTestVersion % Test
