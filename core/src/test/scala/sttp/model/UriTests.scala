@@ -54,12 +54,14 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
     Uri.unsafeApply(
       "http",
       None,
-      HS("example.com"),
+      Some(HS("example.com")),
       None,
       List(Segment("a b", identity)),
       Nil,
       None
-    ) -> "http://example.com/a b"
+    ) -> "http://example.com/a b",
+    Uri.unsafeApply("http", None, None, None, Nil, Nil, None) -> "http:",
+    Uri.unsafeApply("mailto", List("user@example.com")) -> "mailto:user@example.com"
   )
 
   for {
