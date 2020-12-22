@@ -72,7 +72,7 @@ case class Uri(
   def port(p: Option[Int]): Uri = this.copy(authority = authority.map(_.copy(port = p)))
 
   /** Replace the authority. */
-  def authority(a: Authority): Uri = this.copy(authority = a)
+  def authority(a: Authority): Uri = this.copy(authority = Some(a))
 
   /** Replace the authority. */
   def authority(a: Some[Authority]): Uri = this.copy(authority = a)
