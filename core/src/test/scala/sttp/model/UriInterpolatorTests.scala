@@ -153,6 +153,24 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
       (uri"${uri"http://example.com/$v1/"}/$v1", s"http://example.com/$v1/$v1"),
       (uri"${uri"http://example.com/$v1/"}/$v1/", s"http://example.com/$v1/$v1/"),
       (uri"${"http://example.com:123/a/"}/b/c", "http://example.com:123/a/b/c")
+    ),
+    "no authority" -> List(
+      (uri"mailto:user@example.com", "mailto:user@example.com"),
+      (uri"mailto:user@example.com?x=y", "mailto:user@example.com?x=y"),
+      (uri"mailto:user@example.com?x=$None", "mailto:user@example.com"),
+      (uri"mailto:$v1@example.com", s"mailto:$v1@example.com"),
+      (uri"mailto:$v1@example.com?x=${Some("y")}", s"mailto:$v1@example.com?x=y"),
+      (uri"mailto:${"user@example.com"}", s"mailto:user@example.com")
+    ),
+    "relative urls - paths" -> List(
+      (uri"/a/b/c", "/a/b/c"),
+      (uri"/a/b/c?x=y", "/a/b/c?x=y"),
+      (uri"/a/b/c?x=$None", "/a/b/c"),
+      (uri"/$v1/b/c", s"/$v1/b/c"),
+      (uri"/$v1/$v2/c", s"/$v1/$v2encoded/c"),
+      (uri"a/b/c", "a/b/c"),
+      (uri"$v1/b/c", s"$v1/b/c"),
+      (uri"$v1/$v2/c", s"$v1/$v2encoded/c")
     )
   )
 
@@ -166,7 +184,6 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
   }
 
   val validationTestData = List(
-    ("uri with no scheme", () => uri"example.com", "missing scheme"),
     ("uri with two ports", () => uri"http://example.com:80:80", "port specified multiple times"),
     ("uri with embedded host+port and port", () => uri"http://${"example.com:80"}:80", "port specified multiple times")
   )

@@ -46,12 +46,13 @@ case class Uri(
 
   //
 
-  /** Replace the user info with a username only, if authority is defined. */
-  def userInfo(username: String): Uri = this.copy(authority = authority.map(_.userInfo(username)))
+  /** Replace the user info with a username only. Adds an empty host if one is absent. */
+  def userInfo(username: String): Uri =
+    this.copy(authority = Some(authority.getOrElse(Authority("")).userInfo(username)))
 
-  /** Replace the user info with username/password combination, if authority is defined */
+  /** Replace the user info with username/password combination. Adds an empty host if one is absent. */
   def userInfo(username: String, password: String): Uri =
-    this.copy(authority = authority.map(_.userInfo(username, password)))
+    this.copy(authority = Some(authority.getOrElse(Authority("")).userInfo(username, password)))
 
   /** Replace the host. Does not validate the new host value if it's nonempty. */
   def host(h: String): Uri = hostSegment(HostSegment(h))
@@ -555,7 +556,6 @@ object Uri extends UriInterpolator {
   type Encoding = String => String
 
   object HostEncoding {
-    // TODO
     private val IpV6Pattern = "[0-9a-fA-F:]+".r
 
     val Standard: Encoding = {

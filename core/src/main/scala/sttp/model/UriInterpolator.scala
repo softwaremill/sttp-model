@@ -49,7 +49,7 @@ object UriInterpolator {
       UriBuilder.Fragment
     )
 
-    val startingUri = Uri.unsafeApply("-")
+    val startingUri = Uri(None, None, Nil, Nil, None)
 
     val (uri, leftTokens) =
       builders.foldLeft((startingUri, tokens)) { case ((u, t), builder) =>
@@ -121,7 +121,8 @@ object UriInterpolator {
       }
     }
 
-    removeEmptyTokensAroundExp(tokens)
+    val tokensWithEndToken = tokens ++ tokenizer.endToken.toVector
+    addPathStartAfterAuthorityOrSchemeEnd(removeEmptyTokensAroundExp(tokensWithEndToken))
   }
 
   sealed trait Token
@@ -131,6 +132,7 @@ object UriInterpolator {
   case object ColonInAuthority extends Token
   case object AtInAuthority extends Token
   case object DotInAuthority extends Token
+  case object AuthorityEnd extends Token
   case object PathStart extends Token
   case object SlashInPath extends Token
   case object QueryStart extends Token
@@ -140,31 +142,60 @@ object UriInterpolator {
 
   trait Tokenizer {
     def tokenize(s: String): (Tokenizer, Vector[Token])
+    def endToken: Option[Token] = None // token to add if the input is exhausted
   }
 
   object Tokenizer {
-    object Scheme extends Tokenizer {
-      override def tokenize(s: String): (Tokenizer, Vector[Token]) = {
-        s.split("://", 2) match {
-          case Array(scheme, rest) =>
-            val (next, authorityTokens) = Authority.tokenize(rest)
-            (next, Vector(StringToken(scheme), SchemeEnd) ++ authorityTokens)
+    private val AuthorityTerminators = Set('/', '?', '#')
 
-          case Array(x) =>
-            if (!x.matches("[a-zA-Z0-9+\\.\\-]*")) {
-              // anything else than the allowed characters in scheme suggest that
-              // there is no scheme; tokenizing using the next tokenizer in chain
-              // https://stackoverflow.com/questions/3641722/valid-characters-for-uri-schemes
-              Authority.tokenize(x)
-            } else {
-              (this, Vector(StringToken(x)))
-            }
+    object Scheme extends Tokenizer {
+      private val SchemePattern = "[A-Za-z][A-Za-z0-9+.-]*".r
+
+      override def tokenize(s: String): (Tokenizer, Vector[Token]) = {
+        SchemePattern.findPrefixOf(s) match {
+          case Some(scheme) if scheme.length == s.length =>
+            (this, Vector(StringToken(scheme))) // scheme (or another component) might be continued
+          case _ if s.isEmpty => (this, Vector(StringToken(""))) // scheme (or another component) might be continued
+          case Some(scheme) if s(scheme.length) == ':' =>
+            val rest = s.substring(scheme.length + 1)
+            val (next, afterSchemeTokens) = AfterScheme.tokenize(rest)
+            (next, Vector(StringToken(scheme), SchemeEnd) ++ afterSchemeTokens)
+          case _ if s.startsWith(":") => // there was an expression token before, end of scheme
+            val (next, tokens) = AfterScheme.tokenize(s.substring(1))
+            (next, SchemeEnd +: tokens)
+          case _ => // no scheme
+            AfterScheme.tokenize(s)
+        }
+      }
+
+      override def endToken: Option[Token] = Some(SchemeEnd)
+    }
+
+    object AfterScheme extends Tokenizer {
+      override def tokenize(s: String): (Tokenizer, Vector[Token]) = {
+        if (s == "") (this, Vector(StringToken("")))
+        else if (s.startsWith("//")) Authority.tokenize(s.substring(2)) // uri with authority
+        else { // uri without authority
+          val first = s(0)
+          if (AuthorityTerminators.contains(first)) {
+            val (tokenizer, token) = separatorTokenizerAndToken(first)
+            val tokens1 = if (token == PathStart) {
+              // absolute path in a relative uri, adding an empty string token so that the absolute path is preserved
+              // (might be a continuation if there was no scheme)
+              Vector(StringToken(""), SlashInPath)
+            } else Vector(token)
+            val (tokenizer2, tokens2) = tokenizer.tokenize(s.substring(1))
+            (tokenizer2, tokens1 ++ tokens2)
+          } else {
+            // non-slash-initiated path (might be a continuation if there was no scheme)
+            Path.tokenize(s)
+          }
         }
       }
     }
 
     object Authority extends Tokenizer {
-      private val IpV6InAuthorityPattern = "\\[[0-9a-fA-F:]+\\]".r
+      private val IpV6InAuthorityPattern = "\\[[0-9a-fA-F:]+\\]".r // see the pattern in Uri.HostEncoding
 
       override def tokenize(s: String): (Tokenizer, Vector[Token]) = {
         val (tokenizer, tokens) = tokenizeTerminatedFragment(
@@ -176,12 +207,14 @@ object UriInterpolator {
         )
         val tokens2 = tokens.map {
           case StringToken(s @ IpV6InAuthorityPattern()) =>
-            // removing the [] which are used to surround ipv6 adresses in URLs
+            // removing the [] which are used to surround ipv6 addresses in URLs
             StringToken(s.substring(1, s.length - 1))
           case t => t
         }
         (tokenizer, tokens2)
       }
+
+      override def endToken: Option[Token] = Some(AuthorityEnd)
     }
 
     object Path extends Tokenizer {
@@ -242,7 +275,7 @@ object UriInterpolator {
       // See: https://tools.ietf.org/html/rfc3986#section-3.2
       split(s, terminators, None) match {
         case Right((fragment, separator, rest)) =>
-          tokenizeAfterSeparator(tokenizeFragment(fragment), separator, rest)
+          tokenizeAfterSeparator(tokenizeFragment(fragment) ++ current.endToken.toVector, separator, rest)
 
         case Left(fragment) =>
           (current, tokenizeFragment(fragment))
@@ -327,8 +360,7 @@ object UriInterpolator {
     case object Scheme extends UriBuilder {
       override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
         split(t, Set[Token](SchemeEnd)) match {
-          case Left(_) =>
-            throw new IllegalArgumentException("missing scheme")
+          case Left(_) => (u, t)
           case Right((schemeTokens, _, otherTokens)) =>
             val scheme = tokensToString(schemeTokens)
             (u.scheme(scheme), otherTokens)
@@ -369,15 +401,22 @@ object UriInterpolator {
 
     case object HostPort extends UriBuilder {
       override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
-        split(t, Set[Token](PathStart, QueryStart, FragmentStart)) match {
-          case Left(tt) =>
-            (hostPortFromTokens(u, tt), Vector.empty)
-          case Right((hpTokens, sep, otherTokens)) =>
-            (hostPortFromTokens(u, hpTokens), sep +: otherTokens)
+        split(t, Set[Token](AuthorityEnd)) match {
+          case Left(tt) if tt.last == AuthorityEnd => (hostPortFromTokens(u, tt), Vector.empty)
+          case Left(tt)                            => (u, tt)
+          case Right((hpTokens, _, otherTokens))   => (hostPortFromTokens(u, hpTokens), otherTokens)
         }
       }
 
       private def hostPortFromTokens(u: Uri, rawHpTokens: Vector[Token]): Uri = {
+        if (rawHpTokens.isEmpty) {
+          u // no authority
+        } else {
+          hostPortFromNonemptyTokens(u, rawHpTokens)
+        }
+      }
+
+      private def hostPortFromNonemptyTokens(u: Uri, rawHpTokens: Vector[Token]): Uri = {
         // Special case: if the host/port part contains an expression token,
         // which has a string representation which contains a colon (:), then
         // we assume that the intention was to embed the port and host separately,
@@ -620,5 +659,28 @@ object UriInterpolator {
       }
 
     doRemove(tokens, Vector.empty)
+  }
+
+  /** In relative URIs or URIs without authority, there might be no explicit path start (`/`). Adding it so that the
+    * second pass of parsing can depend on the `PathStart` token being available.
+    */
+  private def addPathStartAfterAuthorityOrSchemeEnd(tokens: Vector[Token]): Vector[Token] = {
+    val endIndex = tokens.indexOf(AuthorityEnd) match {
+      case -1 => tokens.indexOf(SchemeEnd)
+      case n  => n
+    }
+
+    if (endIndex + 1 == tokens.length) {
+      tokens // no path, query of fragment at all
+    } else {
+      val afterEndIndex = tokens(endIndex + 1)
+      if (afterEndIndex != PathStart && afterEndIndex != QueryStart && afterEndIndex != FragmentStart) {
+        // no start token after authority/scheme end - inserting
+        val (init, tail) = if (endIndex == -1) (Vector.empty, tokens) else tokens.splitAt(endIndex + 1)
+        init ++ Vector(PathStart) ++ tail
+      } else {
+        tokens
+      }
+    }
   }
 }
