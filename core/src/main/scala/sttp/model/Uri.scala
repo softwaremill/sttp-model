@@ -423,7 +423,12 @@ object Uri extends UriInterpolator {
     )
   }
 
-  // TODO: relative constructors
+  //
+
+  def relative(path: Seq[String]): Uri = relative(path, Vector.empty, None)
+  def relative(path: Seq[String], fragment: Option[String]): Uri = relative(path, Vector.empty, fragment)
+  def relative(path: Seq[String], querySegments: Seq[QuerySegment], fragment: Option[String]): Uri =
+    apply(None, None, path.map(PathSegment(_)), querySegments, fragment.map(FragmentSegment(_)))
 
   //
 
