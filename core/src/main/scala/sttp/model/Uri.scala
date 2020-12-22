@@ -11,19 +11,24 @@ import scala.collection.immutable.Seq
 import scala.util.{Failure, Success, Try}
 import sttp.model.internal.Rfc3986.encode
 
-/** A [[https://en.wikipedia.org/wiki/Uniform_Resource_Identifier URI]].
-  * All components (scheme, host, query, ...) are stored decoded, and
-  * become encoded upon serialization (using [[toString]]).
+/** A [[https://en.wikipedia.org/wiki/Uniform_Resource_Identifier URI]]. Can represent both relative and absolute
+  * URIs, hence in terms of [[https://tools.ietf.org/html/rfc3986]], this is a URI reference.
+  *
+  * All components (scheme, host, query, ...) are stored decoded, and become encoded upon serialization
+  * (using [[toString]]).
   *
   * Instances can be created using the uri interpolator: `uri"..."` (see [[UriInterpolator]]), or the factory methods
   * on the [[Uri]] companion object.
+  *
+  * The `apply`/`safeApply`/`unsafeApply` methods create absolute URIs and require a host.
+  * The `relative` methods creates a relative URI, given path/query/fragment components.
   *
   * @param querySegments Either key-value pairs, single values, or plain
   * query segments. Key value pairs will be serialized as `k=v`, and blocks
   * of key-value pairs/single values will be combined using `&`. Note that no
   * `&` or other separators are added around plain query segments - if
   * required, they need to be added manually as part of the plain query
-  * segment.
+  * segment. Custom encoding logic can be provided when creating a segment.
   */
 case class Uri(
     scheme: Option[String],
@@ -263,10 +268,6 @@ object Uri extends UriInterpolator {
       Some("Scheme can only contain alphanumeric characters, +, - and .")
     else None
   }
-
-  // The apply/safeApply/unsafeApply methods create absolute URIs.
-  // They also always require a valid, defined host, except for the method which contains all URI components,
-  // wrapped in `Segment`s, when applicable.
 
   def safeApply(host: String): Either[String, Uri] =
     safeApply("http", Some(Authority(host)), Vector.empty, Vector.empty, None)
