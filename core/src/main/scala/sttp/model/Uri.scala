@@ -218,7 +218,7 @@ case class Uri(
   def isAbsolute: Boolean = scheme.isDefined
   def isRelative: Boolean = !isAbsolute
 
-  // TODO resolve
+  def resolve(other: Uri): Uri = Uri(toJavaUri.resolve(other.toJavaUri))
 
   override def toString: String = {
     @tailrec
