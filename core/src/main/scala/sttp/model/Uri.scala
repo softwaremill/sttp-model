@@ -2,7 +2,7 @@ package sttp.model
 
 import java.net.URI
 import sttp.model.Uri.QuerySegment.{KeyValue, Plain, Value}
-import sttp.model.Uri.{Authority, FragmentSegment, HostSegment, PathSegment, QuerySegment, Segment}
+import sttp.model.Uri.{Authority, FragmentSegment, HostSegment, PathSegment, QuerySegment, Segment, UserInfo}
 import sttp.model.internal.{Rfc3986, UriCompatibility, Validate}
 import sttp.model.internal.Validate._
 
@@ -47,12 +47,20 @@ case class Uri(
   //
 
   /** Replace the user info with a username only. Adds an empty host if one is absent. */
-  def userInfo(username: String): Uri =
-    this.copy(authority = Some(authority.getOrElse(Authority("")).userInfo(username)))
+  def userInfo(username: String): Uri = userInfo(Some(UserInfo(username, None)))
 
   /** Replace the user info with username/password combination. Adds an empty host if one is absent. */
-  def userInfo(username: String, password: String): Uri =
-    this.copy(authority = Some(authority.getOrElse(Authority("")).userInfo(username, password)))
+  def userInfo(username: String, password: String): Uri = userInfo(Some(UserInfo(username, Some(password))))
+
+  /** Replace the user info with username/password combination. Adds an empty host if one is absent, and user info
+    * is defined.
+    */
+  def userInfo(ui: Option[UserInfo]): Uri = ui match {
+    case Some(v) => this.copy(authority = Some(authority.getOrElse(Authority.Empty).userInfo(Some(v))))
+    case None    => this.copy(authority = authority.map(_.userInfo(None)))
+  }
+
+  def userInfo: Option[UserInfo] = authority.flatMap(_.userInfo)
 
   /** Replace the host. Does not validate the new host value if it's nonempty. */
   def host(h: String): Uri = hostSegment(HostSegment(h))
@@ -60,10 +68,7 @@ case class Uri(
   /** Replace the host. Does not validate the new host value if it's nonempty. */
   def hostSegment(s: Segment): Uri = hostSegment(Some(s))
 
-  /** Replace the host.
-    * Does not validate the new host value if it's nonempty.
-    * If the host is not defined, removes the port & user info.
-    */
+  /** Replace the host. Does not validate the new host value if it's nonempty. */
   def hostSegment(s: Option[Segment]): Uri = this.copy(authority = authority match {
     case Some(a) => s.map(a.hostSegment(_))
     case None    => s.map(Authority(None, _, None))
@@ -71,11 +76,16 @@ case class Uri(
 
   def host: Option[String] = authority.map(_.hostSegment.v)
 
-  /** Replace the port. */
+  /** Replace the port. Adds an empty host if one is absent. */
   def port(p: Int): Uri = port(Some(p))
 
-  /** Replace the port. */
-  def port(p: Option[Int]): Uri = this.copy(authority = authority.map(_.copy(port = p)))
+  /** Replace the port. Adds an empty host if one is absent, and port is defined. */
+  def port(p: Option[Int]): Uri = p match {
+    case Some(v) => this.copy(authority = Some(authority.getOrElse(Authority.Empty).port(v)))
+    case None    => this.copy(authority = authority.map(_.port(None)))
+  }
+
+  def port: Option[Int] = authority.flatMap(_.port)
 
   /** Replace the authority. */
   def authority(a: Authority): Uri = this.copy(authority = Some(a))
@@ -456,6 +466,9 @@ object Uri extends UriInterpolator {
     def userInfo(username: String, password: String): Authority =
       this.copy(userInfo = Some(UserInfo(username, Some(password))))
 
+    /** Replace the user info. */
+    def userInfo(ui: Option[UserInfo]): Authority = this.copy(userInfo = ui)
+
     /** Replace the host. Does not validate the new host value if it's nonempty. */
     def host(h: String): Authority = hostSegment(HostSegment(h))
 
@@ -482,6 +495,8 @@ object Uri extends UriInterpolator {
     }
   }
   object Authority {
+    private[model] val Empty = Authority("")
+
     def safeApply(host: String): Either[String, Authority] =
       Validate.all(validateHost(Some(host)))(Authority(None, HostSegment(host), None))
     def safeApply(host: String, port: Int): Either[String, Authority] =
