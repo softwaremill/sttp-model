@@ -212,8 +212,4 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
       caught.getMessage.toLowerCase() should include(expectedException)
     }
   }
-
-  test("should resolve relative uris") {
-    uri"http://example.org/a/b/c".resolve(Uri.relative(List("..", "d"))).toString shouldBe "http://example.org/a/d"
-  }
 }
