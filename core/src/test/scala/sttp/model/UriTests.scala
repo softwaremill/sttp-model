@@ -214,6 +214,6 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
   }
 
   test("should resolve relative uris") {
-    uri"http://example.org/a/b/c".resolve(Uri.relative(Seq("..", "d"))).toString shouldBe "http://example.org/a/d"
+    uri"http://example.org/a/b/c".resolve(Uri.relative(List("..", "d"))).toString shouldBe "http://example.org/a/d"
   }
 }

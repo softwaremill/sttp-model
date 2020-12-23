@@ -171,6 +171,12 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
       (uri"a/b/c", "a/b/c"),
       (uri"$v1/b/c", s"$v1/b/c"),
       (uri"$v1/$v2/c", s"$v1/$v2encoded/c")
+    ),
+    "scheme relative" -> List(
+      (uri"//example.com", "//example.com"),
+      (uri"//$v1.com", s"//$v1.com"),
+      (uri"//example.com/a/b/c", s"//example.com/a/b/c"),
+      (uri"//example.com/$v1/b/c", s"//example.com/$v1/b/c")
     )
   )
 
