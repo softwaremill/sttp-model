@@ -5,7 +5,13 @@ import sttp.model.headers.CookieWithMeta
 import scala.collection.immutable.Seq
 import scala.util.Try
 
-case class Headers(headers: Seq[Header]) extends HasHeaders
+case class Headers(headers: Seq[Header]) extends HasHeaders {
+  override def toString: String = s"Headers(${Headers.toStringSafe(headers)})"
+}
+object Headers {
+  def toStringSafe(headers: Seq[Header], sensitiveHeaders: Set[String] = HeaderNames.SensitiveHeaders): Seq[String] =
+    headers.map(_.toStringSafe(sensitiveHeaders))
+}
 
 trait HasHeaders {
   def headers: Seq[Header]
