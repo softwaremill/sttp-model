@@ -26,15 +26,14 @@ object Rfc3986 {
   ): String = {
     val sb = new StringBuilder()
     // based on https://gist.github.com/teigen/5865923
-    for (c <- s) {
+    for (b <- s.getBytes("UTF-8")) {
+      val c = (b & 0xff).toChar
       if (c == '+' && encodePlus) sb.append("%2B") // #48
       else if (allowedCharacters(c)) sb.append(c)
       else if (c == ' ' && spaceAsPlus) sb.append('+')
       else {
-        for (b <- c.toString.getBytes("UTF-8")) {
-          sb.append("%")
-          sb.append(Rfc3986Compatibility.formatByte(b))
-        }
+        sb.append("%")
+        sb.append(Rfc3986Compatibility.formatByte(b))
       }
     }
     sb.toString

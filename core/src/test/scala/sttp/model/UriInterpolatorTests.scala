@@ -154,6 +154,12 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
       (uri"${uri"http://example.com/$v1/"}/$v1/", s"http://example.com/$v1/$v1/"),
       (uri"${"http://example.com:123/a/"}/b/c", "http://example.com:123/a/b/c")
     ),
+    "encode unicode characters that are encoded as 3+ UTF-8 bytes" -> List(
+      (uri"http://example.com/we/have/🍪", "http://example.com/we/have/%F0%9F%8D%AA"),
+      (uri"http://example.com/dont/run/with/✂", "http://example.com/dont/run/with/%E2%9C%82"),
+      (uri"http://example.com/in/query?key=🍪", "http://example.com/in/query?key=%F0%9F%8D%AA"),
+      (uri"http://example.com/in/query?🍪=value", "http://example.com/in/query?%F0%9F%8D%AA=value")
+    ),
     "no authority" -> List(
       (uri"mailto:user@example.com", "mailto:user@example.com"),
       (uri"mailto:user@example.com?x=y", "mailto:user@example.com?x=y"),
