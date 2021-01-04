@@ -16,6 +16,6 @@ trait HasHeaders {
   def contentLength: Option[Long] = header(HeaderNames.ContentLength).flatMap(cl => Try(cl.toLong).toOption)
 
   def cookies: Seq[Either[String, CookieWithMeta]] = headers(HeaderNames.SetCookie).map(h => CookieWithMeta.parse(h))
-  def cookiesUnsafe: Seq[CookieWithMeta] =
+  def unsafeCookies: Seq[CookieWithMeta] =
     cookies.map(_.fold(e => throw new RuntimeException(e), identity[CookieWithMeta]))
 }
