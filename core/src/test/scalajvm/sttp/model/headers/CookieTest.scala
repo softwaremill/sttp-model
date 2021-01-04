@@ -48,6 +48,13 @@ class CookieTest extends AnyFlatSpec with Matchers {
           "Something-Else" -> None
         )
       )
+    ),
+    "x=y; SameSite= Strict" -> Right(
+      CookieWithMeta.unsafeApply(
+        "x",
+        "y",
+        sameSite = Some(Cookie.SameSite.Strict)
+      )
     )
   )
 
@@ -72,8 +79,9 @@ class CookieTest extends AnyFlatSpec with Matchers {
       "5",
       Some(ZonedDateTime.of(2018, 10, 5, 14, 28, 0, 0, ZoneId.of("GMT")).toInstant),
       secure = true,
-      httpOnly = true
-    ) -> "user_id=5; Expires=Fri, 5 Oct 2018 14:28:00 GMT; Secure; HttpOnly",
+      httpOnly = true,
+      sameSite = Some(Cookie.SameSite.Strict)
+    ) -> "user_id=5; Expires=Fri, 5 Oct 2018 14:28:00 GMT; Secure; HttpOnly; SameSite=Strict",
     CookieWithMeta.unsafeApply(
       "x",
       "y",

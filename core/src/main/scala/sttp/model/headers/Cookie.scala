@@ -1,5 +1,6 @@
 package sttp.model.headers
 
+import sttp.model.headers.Cookie.SameSite
 import sttp.model.internal.Rfc2616.validateToken
 import sttp.model.internal.Validate._
 import sttp.model.internal.{Rfc2616, Validate}
@@ -60,6 +61,13 @@ object Cookie {
   /** @return Representation of the cookies as in a header value, in the format: `[name]=[value]; [name]=[value]; ...`.
     */
   def toString(cs: List[Cookie]): String = cs.map(_.toString).mkString("; ")
+
+  sealed trait SameSite
+  object SameSite {
+    case object Lax extends SameSite { override def toString = "Lax" }
+    case object Strict extends SameSite { override def toString = "Strict" }
+    case object None extends SameSite { override def toString = "None" }
+  }
 }
 
 case class CookieValueWithMeta(
@@ -70,6 +78,7 @@ case class CookieValueWithMeta(
     path: Option[String],
     secure: Boolean,
     httpOnly: Boolean,
+    sameSite: Option[SameSite],
     otherDirectives: Map[String, Option[String]]
 )
 
@@ -90,9 +99,10 @@ object CookieValueWithMeta {
       path: Option[String] = None,
       secure: Boolean = false,
       httpOnly: Boolean = false,
+      sameSite: Option[SameSite] = None,
       otherDirectives: Map[String, Option[String]] = Map.empty
   ): CookieValueWithMeta =
-    safeApply(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives).getOrThrow
+    safeApply(value, expires, maxAge, domain, path, secure, httpOnly, sameSite, otherDirectives).getOrThrow
 
   def safeApply(
       value: String,
@@ -102,13 +112,14 @@ object CookieValueWithMeta {
       path: Option[String] = None,
       secure: Boolean = false,
       httpOnly: Boolean = false,
+      sameSite: Option[SameSite] = None,
       otherDirectives: Map[String, Option[String]] = Map.empty
   ): Either[String, CookieValueWithMeta] = {
     Validate.all(
       Cookie.validateValue(value),
       path.flatMap(validateDirectiveValue("path", _)),
       domain.flatMap(validateDirectiveValue("domain", _))
-    )(apply(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives))
+    )(apply(value, expires, maxAge, domain, path, secure, httpOnly, sameSite, otherDirectives))
   }
 }
 
@@ -128,6 +139,7 @@ case class CookieWithMeta private (
   def path: Option[String] = valueWithMeta.path
   def secure: Boolean = valueWithMeta.secure
   def httpOnly: Boolean = valueWithMeta.httpOnly
+  def sameSite: Option[SameSite] = valueWithMeta.sameSite
   def otherDirectives: Map[String, Option[String]] = valueWithMeta.otherDirectives
 
   def value(v: String): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(value = v))
@@ -137,6 +149,7 @@ case class CookieWithMeta private (
   def path(v: Option[String]): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(path = v))
   def secure(v: Boolean): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(secure = v))
   def httpOnly(v: Boolean): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(httpOnly = v))
+  def sameSite(s: Option[SameSite]): CookieWithMeta = copy(valueWithMeta = valueWithMeta.copy(sameSite = s))
   def otherDirective(v: (String, Option[String])): CookieWithMeta =
     copy(valueWithMeta = valueWithMeta.copy(otherDirectives = otherDirectives + v))
 
@@ -150,7 +163,8 @@ case class CookieWithMeta private (
       domain.map(d => s"Domain=$d"),
       path.map(p => s"Path=$p"),
       if (secure) Some("Secure") else None,
-      if (httpOnly) Some("HttpOnly") else None
+      if (httpOnly) Some("HttpOnly") else None,
+      sameSite.map(s => s"SameSite=$s")
     ) ++ otherDirectives.map {
       case (k, Some(v)) => Some(s"$k=$v")
       case (k, None)    => Some(k)
@@ -170,9 +184,10 @@ object CookieWithMeta {
       path: Option[String] = None,
       secure: Boolean = false,
       httpOnly: Boolean = false,
+      sameSite: Option[SameSite] = None,
       otherDirectives: Map[String, Option[String]] = Map.empty
   ): CookieWithMeta =
-    safeApply(name, value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives).getOrThrow
+    safeApply(name, value, expires, maxAge, domain, path, secure, httpOnly, sameSite, otherDirectives).getOrThrow
 
   def safeApply(
       name: String,
@@ -183,13 +198,14 @@ object CookieWithMeta {
       path: Option[String] = None,
       secure: Boolean = false,
       httpOnly: Boolean = false,
+      sameSite: Option[SameSite] = None,
       otherDirectives: Map[String, Option[String]] = Map.empty
   ): Either[String, CookieWithMeta] = {
     Cookie.validateName(name) match {
       case Some(e) => Left(e)
       case None =>
         CookieValueWithMeta
-          .safeApply(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
+          .safeApply(value, expires, maxAge, domain, path, secure, httpOnly, sameSite, otherDirectives)
           .right
           .map { v =>
             apply(name, v)
@@ -206,11 +222,12 @@ object CookieWithMeta {
       path: Option[String] = None,
       secure: Boolean = false,
       httpOnly: Boolean = false,
+      sameSite: Option[SameSite] = None,
       otherDirectives: Map[String, Option[String]] = Map.empty
   ): CookieWithMeta =
     apply(
       name,
-      CookieValueWithMeta(value, expires, maxAge, domain, path, secure, httpOnly, otherDirectives)
+      CookieValueWithMeta(value, expires, maxAge, domain, path, secure, httpOnly, sameSite, otherDirectives)
     )
 
   // https://tools.ietf.org/html/rfc6265#section-4.1.1
@@ -242,7 +259,14 @@ object CookieWithMeta {
       case (ci"path", v)     => result = result.right.map(_.path(Some(v.getOrElse(""))))
       case (ci"secure", _)   => result = result.right.map(_.secure(true))
       case (ci"httponly", _) => result = result.right.map(_.httpOnly(true))
-      case (k, v)            => result = result.right.map(_.otherDirective((k, v)))
+      case (ci"samesite", Some(v)) =>
+        v.trim match {
+          case ci"lax"    => result = result.right.map(_.sameSite(Some(SameSite.Lax)))
+          case ci"strict" => result = result.right.map(_.sameSite(Some(SameSite.Strict)))
+          case ci"none"   => result = result.right.map(_.sameSite(Some(SameSite.None)))
+          case _          => result = Left(s"Same-Site cookie directive is not an allowed value: $v")
+        }
+      case (k, v) => result = result.right.map(_.otherDirective((k, v)))
     }
 
     result
