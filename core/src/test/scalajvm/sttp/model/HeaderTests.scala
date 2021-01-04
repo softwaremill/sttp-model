@@ -2,6 +2,7 @@ package sttp.model
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import sttp.model.headers.CacheDirective
 
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -32,12 +33,8 @@ class HeaderTests extends AnyFlatSpec with Matchers {
   }
 
   it should "properly create a cache-control header" in {
-    Header.cacheControl(maxAge = Some(3.seconds)).toString shouldBe "Cache-Control: max-age=3"
-    Header.cacheControl(noCache = true).toString shouldBe "Cache-Control: no-cache"
-    Header.cacheControl(maxStale = Some(None)).toString shouldBe "Cache-Control: max-stale"
-    Header.cacheControl(maxStale = Some(Some(1.second))).toString shouldBe "Cache-Control: max-stale=1"
     Header
-      .cacheControl(noTransform = true, public = true, sMaxage = Some(10.seconds))
+      .cacheControl(CacheDirective.NoTransform, CacheDirective.Public, CacheDirective.SMaxage(10.seconds))
       .toString shouldBe "Cache-Control: no-transform, public, s-maxage=10"
   }
 
