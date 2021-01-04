@@ -53,13 +53,19 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
     Uri.unsafeApply("2001:db8::ff00:42:8329", 8080) -> "http://[2001:db8::ff00:42:8329]:8080",
     Uri.unsafeApply(
       "http",
-      None,
-      HS("example.com"),
-      None,
+      Some(Authority("example.com")),
       List(Segment("a b", identity)),
       Nil,
       None
-    ) -> "http://example.com/a b"
+    ) -> "http://example.com/a b",
+    Uri.unsafeApply("http", None, Nil, Nil, None) -> "http:",
+    Uri.unsafeApply("mailto", List("user@example.com")) -> "mailto:user@example.com",
+    Uri.relative(List("x", "y")) -> "x/y",
+    Uri.relative(List("", "x", "y")) -> "/x/y",
+    Uri.relative(List("..", "x", "y")) -> "../x/y",
+    Uri.relative(Nil) -> "",
+    Uri.relative(List("x"), Some("a")) -> "x#a",
+    Uri.relative(List("x"), List(QS.KeyValue("p1", "v1")), Some("a")) -> "x?p1=v1#a"
   )
 
   for {

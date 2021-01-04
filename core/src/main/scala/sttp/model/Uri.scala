@@ -1,9 +1,8 @@
 package sttp.model
 
 import java.net.URI
-
 import sttp.model.Uri.QuerySegment.{KeyValue, Plain, Value}
-import sttp.model.Uri.{FragmentSegment, HostSegment, PathSegment, QuerySegment, Segment, UserInfo}
+import sttp.model.Uri.{Authority, FragmentSegment, HostSegment, PathSegment, QuerySegment, Segment, UserInfo}
 import sttp.model.internal.{Rfc3986, UriCompatibility, Validate}
 import sttp.model.internal.Validate._
 
@@ -12,52 +11,87 @@ import scala.collection.immutable.Seq
 import scala.util.{Failure, Success, Try}
 import sttp.model.internal.Rfc3986.encode
 
-/** A [[https://en.wikipedia.org/wiki/Uniform_Resource_Identifier URI]].
-  * All components (scheme, host, query, ...) are stored decoded, and
-  * become encoded upon serialization (using [[toString]]).
+/** A [[https://en.wikipedia.org/wiki/Uniform_Resource_Identifier URI]]. Can represent both relative and absolute
+  * URIs, hence in terms of [[https://tools.ietf.org/html/rfc3986]], this is a URI reference.
+  *
+  * All components (scheme, host, query, ...) are stored decoded, and become encoded upon serialization
+  * (using [[toString]]).
   *
   * Instances can be created using the uri interpolator: `uri"..."` (see [[UriInterpolator]]), or the factory methods
   * on the [[Uri]] companion object.
+  *
+  * The `apply`/`safeApply`/`unsafeApply` methods create absolute URIs and require a host.
+  * The `relative` methods creates a relative URI, given path/query/fragment components.
   *
   * @param querySegments Either key-value pairs, single values, or plain
   * query segments. Key value pairs will be serialized as `k=v`, and blocks
   * of key-value pairs/single values will be combined using `&`. Note that no
   * `&` or other separators are added around plain query segments - if
   * required, they need to be added manually as part of the plain query
-  * segment.
+  * segment. Custom encoding logic can be provided when creating a segment.
   */
 case class Uri(
-    scheme: String,
-    userInfo: Option[UserInfo],
-    hostSegment: Segment,
-    port: Option[Int],
+    scheme: Option[String],
+    authority: Option[Authority],
     pathSegments: Seq[Segment],
     querySegments: Seq[QuerySegment],
     fragmentSegment: Option[Segment]
 ) {
 
   /** Replace the scheme. Does not validate the new scheme value. */
-  def scheme(s: String): Uri = this.copy(scheme = s)
+  def scheme(s: String): Uri = this.copy(scheme = Some(s))
 
-  def userInfo(username: String): Uri =
-    this.copy(userInfo = Some(UserInfo(username, None)))
+  /** Replace the scheme. Does not validate the new scheme value. */
+  def scheme(s: Option[String]): Uri = this.copy(scheme = s)
 
-  def userInfo(username: String, password: String): Uri =
-    this.copy(userInfo = Some(UserInfo(username, Some(password))))
+  //
+
+  /** Replace the user info with a username only. Adds an empty host if one is absent. */
+  def userInfo(username: String): Uri = userInfo(Some(UserInfo(username, None)))
+
+  /** Replace the user info with username/password combination. Adds an empty host if one is absent. */
+  def userInfo(username: String, password: String): Uri = userInfo(Some(UserInfo(username, Some(password))))
+
+  /** Replace the user info with username/password combination. Adds an empty host if one is absent, and user info
+    * is defined.
+    */
+  def userInfo(ui: Option[UserInfo]): Uri = ui match {
+    case Some(v) => this.copy(authority = Some(authority.getOrElse(Authority.Empty).userInfo(Some(v))))
+    case None    => this.copy(authority = authority.map(_.userInfo(None)))
+  }
+
+  def userInfo: Option[UserInfo] = authority.flatMap(_.userInfo)
 
   /** Replace the host. Does not validate the new host value if it's nonempty. */
   def host(h: String): Uri = hostSegment(HostSegment(h))
 
   /** Replace the host. Does not validate the new host value if it's nonempty. */
-  def hostSegment(s: Segment): Uri = this.copy(hostSegment = s)
+  def hostSegment(s: Segment): Uri = hostSegment(Some(s))
 
-  def host: String = hostSegment.v
+  /** Replace the host. Does not validate the new host value if it's nonempty. */
+  def hostSegment(s: Option[Segment]): Uri = this.copy(authority = authority match {
+    case Some(a) => s.map(a.hostSegment(_))
+    case None    => s.map(Authority(None, _, None))
+  })
 
-  //
+  def host: Option[String] = authority.map(_.hostSegment.v)
 
-  def port(p: Int): Uri = this.copy(port = Some(p))
+  /** Replace the port. Adds an empty host if one is absent. */
+  def port(p: Int): Uri = port(Some(p))
 
-  def port(p: Option[Int]): Uri = this.copy(port = p)
+  /** Replace the port. Adds an empty host if one is absent, and port is defined. */
+  def port(p: Option[Int]): Uri = p match {
+    case Some(v) => this.copy(authority = Some(authority.getOrElse(Authority.Empty).port(v)))
+    case None    => this.copy(authority = authority.map(_.port(None)))
+  }
+
+  def port: Option[Int] = authority.flatMap(_.port)
+
+  /** Replace the authority. */
+  def authority(a: Authority): Uri = this.copy(authority = Some(a))
+
+  /** Replace the authority. */
+  def authority(a: Some[Authority]): Uri = this.copy(authority = a)
 
   //
 
@@ -169,8 +203,7 @@ case class Uri(
       k -> v
     }
 
-  /** Adds the given query segment.
-    */
+  /** Adds the given query segment. */
   @deprecated(message = "Use addQuerySegment", since = "1.2.0")
   def querySegment(qf: QuerySegment): Uri = addQuerySegment(qf)
 
@@ -178,16 +211,13 @@ case class Uri(
 
   //
 
-  /** Replace the fragment.
-    */
+  /** Replace the fragment. */
   def fragment(f: String): Uri = fragment(Some(f))
 
-  /** Replace the fragment.
-    */
+  /** Replace the fragment. */
   def fragment(f: Option[String]): Uri = fragmentSegment(f.map(FragmentSegment(_)))
 
-  /** Replace the fragment.
-    */
+  /** Replace the fragment. */
   def fragmentSegment(s: Option[Segment]): Uri = this.copy(fragmentSegment = s)
 
   def fragment: Option[String] = fragmentSegment.map(_.v)
@@ -196,10 +226,12 @@ case class Uri(
 
   def toJavaUri: URI = new URI(toString())
 
-  override def toString: String = {
-    def encodeUserInfo(ui: UserInfo): String =
-      encode(Rfc3986.UserInfo)(ui.username) + ui.password.fold("")(":" + encode(Rfc3986.UserInfo)(_))
+  def isAbsolute: Boolean = scheme.isDefined
+  def isRelative: Boolean = !isAbsolute
 
+  def resolve(other: Uri): Uri = Uri(toJavaUri.resolve(other.toJavaUri))
+
+  override def toString: String = {
     @tailrec
     def encodeQuerySegments(qss: List[QuerySegment], previousWasPlain: Boolean, sb: StringBuilder): String =
       qss match {
@@ -219,11 +251,9 @@ case class Uri(
           encodeQuerySegments(t, previousWasPlain = false, sb)
       }
 
-    val schemeS = encode(Rfc3986.Scheme)(scheme)
-    val userInfoS = userInfo.fold("")(encodeUserInfo(_) + "@")
-    val hostS = hostSegment.encoded
-    val portS = port.fold("")(":" + _)
-    val pathPrefixS = if (pathSegments.isEmpty) "" else "/"
+    val schemeS = scheme.map(s => encode(Rfc3986.Scheme)(s) + ":").getOrElse("")
+    val authorityS = authority.fold("")(_.toString)
+    val pathPrefixS = if (pathSegments.isEmpty || authority.isEmpty) "" else "/"
     val pathS = pathSegments.map(_.encoded).mkString("/")
     val queryPrefixS = if (querySegments.isEmpty) "" else "?"
 
@@ -232,7 +262,7 @@ case class Uri(
     // https://stackoverflow.com/questions/2053132/is-a-colon-safe-for-friendly-url-use/2053640#2053640
     val fragS = fragmentSegment.fold("")(s => "#" + s.encoded)
 
-    s"$schemeS://$userInfoS$hostS$portS$pathPrefixS$pathS$queryPrefixS$queryS$fragS"
+    s"$schemeS$authorityS$pathPrefixS$pathS$queryPrefixS$queryS$fragS"
   }
 }
 
@@ -242,34 +272,34 @@ case class Uri(
   */
 object Uri extends UriInterpolator {
   private val AllowedSchemeCharacters = "[a-zA-Z][a-zA-Z0-9+-.]*".r
-  private def validateHost(h: String): Option[String] = if (h.isEmpty) Some("Host cannot be empty") else None
-  private def validateScheme(s: String) =
+  private def validateHost(host: Option[String]): Option[String] =
+    host.flatMap(h => if (h.isEmpty) Some("Host cannot be empty") else None)
+  private def validateScheme(scheme: Option[String]) = scheme.flatMap { s =>
     if (AllowedSchemeCharacters.unapplySeq(s).isEmpty)
       Some("Scheme can only contain alphanumeric characters, +, - and .")
     else None
-
-  //
+  }
 
   def safeApply(host: String): Either[String, Uri] =
-    safeApply("http", None, HostSegment(host), None, Vector.empty, Vector.empty, None)
+    safeApply("http", Some(Authority(host)), Vector.empty, Vector.empty, None)
   def safeApply(host: String, port: Int): Either[String, Uri] =
-    safeApply("http", None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
+    safeApply("http", Some(Authority(host, port)), Vector.empty, Vector.empty, None)
   def safeApply(host: String, port: Int, path: Seq[String]): Either[String, Uri] =
-    safeApply("http", None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
+    safeApply("http", Some(Authority(host, port)), path.map(PathSegment(_)), Vector.empty, None)
+  def safeApply(scheme: String, path: Seq[String]): Either[String, Uri] =
+    safeApply(scheme, None, path.map(PathSegment(_)), Vector.empty, None)
   def safeApply(scheme: String, host: String): Either[String, Uri] =
-    safeApply(scheme, None, HostSegment(host), None, Vector.empty, Vector.empty, None)
+    safeApply(scheme, Some(Authority(host)), Vector.empty, Vector.empty, None)
   def safeApply(scheme: String, host: String, port: Int): Either[String, Uri] =
-    safeApply(scheme, None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
+    safeApply(scheme, Some(Authority(host, port)), Vector.empty, Vector.empty, None)
   def safeApply(scheme: String, host: String, port: Int, path: Seq[String]): Either[String, Uri] =
-    safeApply(scheme, None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
+    safeApply(scheme, Some(Authority(host, port)), path.map(PathSegment(_)), Vector.empty, None)
   def safeApply(scheme: String, host: String, path: Seq[String]): Either[String, Uri] =
-    safeApply(scheme, None, HostSegment(host), None, path.map(PathSegment(_)), Vector.empty, None)
+    safeApply(scheme, Some(Authority(host)), path.map(PathSegment(_)), Vector.empty, None)
   def safeApply(scheme: String, host: String, path: Seq[String], fragment: Option[String]): Either[String, Uri] =
     safeApply(
       scheme,
-      None,
-      HostSegment(host),
-      None,
+      Some(Authority(host)),
       path.map(PathSegment(_)),
       Vector.empty,
       fragment.map(FragmentSegment(_))
@@ -285,48 +315,44 @@ object Uri extends UriInterpolator {
   ): Either[String, Uri] =
     safeApply(
       scheme,
-      userInfo,
-      HostSegment(host),
-      port,
+      Some(Authority(userInfo, HostSegment(host), port)),
       path.map(PathSegment(_)),
       querySegments,
       fragment.map(FragmentSegment(_))
     )
   def safeApply(
       scheme: String,
-      userInfo: Option[UserInfo],
-      hostSegment: Segment,
-      port: Option[Int],
+      authority: Option[Authority],
       pathSegments: Seq[Segment],
       querySegments: Seq[QuerySegment],
       fragmentSegment: Option[Segment]
   ): Either[String, Uri] =
-    Validate.all(validateScheme(scheme), validateHost(hostSegment.v))(
-      apply(scheme, userInfo, hostSegment, port, pathSegments, querySegments, fragmentSegment)
+    Validate.all(validateScheme(Some(scheme)), validateHost(authority.map(_.hostSegment.v)))(
+      apply(Some(scheme), authority, pathSegments, querySegments, fragmentSegment)
     )
 
   //
 
   def unsafeApply(host: String): Uri =
-    unsafeApply("http", None, HostSegment(host), None, Vector.empty, Vector.empty, None)
+    unsafeApply("http", Some(Authority(host)), Vector.empty, Vector.empty, None)
   def unsafeApply(host: String, port: Int): Uri =
-    unsafeApply("http", None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
+    unsafeApply("http", Some(Authority(host, port)), Vector.empty, Vector.empty, None)
   def unsafeApply(host: String, port: Int, path: Seq[String]): Uri =
-    unsafeApply("http", None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
+    unsafeApply("http", Some(Authority(host, port)), path.map(PathSegment(_)), Vector.empty, None)
+  def unsafeApply(scheme: String, path: Seq[String]): Uri =
+    unsafeApply(scheme, None, path.map(PathSegment(_)), Vector.empty, None)
   def unsafeApply(scheme: String, host: String): Uri =
-    unsafeApply(scheme, None, HostSegment(host), None, Vector.empty, Vector.empty, None)
+    unsafeApply(scheme, Some(Authority(host)), Vector.empty, Vector.empty, None)
   def unsafeApply(scheme: String, host: String, port: Int): Uri =
-    unsafeApply(scheme, None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
+    unsafeApply(scheme, Some(Authority(host, port)), Vector.empty, Vector.empty, None)
   def unsafeApply(scheme: String, host: String, port: Int, path: Seq[String]): Uri =
-    unsafeApply(scheme, None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
+    unsafeApply(scheme, Some(Authority(host, port)), path.map(PathSegment(_)), Vector.empty, None)
   def unsafeApply(scheme: String, host: String, path: Seq[String]): Uri =
-    unsafeApply(scheme, None, HostSegment(host), None, path.map(PathSegment(_)), Vector.empty, None)
+    unsafeApply(scheme, Some(Authority(host)), path.map(PathSegment(_)), Vector.empty, None)
   def unsafeApply(scheme: String, host: String, path: Seq[String], fragment: Option[String]): Uri =
     unsafeApply(
       scheme,
-      None,
-      HostSegment(host),
-      None,
+      Some(Authority(host)),
       path.map(PathSegment(_)),
       Vector.empty,
       fragment.map(FragmentSegment(_))
@@ -342,50 +368,40 @@ object Uri extends UriInterpolator {
   ): Uri =
     unsafeApply(
       scheme,
-      userInfo,
-      HostSegment(host),
-      port,
+      Some(Authority(userInfo, HostSegment(host), port)),
       path.map(PathSegment(_)),
       querySegments,
       fragment.map(FragmentSegment(_))
     )
   def unsafeApply(
       scheme: String,
-      userInfo: Option[UserInfo],
-      hostSegment: Segment,
-      port: Option[Int],
+      authority: Option[Authority],
       pathSegments: Seq[Segment],
       querySegments: Seq[QuerySegment],
       fragmentSegment: Option[Segment]
   ): Uri =
-    safeApply(scheme, userInfo, hostSegment, port, pathSegments, querySegments, fragmentSegment).getOrThrow
+    safeApply(scheme, authority, pathSegments, querySegments, fragmentSegment).getOrThrow
 
   //
 
   def apply(host: String): Uri =
-    apply("http", None, HostSegment(host), None, Vector.empty, Vector.empty, None)
+    apply(Some("http"), Some(Authority(host)), Vector.empty, Vector.empty, None)
   def apply(host: String, port: Int): Uri =
-    apply("http", None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
+    apply(Some("http"), Some(Authority(host, port)), Vector.empty, Vector.empty, None)
   def apply(host: String, port: Int, path: Seq[String]): Uri =
-    apply("http", None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
+    apply(Some("http"), Some(Authority(host, port)), path.map(PathSegment(_)), Vector.empty, None)
+  def apply(scheme: String, path: Seq[String]): Uri =
+    apply(Some(scheme), None, path.map(PathSegment(_)), Vector.empty, None)
   def apply(scheme: String, host: String): Uri =
-    apply(scheme, None, HostSegment(host), None, Vector.empty, Vector.empty, None)
+    apply(Some(scheme), Some(Authority(host)), Vector.empty, Vector.empty, None)
   def apply(scheme: String, host: String, port: Int): Uri =
-    apply(scheme, None, HostSegment(host), Some(port), Vector.empty, Vector.empty, None)
+    apply(Some(scheme), Some(Authority(host, port)), Vector.empty, Vector.empty, None)
   def apply(scheme: String, host: String, port: Int, path: Seq[String]): Uri =
-    apply(scheme, None, HostSegment(host), Some(port), path.map(PathSegment(_)), Vector.empty, None)
+    apply(Some(scheme), Some(Authority(host, port)), path.map(PathSegment(_)), Vector.empty, None)
   def apply(scheme: String, host: String, path: Seq[String]): Uri =
-    apply(scheme, None, HostSegment(host), None, path.map(PathSegment(_)), Vector.empty, None)
+    apply(Some(scheme), Some(Authority(host)), path.map(PathSegment(_)), Vector.empty, None)
   def apply(scheme: String, host: String, path: Seq[String], fragment: Option[String]): Uri =
-    apply(
-      scheme,
-      None,
-      HostSegment(host),
-      None,
-      path.map(PathSegment(_)),
-      Vector.empty,
-      fragment.map(FragmentSegment(_))
-    )
+    apply(Some(scheme), Some(Authority(host)), path.map(PathSegment(_)), Vector.empty, fragment.map(FragmentSegment(_)))
   def apply(
       scheme: String,
       userInfo: Option[UserInfo],
@@ -394,16 +410,37 @@ object Uri extends UriInterpolator {
       path: Seq[String],
       querySegments: Seq[QuerySegment],
       fragment: Option[String]
-  ): Uri =
+  ): Uri = {
     apply(
-      scheme,
-      userInfo,
-      HostSegment(host),
-      port,
+      Some(scheme),
+      Some(Authority(userInfo, HostSegment(host), port)),
       path.map(PathSegment(_)),
       querySegments,
       fragment.map(FragmentSegment(_))
     )
+  }
+  def apply(
+      scheme: String,
+      authority: Option[Authority],
+      path: Seq[Segment],
+      querySegments: Seq[QuerySegment],
+      fragment: Option[Segment]
+  ): Uri = {
+    apply(
+      Some(scheme),
+      authority,
+      path,
+      querySegments,
+      fragment
+    )
+  }
+
+  //
+
+  def relative(path: Seq[String]): Uri = relative(path, Vector.empty, None)
+  def relative(path: Seq[String], fragment: Option[String]): Uri = relative(path, Vector.empty, fragment)
+  def relative(path: Seq[String], querySegments: Seq[QuerySegment], fragment: Option[String]): Uri =
+    apply(None, None, path.map(PathSegment(_)), querySegments, fragment.map(FragmentSegment(_)))
 
   //
 
@@ -417,6 +454,60 @@ object Uri extends UriInterpolator {
     }
 
   def unsafeParse(uri: String): Uri = uri"$uri"
+
+  //
+
+  case class Authority(userInfo: Option[UserInfo], hostSegment: Segment, port: Option[Int]) {
+
+    /** Replace the user info with a username only. */
+    def userInfo(username: String): Authority = this.copy(userInfo = Some(UserInfo(username, None)))
+
+    /** Replace the user info with username/password combination. */
+    def userInfo(username: String, password: String): Authority =
+      this.copy(userInfo = Some(UserInfo(username, Some(password))))
+
+    /** Replace the user info. */
+    def userInfo(ui: Option[UserInfo]): Authority = this.copy(userInfo = ui)
+
+    /** Replace the host. Does not validate the new host value if it's nonempty. */
+    def host(h: String): Authority = hostSegment(HostSegment(h))
+
+    /** Replace the host. Does not validate the new host value if it's nonempty. */
+    def hostSegment(s: Segment): Authority = this.copy(hostSegment = s)
+
+    def host: String = hostSegment.v
+
+    /** Replace the port. */
+    def port(p: Int): Authority = port(Some(p))
+
+    /** Replace the port. */
+    def port(p: Option[Int]): Authority = this.copy(port = p)
+
+    override def toString: String = {
+      def encodeUserInfo(ui: UserInfo): String =
+        encode(Rfc3986.UserInfo)(ui.username) + ui.password.fold("")(":" + encode(Rfc3986.UserInfo)(_))
+
+      val userInfoS = userInfo.fold("")(encodeUserInfo(_) + "@")
+      val hostS = hostSegment.encoded
+      val portS = port.fold("")(":" + _)
+
+      s"//$userInfoS$hostS$portS"
+    }
+  }
+  object Authority {
+    private[model] val Empty = Authority("")
+
+    def safeApply(host: String): Either[String, Authority] =
+      Validate.all(validateHost(Some(host)))(Authority(None, HostSegment(host), None))
+    def safeApply(host: String, port: Int): Either[String, Authority] =
+      Validate.all(validateHost(Some(host)))(Authority(None, HostSegment(host), Some(port)))
+    def unsafeApply(host: String): Authority = safeApply(host).getOrThrow
+    def unsafeApply(host: String, port: Int): Authority = safeApply(host, port).getOrThrow
+    def apply(host: String): Authority = Authority(None, HostSegment(host), None)
+    def apply(host: String, port: Int): Authority = Authority(None, HostSegment(host), Some(port))
+  }
+
+  //
 
   case class Segment(v: String, encoding: Encoding) {
     def encoded: String = encoding(v)
@@ -480,7 +571,6 @@ object Uri extends UriInterpolator {
   type Encoding = String => String
 
   object HostEncoding {
-    // TODO
     private val IpV6Pattern = "[0-9a-fA-F:]+".r
 
     val Standard: Encoding = {
