@@ -1,5 +1,6 @@
 package sttp.model.headers
 
+import sttp.model.Header
 import sttp.model.headers.Cookie.SameSite
 import sttp.model.internal.Rfc2616.validateToken
 import sttp.model.internal.Validate._
@@ -7,7 +8,6 @@ import sttp.model.internal.{Rfc2616, Validate}
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneId}
-import java.util.Locale
 import scala.util.{Failure, Success, Try}
 
 /** A cookie name-value pair.
@@ -246,7 +246,7 @@ object CookieWithMeta {
     var result: Either[String, CookieWithMeta] = Right(CookieWithMeta.apply(name, value.getOrElse("")))
     other.map(splitkv).map(t => (t._1, t._2)).foreach {
       case (ci"expires", Some(v)) =>
-        parseDatetime(v) match {
+        Header.parseHttpDate(v) match {
           case Right(expires) => result = result.right.map(_.expires(Some(expires)))
           case Left(_)        => result = Left(s"Expires cookie directive is not a valid RFC1123 or RFC850 datetime: $v")
         }
@@ -273,30 +273,6 @@ object CookieWithMeta {
   }
 
   def unsafeParse(s: String): CookieWithMeta = parse(s).getOrThrow
-
-  private val Rfc850DatetimePattern = "dd-MMM-yyyy HH:mm:ss zzz"
-  private val Rfc850DatetimeFormat = DateTimeFormatter.ofPattern(Rfc850DatetimePattern, Locale.US)
-
-  val Rfc850WeekDays = Set("mon", "tue", "wed", "thu", "fri", "sat", "sun")
-
-  private def parseRfc850DateTime(v: String): Instant = {
-    val expiresParts = v.split(", ")
-    if (expiresParts.length != 2)
-      throw new Exception("There must be exactly one \", \"")
-    if (!Rfc850WeekDays.contains(expiresParts(0).trim.toLowerCase(Locale.ENGLISH)))
-      throw new Exception("String must start with weekday name")
-    Instant.from(Rfc850DatetimeFormat.parse(expiresParts(1)))
-  }
-
-  private def parseDatetime(v: String): Either[Unit, Instant] =
-    Try(Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(v))) match {
-      case Success(r) => Right(r)
-      case Failure(_) =>
-        Try(parseRfc850DateTime(v)) match {
-          case Success(r) => Right(r)
-          case Failure(_) => Left(())
-        }
-    }
 
   private implicit class StringInterpolations(sc: StringContext) {
     class CaseInsensitiveStringMatcher {

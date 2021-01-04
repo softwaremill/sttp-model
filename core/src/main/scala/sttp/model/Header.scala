@@ -8,6 +8,8 @@ import sttp.model.internal.Validate._
 
 import java.time.{Instant, ZoneId}
 import java.time.format.DateTimeFormatter
+import java.util.Locale
+import scala.util.{Failure, Success, Try}
 import scala.util.hashing.MurmurHash3
 
 /** An HTTP header. The [[name]] property is case-insensitive during equality checks.
@@ -107,4 +109,31 @@ object Header {
     Header(HeaderNames.XForwardedFor, (firstAddress +: otherAddresses).mkString(", "))
 
   private val GMT = ZoneId.of("GMT")
+
+  //
+
+  private val Rfc850DatetimePattern = "dd-MMM-yyyy HH:mm:ss zzz"
+  private val Rfc850DatetimeFormat = DateTimeFormatter.ofPattern(Rfc850DatetimePattern, Locale.US)
+
+  val Rfc850WeekDays = Set("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+
+  private def parseRfc850DateTime(v: String): Instant = {
+    val expiresParts = v.split(", ")
+    if (expiresParts.length != 2)
+      throw new Exception("There must be exactly one \", \"")
+    if (!Rfc850WeekDays.contains(expiresParts(0).trim.toLowerCase(Locale.ENGLISH)))
+      throw new Exception("String must start with weekday name")
+    Instant.from(Rfc850DatetimeFormat.parse(expiresParts(1)))
+  }
+
+  def parseHttpDate(v: String): Either[String, Instant] =
+    Try(Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(v))) match {
+      case Success(r) => Right(r)
+      case Failure(e) =>
+        Try(parseRfc850DateTime(v)) match {
+          case Success(r) => Right(r)
+          case Failure(_) => Left(s"Invalid http date: $v (${e.getMessage})")
+        }
+    }
+  def unsafeParseHttpDate(s: String): Instant = parseHttpDate(s).getOrThrow
 }
