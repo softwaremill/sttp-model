@@ -1,9 +1,9 @@
-package sttp.model
-
-import java.time.{ZoneId, ZonedDateTime}
+package sttp.model.headers
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import java.time.{ZoneId, ZonedDateTime}
 
 class CookieTest extends AnyFlatSpec with Matchers {
   val parseCookieData = List(

@@ -1,5 +1,7 @@
 package sttp.model
 
+import sttp.model.headers.CookieWithMeta
+
 import scala.collection.immutable.Seq
 import scala.util.Try
 
