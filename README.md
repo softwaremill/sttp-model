@@ -30,9 +30,13 @@ Available model classes include:
 * `MediaType`
 * `Header`
 * `HeaderNames`
-* `Cookie`
 * `QueryParams`
-* `Part`
+* body fragments:  
+   * `Part`
+   * `ServerSentEvent`  
+* header values:
+   * `Cookie`
+   * `ETag`
 
 Most classes contain both serialisation & parsing functionality, following these conventions:
 

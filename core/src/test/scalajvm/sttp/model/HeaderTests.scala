@@ -41,14 +41,6 @@ class HeaderTests extends AnyFlatSpec with Matchers {
       .toString shouldBe "Cache-Control: no-transform, public, s-maxage=10"
   }
 
-  it should "properly quote an etag" in {
-    Header.etag("xyz").toString shouldBe "ETag: \"xyz\""
-  }
-
-  it should "properly quote a weak etag" in {
-    Header.etag("xyz", weak = true).toString shouldBe "ETag: W/\"xyz\""
-  }
-
   it should "properly format expires date" in {
     val i = ZonedDateTime.parse("Wed, 21 Oct 2015 07:28:00 GMT", DateTimeFormatter.RFC_1123_DATE_TIME)
     Header.expires(i.toInstant).toString shouldBe "Expires: Wed, 21 Oct 2015 07:28:00 GMT"

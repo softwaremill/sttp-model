@@ -1,7 +1,7 @@
 package sttp.model
 
 import sttp.model.HeaderNames.SensitiveHeaders
-import sttp.model.headers.{Cookie, CookieWithMeta}
+import sttp.model.headers.{Cookie, CookieWithMeta, ETag}
 import sttp.model.internal.Validate
 import sttp.model.internal.Rfc2616.validateToken
 import sttp.model.internal.Validate._
@@ -127,8 +127,8 @@ object Header {
   def contentType(mediaType: MediaType): Header = Header(HeaderNames.ContentType, mediaType.toString)
   def cookie(firstCookie: Cookie, otherCookies: Cookie*): Header =
     Header(HeaderNames.Cookie, (firstCookie +: otherCookies).map(_.toString).mkString("; "))
-  def etag(tag: String, weak: Boolean = false): Header =
-    Header(HeaderNames.Etag, s"""${if (weak) "W/" else ""}"$tag"""")
+  def etag(tag: String): Header = etag(ETag(tag))
+  def etag(tag: ETag): Header = Header(HeaderNames.Etag, tag.toString)
   def expires(i: Instant): Header =
     Header(HeaderNames.Expires, DateTimeFormatter.RFC_1123_DATE_TIME.format(i.atZone(GMT)))
   def lastModified(i: Instant): Header =
