@@ -4,8 +4,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import sttp.model.headers.CacheDirective
 
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import scala.concurrent.duration.DurationInt
 
 class HeaderTests extends AnyFlatSpec with Matchers {
@@ -14,8 +12,8 @@ class HeaderTests extends AnyFlatSpec with Matchers {
   }
 
   it should "validate status codes" in {
-    Header.safeApply("Aut ho", "a bc") shouldBe Symbol("left")
-    Header.safeApply(HeaderNames.Authorization, "xy z") shouldBe Symbol("right")
+    Header.safeApply("Aut ho", "a bc") should matchPattern { case Left(_) => }
+    Header.safeApply(HeaderNames.Authorization, "xy z") should matchPattern { case Right(_) => }
   }
 
   it should "throw exceptions on invalid headers" in {
@@ -36,10 +34,5 @@ class HeaderTests extends AnyFlatSpec with Matchers {
     Header
       .cacheControl(CacheDirective.NoTransform, CacheDirective.Public, CacheDirective.SMaxage(10.seconds))
       .toString shouldBe "Cache-Control: no-transform, public, s-maxage=10"
-  }
-
-  it should "properly format expires date" in {
-    val i = ZonedDateTime.parse("Wed, 21 Oct 2015 07:28:00 GMT", DateTimeFormatter.RFC_1123_DATE_TIME)
-    Header.expires(i.toInstant).toString shouldBe "Expires: Wed, 21 Oct 2015 07:28:00 GMT"
   }
 }

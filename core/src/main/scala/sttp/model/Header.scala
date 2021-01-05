@@ -108,12 +108,13 @@ object Header {
   def xForwardedFor(firstAddress: String, otherAddresses: String*): Header =
     Header(HeaderNames.XForwardedFor, (firstAddress +: otherAddresses).mkString(", "))
 
-  private val GMT = ZoneId.of("GMT")
+  // TODO: remove lazy once native supports java time
+  private lazy val GMT = ZoneId.of("GMT")
 
   //
 
-  private val Rfc850DatetimePattern = "dd-MMM-yyyy HH:mm:ss zzz"
-  private val Rfc850DatetimeFormat = DateTimeFormatter.ofPattern(Rfc850DatetimePattern, Locale.US)
+  private lazy val Rfc850DatetimePattern = "dd-MMM-yyyy HH:mm:ss zzz"
+  private lazy val Rfc850DatetimeFormat = DateTimeFormatter.ofPattern(Rfc850DatetimePattern, Locale.US)
 
   val Rfc850WeekDays = Set("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
