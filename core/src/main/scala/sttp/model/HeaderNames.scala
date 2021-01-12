@@ -66,12 +66,14 @@ trait HeaderNames {
   val Via = "Via"
   val Warning = "Warning"
   val WwwAuthenticate = "WWW-Authenticate"
+  val XFrameOptions = "X-Frame-Options"
   val XForwardedFor = "X-Forwarded-For"
   val XForwardedHost = "X-Forwarded-Host"
   val XForwardedPort = "X-Forwarded-Port"
   val XForwardedProto = "X-Forwarded-Proto"
   val XRealIp = "X-Real-Ip"
   val XRequestedWith = "X-Requested-With"
+  val XXSSProtection = "X-XSS-Protection"
 
   val ContentHeaders: Set[String] =
     Set(HeaderNames.ContentLength, HeaderNames.ContentType, HeaderNames.ContentMd5).map(_.toLowerCase())
