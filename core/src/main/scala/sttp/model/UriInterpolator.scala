@@ -71,7 +71,6 @@ object UriInterpolator {
 
     while (strings.hasNext) {
       val nextExpression = expressions.next()
-      val nextExpressionStr = nextExpression.toString
 
       // special case: the interpolation starts with an expression, which
       // contains a whole URI. In this case, parsing the expression as if
@@ -79,7 +78,7 @@ object UriInterpolator {
       // way it's possible to extend existing URIs. Without special-casing
       // the embedded URI would be escaped and become part of the host
       // as a whole.
-      if (tokens == Vector(StringToken("")) && nextExpressionStr.contains("://")) {
+      if (tokens == Vector(StringToken(""))) {
         def tokenizeExpressionAsString(): Unit = {
           val (nextTokenizer, nextTokens) =
             tokenizer.tokenize(nextExpression.toString)
@@ -402,9 +401,9 @@ object UriInterpolator {
     case object HostPort extends UriBuilder {
       override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
         split(t, Set[Token](AuthorityEnd)) match {
-          case Left(tt) if tt.last == AuthorityEnd => (hostPortFromTokens(u, tt), Vector.empty)
-          case Left(tt)                            => (u, tt)
-          case Right((hpTokens, _, otherTokens))   => (hostPortFromTokens(u, hpTokens), otherTokens)
+          case Left(tt) if tt.lastOption.contains(AuthorityEnd) => (hostPortFromTokens(u, tt), Vector.empty)
+          case Left(tt)                                         => (u, tt)
+          case Right((hpTokens, _, otherTokens))                => (hostPortFromTokens(u, hpTokens), otherTokens)
         }
       }
 
