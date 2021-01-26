@@ -152,9 +152,10 @@ object UriInterpolator {
 
       override def tokenize(s: String): (Tokenizer, Vector[Token]) = {
         SchemePattern.findPrefixOf(s) match {
-          case Some(scheme) if scheme.length == s.length =>
-            (this, Vector(StringToken(scheme))) // scheme (or another component) might be continued
-          case _ if s.isEmpty => (this, Vector(StringToken(""))) // scheme (or another component) might be continued
+          // #59: if the entire string matches the pattern, then there's no scheme terminator (`:`). This means there's
+          // no scheme, hence - tokenizing as a relative uri.
+          case Some(scheme) if scheme.length == s.length => AfterScheme.tokenize(scheme)
+          case _ if s.isEmpty                            => (this, Vector(StringToken(""))) // scheme (or another component) might be continued
           case Some(scheme) if s(scheme.length) == ':' =>
             val rest = s.substring(scheme.length + 1)
             val (next, afterSchemeTokens) = AfterScheme.tokenize(rest)
