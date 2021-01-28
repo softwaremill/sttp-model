@@ -28,7 +28,8 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
     ),
     "scheme" -> List(
       (uri"http${if (secure) "s" else ""}://example.com", s"https://example.com"),
-      (uri"${if (secure) "https" else "http"}://example.com", s"https://example.com")
+      (uri"${if (secure) "https" else "http"}://example.com", s"https://example.com"),
+      (uri"${"http"}://example.com:$None", s"http://example.com")
     ),
     "user info" -> List(
       (uri"http://user:pass@example.com", s"http://user:pass@example.com"),

@@ -71,14 +71,18 @@ object UriInterpolator {
 
     while (strings.hasNext) {
       val nextExpression = expressions.next()
+      val nextExpressionStr = nextExpression.toString
 
-      // special case: the interpolation starts with an expression, which
-      // contains a whole URI. In this case, parsing the expression as if
-      // its string value was embedded in the interpolated string. This
-      // way it's possible to extend existing URIs. Without special-casing
-      // the embedded URI would be escaped and become part of the host
+      val nextStr = strings.next()
+
+      // Special case: the interpolation starts with an expression, which contains a whole URI. This URI can be
+      // absolute - in which case the expression should contain ://; or relative - in which case, the next string
+      // token can't be the scheme separator ://.
+      //
+      // Parsing the expression as if its string value was embedded in the interpolated string. This way it's possible
+      // to extend existing URIs. Without special-casing the embedded URI would be escaped and become part of the host
       // as a whole.
-      if (tokens == Vector(StringToken(""))) {
+      if (tokens == Vector(StringToken("")) && (nextExpressionStr.contains("://") || !nextStr.contains("://"))) {
         def tokenizeExpressionAsString(): Unit = {
           val (nextTokenizer, nextTokens) =
             tokenizer.tokenize(nextExpression.toString)
@@ -87,7 +91,7 @@ object UriInterpolator {
         }
 
         def tokenizeStringRemoveEmptyPrefix(): Unit = {
-          val (nextTokenizer, nextTokens) = tokenizer.tokenize(strings.next())
+          val (nextTokenizer, nextTokens) = tokenizer.tokenize(nextStr)
           tokenizer = nextTokenizer
 
           // we need to remove empty tokens around exp as well - however here
@@ -114,7 +118,7 @@ object UriInterpolator {
       } else {
         tokens = tokens :+ ExpressionToken(nextExpression)
 
-        val (nextTokenizer, nextTokens) = tokenizer.tokenize(strings.next())
+        val (nextTokenizer, nextTokens) = tokenizer.tokenize(nextStr)
         tokenizer = nextTokenizer
         tokens = tokens ++ nextTokens
       }
