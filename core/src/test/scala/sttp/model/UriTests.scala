@@ -15,6 +15,7 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
 
   val wholeUriTestData = List(
     Uri.unsafeApply("http", None, "example.com", None, Nil, Nil, None) -> "http://example.com",
+    Uri.unsafeApply("http", None, "example.com", None, List(""), Nil, None) -> "http://example.com/",
     Uri.unsafeApply(
       "https",
       None,
@@ -60,12 +61,13 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
     ) -> "http://example.com/a b",
     Uri.unsafeApply("http", None, Nil, Nil, None) -> "http:",
     Uri.unsafeApply("mailto", List("user@example.com")) -> "mailto:user@example.com",
-    Uri.relative(List("x", "y")) -> "x/y",
-    Uri.relative(List("", "x", "y")) -> "/x/y",
-    Uri.relative(List("..", "x", "y")) -> "../x/y",
-    Uri.relative(Nil) -> "",
-    Uri.relative(List("x"), Some("a")) -> "x#a",
-    Uri.relative(List("x"), List(QS.KeyValue("p1", "v1")), Some("a")) -> "x?p1=v1#a"
+    Uri.relative(List("x", "y")) -> "/x/y",
+    Uri.relative(List("x", "y", "")) -> "/x/y/",
+    Uri.relative(List("")) -> "/",
+    Uri.relative(List("x"), Some("a")) -> "/x#a",
+    Uri.relative(List("x"), List(QS.KeyValue("p1", "v1")), Some("a")) -> "/x?p1=v1#a",
+    Uri.pathRelative(List("x", "y")) -> "x/y",
+    Uri.pathRelative(List("..", "x", "y")) -> "../x/y"
   )
 
   for {
