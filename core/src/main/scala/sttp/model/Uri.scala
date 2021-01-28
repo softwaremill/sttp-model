@@ -565,7 +565,10 @@ object Uri extends UriInterpolator {
     def add(ps: scala.collection.Seq[String]): PathSegments = addSegments(ps.toList.map(PathSegment(_)))
     def addSegment(s: Segment): PathSegments = addSegments(List(s))
     def addSegments(s1: Segment, s2: Segment, ss: Segment*): PathSegments = addSegments(s1 :: s2 :: ss.toList)
-    def addSegments(ss: scala.collection.Seq[Segment]): PathSegments = withSegments(segments ++ ss.toList)
+    def addSegments(ss: scala.collection.Seq[Segment]): PathSegments = {
+      val base = if (segments.lastOption.exists(_.v.isEmpty)) segments.init else segments
+      withSegments(base ++ ss.toList)
+    }
 
     def withS(p: String, ps: String*): PathSegments = withS(p :: ps.toList)
     def withS(ps: scala.collection.Seq[String]): PathSegments = withSegments(ps.toList.map(PathSegment(_)))

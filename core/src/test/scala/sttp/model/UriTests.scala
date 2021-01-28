@@ -214,4 +214,16 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
       caught.getMessage.toLowerCase() should include(expectedException)
     }
   }
+
+  test("should add path ignoring the trailing empty segment if necessary") {
+    uri"http://x.com".addPath("a").toString shouldBe "http://x.com/a"
+    uri"http://x.com/".addPath("a").toString shouldBe "http://x.com/a"
+    uri"http://x.com/a".addPath("b").toString shouldBe "http://x.com/a/b"
+    uri"http://x.com".addPath("a", "b").toString shouldBe "http://x.com/a/b"
+    uri"http://x.com/".addPath("a", "b").toString shouldBe "http://x.com/a/b"
+    uri"/".addPath("a").toString shouldBe "/a"
+    uri"/a".addPath("b").toString shouldBe "/a/b"
+    uri"a".addPath("b").toString shouldBe "a/b"
+    uri"a/".addPath("b").toString shouldBe "a/b"
+  }
 }
