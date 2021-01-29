@@ -49,7 +49,7 @@ object UriInterpolator {
       UriBuilder.Fragment
     )
 
-    val startingUri = Uri(None, None, Nil, Nil, None)
+    val startingUri = Uri(None, None, Uri.EmptyPath, Nil, None)
 
     val (uri, leftTokens) =
       builders.foldLeft((startingUri, tokens)) { case ((u, t), builder) =>
@@ -458,8 +458,18 @@ object UriInterpolator {
     }
 
     case object Path extends UriBuilder {
-      override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) =
-        fromStartingToken(u, t, PathStart, Set[Token](QueryStart, FragmentStart), pathFromTokens)
+      override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
+        val noSchemeAndAuthority = u.scheme.isEmpty && u.authority.isEmpty
+        val (uu, tt) = if (noSchemeAndAuthority && t.startsWith(List(PathStart, StringToken(""), SlashInPath))) {
+          // the uri is relative and starts with a /, which will be parsed as an empty initial component - removing
+          (u, PathStart +: t.drop(3))
+        } else if (noSchemeAndAuthority && t.headOption.contains(PathStart)) {
+          // the uri is relative and the path is relative as well - doesn't start with /
+          (u.copy(pathSegments = Uri.RelativePath(Nil)), t)
+        } else (u, t)
+
+        fromStartingToken(uu, tt, PathStart, Set[Token](QueryStart, FragmentStart), pathFromTokens)
+      }
 
       private def pathFromTokens(u: Uri, tokens: Vector[Token]): Uri = {
         u.addPath(tokensToStringSeq(tokens))
@@ -675,7 +685,7 @@ object UriInterpolator {
     }
 
     if (endIndex + 1 == tokens.length) {
-      tokens // no path, query of fragment at all
+      tokens // no path, query or fragment at all
     } else {
       val afterEndIndex = tokens(endIndex + 1)
       if (afterEndIndex != PathStart && afterEndIndex != QueryStart && afterEndIndex != FragmentStart) {

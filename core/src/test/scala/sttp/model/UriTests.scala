@@ -15,6 +15,7 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
 
   val wholeUriTestData = List(
     Uri.unsafeApply("http", None, "example.com", None, Nil, Nil, None) -> "http://example.com",
+    Uri.unsafeApply("http", None, "example.com", None, List(""), Nil, None) -> "http://example.com/",
     Uri.unsafeApply(
       "https",
       None,
@@ -60,12 +61,13 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
     ) -> "http://example.com/a b",
     Uri.unsafeApply("http", None, Nil, Nil, None) -> "http:",
     Uri.unsafeApply("mailto", List("user@example.com")) -> "mailto:user@example.com",
-    Uri.relative(List("x", "y")) -> "x/y",
-    Uri.relative(List("", "x", "y")) -> "/x/y",
-    Uri.relative(List("..", "x", "y")) -> "../x/y",
-    Uri.relative(Nil) -> "",
-    Uri.relative(List("x"), Some("a")) -> "x#a",
-    Uri.relative(List("x"), List(QS.KeyValue("p1", "v1")), Some("a")) -> "x?p1=v1#a"
+    Uri.relative(List("x", "y")) -> "/x/y",
+    Uri.relative(List("x", "y", "")) -> "/x/y/",
+    Uri.relative(List("")) -> "/",
+    Uri.relative(List("x"), Some("a")) -> "/x#a",
+    Uri.relative(List("x"), List(QS.KeyValue("p1", "v1")), Some("a")) -> "/x?p1=v1#a",
+    Uri.pathRelative(List("x", "y")) -> "x/y",
+    Uri.pathRelative(List("..", "x", "y")) -> "../x/y"
   )
 
   for {
@@ -211,5 +213,17 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
 
       caught.getMessage.toLowerCase() should include(expectedException)
     }
+  }
+
+  test("should add path ignoring the trailing empty segment if necessary") {
+    uri"http://x.com".addPath("a").toString shouldBe "http://x.com/a"
+    uri"http://x.com/".addPath("a").toString shouldBe "http://x.com/a"
+    uri"http://x.com/a".addPath("b").toString shouldBe "http://x.com/a/b"
+    uri"http://x.com".addPath("a", "b").toString shouldBe "http://x.com/a/b"
+    uri"http://x.com/".addPath("a", "b").toString shouldBe "http://x.com/a/b"
+    uri"/".addPath("a").toString shouldBe "/a"
+    uri"/a".addPath("b").toString shouldBe "/a/b"
+    uri"a".addPath("b").toString shouldBe "a/b"
+    uri"a/".addPath("b").toString shouldBe "a/b"
   }
 }

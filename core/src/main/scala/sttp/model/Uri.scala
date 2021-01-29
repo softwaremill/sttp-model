@@ -2,7 +2,16 @@ package sttp.model
 
 import java.net.URI
 import sttp.model.Uri.QuerySegment.{KeyValue, Plain, Value}
-import sttp.model.Uri.{Authority, FragmentSegment, HostSegment, PathSegment, QuerySegment, Segment, UserInfo}
+import sttp.model.Uri.{
+  Authority,
+  FragmentSegment,
+  HostSegment,
+  PathSegments,
+  PathSegment,
+  QuerySegment,
+  Segment,
+  UserInfo
+}
 import sttp.model.internal.{Rfc3986, UriCompatibility, Validate}
 import sttp.model.internal.Validate._
 
@@ -33,7 +42,7 @@ import sttp.model.internal.Rfc3986.encode
 case class Uri(
     scheme: Option[String],
     authority: Option[Authority],
-    pathSegments: Seq[Segment],
+    pathSegments: PathSegments,
     querySegments: Seq[QuerySegment],
     fragmentSegment: Option[Segment]
 ) {
@@ -119,12 +128,17 @@ case class Uri(
   @deprecated(message = "Use addPath, withPath or withWholePath", since = "1.2.0")
   def pathSegments(ss: scala.collection.Seq[Segment]): Uri = withPathSegments(ss.toList)
 
-  def addPath(p: String): Uri = addPath(List(p))
   def addPath(p: String, ps: String*): Uri = addPath(p :: ps.toList)
   def addPath(ps: scala.collection.Seq[String]): Uri = addPathSegments(ps.toList.map(PathSegment(_)))
   def addPathSegment(s: Segment): Uri = addPathSegments(List(s))
   def addPathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = addPathSegments(s1 :: s2 :: ss.toList)
-  def addPathSegments(ss: scala.collection.Seq[Segment]): Uri = this.copy(pathSegments = pathSegments ++ ss.toList)
+  def addPathSegments(ss: scala.collection.Seq[Segment]): Uri = copy(pathSegments = pathSegments.addSegments(ss))
+
+  def withPath(p: String, ps: String*): Uri = withPath(p :: ps.toList)
+  def withPath(ps: scala.collection.Seq[String]): Uri = withPathSegments(ps.toList.map(PathSegment(_)))
+  def withPathSegment(s: Segment): Uri = withPathSegments(List(s))
+  def withPathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = withPathSegments(s1 :: s2 :: ss.toList)
+  def withPathSegments(ss: scala.collection.Seq[Segment]): Uri = copy(pathSegments = pathSegments.withSegments(ss))
 
   /** Replace the whole path with the given one. Leading `/` will be removed, if present, and the path will be
     * split into segments on `/`.
@@ -135,13 +149,8 @@ case class Uri(
     val ps = pWithoutLeadingSlash.split("/", -1).toList
     withPath(ps)
   }
-  def withPath(p: String, ps: String*): Uri = withPath(p :: ps.toList)
-  def withPath(ps: scala.collection.Seq[String]): Uri = withPathSegments(ps.toList.map(PathSegment(_)))
-  def withPathSegment(s: Segment): Uri = withPathSegments(List(s))
-  def withPathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = withPathSegments(s1 :: s2 :: ss.toList)
-  def withPathSegments(ss: scala.collection.Seq[Segment]): Uri = this.copy(pathSegments = ss.toList)
 
-  def path: Seq[String] = pathSegments.map(_.v)
+  def path: Seq[String] = pathSegments.segments.map(_.v).toList
 
   //
 
@@ -253,8 +262,13 @@ case class Uri(
 
     val schemeS = scheme.map(s => encode(Rfc3986.Scheme)(s) + ":").getOrElse("")
     val authorityS = authority.fold("")(_.toString)
-    val pathPrefixS = if (pathSegments.isEmpty || authority.isEmpty) "" else "/"
-    val pathS = pathSegments.map(_.encoded).mkString("/")
+    val pathPrefixS = pathSegments match {
+      case _ if authority.isEmpty && scheme.isDefined => ""
+      case Uri.EmptyPath                              => ""
+      case Uri.AbsolutePath(_)                        => "/"
+      case Uri.RelativePath(_)                        => ""
+    }
+    val pathS = pathSegments.segments.map(_.encoded).mkString("/")
     val queryPrefixS = if (querySegments.isEmpty) "" else "?"
 
     val queryS = encodeQuerySegments(querySegments.toList, previousWasPlain = true, new StringBuilder())
@@ -328,7 +342,13 @@ object Uri extends UriInterpolator {
       fragmentSegment: Option[Segment]
   ): Either[String, Uri] =
     Validate.all(validateScheme(Some(scheme)), validateHost(authority.map(_.hostSegment.v)))(
-      apply(Some(scheme), authority, pathSegments, querySegments, fragmentSegment)
+      apply(
+        Some(scheme),
+        authority,
+        PathSegments.absoluteOrEmpty(pathSegments),
+        querySegments,
+        fragmentSegment
+      )
     )
 
   //
@@ -385,23 +405,29 @@ object Uri extends UriInterpolator {
   //
 
   def apply(host: String): Uri =
-    apply(Some("http"), Some(Authority(host)), Vector.empty, Vector.empty, None)
+    apply(Some("http"), Some(Authority(host)), EmptyPath, Vector.empty, None)
   def apply(host: String, port: Int): Uri =
-    apply(Some("http"), Some(Authority(host, port)), Vector.empty, Vector.empty, None)
+    apply(Some("http"), Some(Authority(host, port)), EmptyPath, Vector.empty, None)
   def apply(host: String, port: Int, path: Seq[String]): Uri =
-    apply(Some("http"), Some(Authority(host, port)), path.map(PathSegment(_)), Vector.empty, None)
+    apply(Some("http"), Some(Authority(host, port)), PathSegments.absoluteOrEmptyS(path), Vector.empty, None)
   def apply(scheme: String, path: Seq[String]): Uri =
-    apply(Some(scheme), None, path.map(PathSegment(_)), Vector.empty, None)
+    apply(Some(scheme), None, PathSegments.absoluteOrEmptyS(path), Vector.empty, None)
   def apply(scheme: String, host: String): Uri =
-    apply(Some(scheme), Some(Authority(host)), Vector.empty, Vector.empty, None)
+    apply(Some(scheme), Some(Authority(host)), EmptyPath, Vector.empty, None)
   def apply(scheme: String, host: String, port: Int): Uri =
-    apply(Some(scheme), Some(Authority(host, port)), Vector.empty, Vector.empty, None)
+    apply(Some(scheme), Some(Authority(host, port)), EmptyPath, Vector.empty, None)
   def apply(scheme: String, host: String, port: Int, path: Seq[String]): Uri =
-    apply(Some(scheme), Some(Authority(host, port)), path.map(PathSegment(_)), Vector.empty, None)
+    apply(Some(scheme), Some(Authority(host, port)), PathSegments.absoluteOrEmptyS(path), Vector.empty, None)
   def apply(scheme: String, host: String, path: Seq[String]): Uri =
-    apply(Some(scheme), Some(Authority(host)), path.map(PathSegment(_)), Vector.empty, None)
+    apply(Some(scheme), Some(Authority(host)), PathSegments.absoluteOrEmptyS(path), Vector.empty, None)
   def apply(scheme: String, host: String, path: Seq[String], fragment: Option[String]): Uri =
-    apply(Some(scheme), Some(Authority(host)), path.map(PathSegment(_)), Vector.empty, fragment.map(FragmentSegment(_)))
+    apply(
+      Some(scheme),
+      Some(Authority(host)),
+      PathSegments.absoluteOrEmptyS(path),
+      Vector.empty,
+      fragment.map(FragmentSegment(_))
+    )
   def apply(
       scheme: String,
       userInfo: Option[UserInfo],
@@ -414,7 +440,7 @@ object Uri extends UriInterpolator {
     apply(
       Some(scheme),
       Some(Authority(userInfo, HostSegment(host), port)),
-      path.map(PathSegment(_)),
+      PathSegments.absoluteOrEmptyS(path),
       querySegments,
       fragment.map(FragmentSegment(_))
     )
@@ -429,7 +455,7 @@ object Uri extends UriInterpolator {
     apply(
       Some(scheme),
       authority,
-      path,
+      PathSegments.absoluteOrEmpty(path),
       querySegments,
       fragment
     )
@@ -437,10 +463,25 @@ object Uri extends UriInterpolator {
 
   //
 
+  /** Create a relative URI with an absolute path. */
   def relative(path: Seq[String]): Uri = relative(path, Vector.empty, None)
+
+  /** Create a relative URI with an absolute path. */
   def relative(path: Seq[String], fragment: Option[String]): Uri = relative(path, Vector.empty, fragment)
+
+  /** Create a relative URI with an absolute path. */
   def relative(path: Seq[String], querySegments: Seq[QuerySegment], fragment: Option[String]): Uri =
-    apply(None, None, path.map(PathSegment(_)), querySegments, fragment.map(FragmentSegment(_)))
+    apply(None, None, PathSegments.absoluteOrEmptyS(path), querySegments, fragment.map(FragmentSegment(_)))
+
+  /** Create a relative URI with a relative path. */
+  def pathRelative(path: Seq[String]): Uri = pathRelative(path, Vector.empty, None)
+
+  /** Create a relative URI with a relative path. */
+  def pathRelative(path: Seq[String], fragment: Option[String]): Uri = pathRelative(path, Vector.empty, fragment)
+
+  /** Create a relative URI with a relative path. */
+  def pathRelative(path: Seq[String], querySegments: Seq[QuerySegment], fragment: Option[String]): Uri =
+    apply(None, None, RelativePath(path.map(PathSegment(_))), querySegments, fragment.map(FragmentSegment(_)))
 
   //
 
@@ -515,6 +556,43 @@ object Uri extends UriInterpolator {
 
   object HostSegment {
     def apply(v: String): Segment = Segment(v, HostEncoding.Standard)
+  }
+
+  sealed trait PathSegments {
+    def segments: collection.Seq[Segment]
+
+    def add(p: String, ps: String*): PathSegments = add(p :: ps.toList)
+    def add(ps: scala.collection.Seq[String]): PathSegments = addSegments(ps.toList.map(PathSegment(_)))
+    def addSegment(s: Segment): PathSegments = addSegments(List(s))
+    def addSegments(s1: Segment, s2: Segment, ss: Segment*): PathSegments = addSegments(s1 :: s2 :: ss.toList)
+    def addSegments(ss: scala.collection.Seq[Segment]): PathSegments = {
+      val base = if (segments.lastOption.exists(_.v.isEmpty)) segments.init else segments
+      withSegments(base ++ ss.toList)
+    }
+
+    def withS(p: String, ps: String*): PathSegments = withS(p :: ps.toList)
+    def withS(ps: scala.collection.Seq[String]): PathSegments = withSegments(ps.toList.map(PathSegment(_)))
+    def withSegment(s: Segment): PathSegments = withSegments(List(s))
+    def withSegments(s1: Segment, s2: Segment, ss: Segment*): PathSegments = withSegments(s1 :: s2 :: ss.toList)
+    def withSegments(ss: scala.collection.Seq[Segment]): PathSegments
+  }
+  object PathSegments {
+    def absoluteOrEmptyS(segments: Seq[String]): PathSegments = absoluteOrEmpty(segments.map(PathSegment(_)))
+    def absoluteOrEmpty(segments: Seq[Segment]): PathSegments =
+      if (segments.isEmpty) EmptyPath else AbsolutePath(segments)
+  }
+  case object EmptyPath extends PathSegments {
+    override def withSegments(ss: collection.Seq[Segment]): PathSegments = AbsolutePath(ss.toList)
+    override def segments: collection.Seq[Segment] = Nil
+    override def toString: String = ""
+  }
+  case class AbsolutePath(segments: Seq[Segment]) extends PathSegments {
+    override def withSegments(ss: scala.collection.Seq[Segment]): AbsolutePath = copy(segments = ss.toList)
+    override def toString: String = "/" + segments.map(_.encoded).mkString("/")
+  }
+  case class RelativePath(segments: Seq[Segment]) extends PathSegments {
+    override def withSegments(ss: scala.collection.Seq[Segment]): RelativePath = copy(segments = ss.toList)
+    override def toString: String = segments.map(_.encoded).mkString("/")
   }
 
   object PathSegment {
