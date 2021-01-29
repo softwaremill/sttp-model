@@ -1,13 +1,12 @@
 import com.softwaremill.SbtSoftwareMillBrowserTestJS._
 
 val scala2_11 = "2.11.12"
-val scala2_12 = "2.12.12"
+val scala2_12 = "2.12.13"
 val scala2_13 = "2.13.4"
 val scala2 = List(scala2_11, scala2_12, scala2_13)
-val scala3 = List("3.0.0-M2", "3.0.0-M3")
+val scala3 = List("3.0.0-M3")
 
-val scalaTestVersion = "3.2.3"
-val scalaNativeTestInterfaceVersion = "0.4.0-M2"
+val scalaTestVersion = "3.2.4-M1"
 
 excludeLintKeys in Global ++= Set(ideSkipProject)
 
@@ -50,10 +49,8 @@ val commonJsSettings = commonSettings ++ Seq(
 )
 
 val commonNativeSettings = commonSettings ++ Seq(
-  nativeLinkStubs := true,
   ideSkipProject := true,
   libraryDependencies ++= Seq(
-    "org.scala-native" %%% "test-interface" % scalaNativeTestInterfaceVersion,
     "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
   )
 )
@@ -91,6 +88,6 @@ lazy val core = (projectMatrix in file("core"))
     )
   )
   .nativePlatform(
-    scalaVersions = List(scala2_11),
+    scalaVersions = scala2,
     settings = commonNativeSettings
   )
