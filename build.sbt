@@ -70,7 +70,7 @@ val compileAndTest = "compile->compile;test->test"
 
 lazy val rootProject = (project in file("."))
   .settings(commonSettings: _*)
-  .settings(skip in publish := true, name := "sttp-model")
+  .settings(skip in publish := true, name := "sttp-model", scalaVersion := scala2_13)
   .aggregate(projectAggregates: _*)
 
 lazy val core = (projectMatrix in file("core"))
