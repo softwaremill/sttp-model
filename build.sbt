@@ -4,9 +4,9 @@ val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.13"
 val scala2_13 = "2.13.4"
 val scala2 = List(scala2_11, scala2_12, scala2_13)
-val scala3 = List("3.0.0-M2", "3.0.0-M3")
+val scala3 = List("3.0.0-M3")
 
-def scalaTestVersion(scalaVersion: String) = if(scalaVersion == "3.0.0-M2") "3.2.3" else "3.2.4-M1"
+val scalaTestVersion = "3.2.4-M1"
 
 excludeLintKeys in Global ++= Set(ideSkipProject)
 
@@ -27,7 +27,7 @@ val commonJvmSettings = commonSettings ++ Seq(
   scalacOptions ++= Seq("-target:jvm-1.8"),
   ideSkipProject := (scalaVersion.value != scala2_13),
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % scalaTestVersion(scalaVersion.value) % Test
+    "org.scalatest" %% "scalatest" % scalaTestVersion % Test
   )
 )
 
@@ -44,14 +44,14 @@ val commonJsSettings = commonSettings ++ Seq(
   },
   libraryDependencies ++= Seq(
     "org.scala-js" %%% "scalajs-dom" % "1.1.0",
-    "org.scalatest" %%% "scalatest" % scalaTestVersion(scalaVersion.value) % Test
+    "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
   )
 )
 
 val commonNativeSettings = commonSettings ++ Seq(
   ideSkipProject := true,
   libraryDependencies ++= Seq(
-    "org.scalatest" %%% "scalatest" % scalaTestVersion(scalaVersion.value) % Test
+    "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
   )
 )
 
