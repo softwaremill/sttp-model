@@ -619,7 +619,7 @@ object Uri extends UriInterpolator {
     }
 
     /** A query fragment which contains only the value, without a key. */
-    case class Value(v: String, relaxedEncoding: Encoding = QuerySegmentEncoding.StandardValue) extends QuerySegment {
+    case class Value(v: String, encoding: Encoding = QuerySegmentEncoding.StandardValue) extends QuerySegment {
       override def toString = s"Value($v,[encoding])"
     }
 
