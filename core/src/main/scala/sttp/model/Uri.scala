@@ -614,10 +614,14 @@ object Uri extends UriInterpolator {
         v: String,
         keyEncoding: Encoding = QuerySegmentEncoding.StandardKey,
         valueEncoding: Encoding = QuerySegmentEncoding.StandardValue
-    ) extends QuerySegment
+    ) extends QuerySegment {
+      override def toString = s"KeyValue($k,$v,[keyEncoding],[valueEncoding])"
+    }
 
     /** A query fragment which contains only the value, without a key. */
-    case class Value(v: String, relaxedEncoding: Encoding = QuerySegmentEncoding.StandardValue) extends QuerySegment
+    case class Value(v: String, relaxedEncoding: Encoding = QuerySegmentEncoding.StandardValue) extends QuerySegment {
+      override def toString = s"Value($v,[encoding])"
+    }
 
     /** A query fragment which will be inserted into the query, without and
       * preceding or following separators. Allows constructing query strings
@@ -632,7 +636,9 @@ object Uri extends UriInterpolator {
       * [[https://stackoverflow.com/questions/2322764/what-characters-must-be-escaped-in-an-http-query-string]]
       * [[https://stackoverflow.com/questions/2366260/whats-valid-and-whats-not-in-a-uri-query]]
       */
-    case class Plain(v: String, encoding: Encoding = QuerySegmentEncoding.StandardValue) extends QuerySegment
+    case class Plain(v: String, encoding: Encoding = QuerySegmentEncoding.StandardValue) extends QuerySegment {
+      override def toString = s"Plain($v,[encoding])"
+    }
 
     private[model] def fromQueryParams(mqp: QueryParams): Iterable[QuerySegment] = {
       mqp.toMultiSeq.flatMap { case (k, vs) =>
