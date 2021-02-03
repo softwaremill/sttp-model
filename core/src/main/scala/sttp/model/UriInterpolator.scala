@@ -588,6 +588,7 @@ object UriInterpolator {
         t match {
           case ExpressionToken(_) => true
           case StringToken(_)     => true
+          case EqInQuery          => true // #64: query values can contain = signs as well
           case _                  => false
         }
 
@@ -607,6 +608,7 @@ object UriInterpolator {
               .flatMap {
                 case ExpressionToken(e) => anyToStringOpt(e)
                 case StringToken(s)     => Some(decode(s, decodePlusAsSpace))
+                case EqInQuery          => Some("=")
                 case _                  => None
               }
 

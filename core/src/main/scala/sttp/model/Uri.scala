@@ -612,21 +612,19 @@ object Uri extends UriInterpolator {
     case class KeyValue(
         k: String,
         v: String,
-        keyEncoding: Encoding = QuerySegmentEncoding.Standard,
-        valueEncoding: Encoding = QuerySegmentEncoding.Standard
+        keyEncoding: Encoding = QuerySegmentEncoding.StandardKey,
+        valueEncoding: Encoding = QuerySegmentEncoding.StandardValue
     ) extends QuerySegment
 
-    /** A query fragment which contains only the value, without a key.
-      */
-    case class Value(v: String, relaxedEncoding: Encoding = QuerySegmentEncoding.Standard) extends QuerySegment
+    /** A query fragment which contains only the value, without a key. */
+    case class Value(v: String, relaxedEncoding: Encoding = QuerySegmentEncoding.StandardValue) extends QuerySegment
 
     /** A query fragment which will be inserted into the query, without and
       * preceding or following separators. Allows constructing query strings
       * which are not (only) &-separated key-value pairs.
       *
-      * @param encoding Should reserved characters (in the RFC3986 sense),
-      * which are allowed in the query string, but can be also escaped be
-      * left unchanged. These characters are:
+      * @param encoding How to encode the value, and which characters should be escaped. The RFC3986 standard
+      * defines that the query can include these special characters, without escaping:
       * {{{
       * /?:@-._~!$&()*+,;=
       * }}}
@@ -634,7 +632,7 @@ object Uri extends UriInterpolator {
       * [[https://stackoverflow.com/questions/2322764/what-characters-must-be-escaped-in-an-http-query-string]]
       * [[https://stackoverflow.com/questions/2366260/whats-valid-and-whats-not-in-a-uri-query]]
       */
-    case class Plain(v: String, encoding: Encoding = QuerySegmentEncoding.Standard) extends QuerySegment
+    case class Plain(v: String, encoding: Encoding = QuerySegmentEncoding.StandardValue) extends QuerySegment
 
     private[model] def fromQueryParams(mqp: QueryParams): Iterable[QuerySegment] = {
       mqp.toMultiSeq.flatMap { case (k, vs) =>
@@ -663,14 +661,18 @@ object Uri extends UriInterpolator {
 
   object QuerySegmentEncoding {
 
-    /** Encodes all reserved characters using [[java.net.URLEncoder.encode()]].
-      */
+    /** Encodes all reserved characters using [[java.net.URLEncoder.encode()]]. */
     val All: Encoding = UriCompatibility.encodeQuery(_, "UTF-8")
 
-    /** Encodes only the `&` and `=` reserved characters, which are usually
-      * used to separate query parameter names and values.
+    /** Encodes only the `&` and `=` reserved characters, which are usually used to separate query parameter names and
+      * values.
       */
-    val Standard: Encoding = encode(Rfc3986.QueryNoStandardDelims, spaceAsPlus = true, encodePlus = true)
+    val StandardKey: Encoding = encode(Rfc3986.Query -- Set('&', '='), spaceAsPlus = true, encodePlus = true)
+
+    /** Encodes only the `&` reserved character, which is usually used to separate query parameter names and values.
+      * The '=' sign is allowed in values.
+      */
+    val StandardValue: Encoding = encode(Rfc3986.Query -- Set('&'), spaceAsPlus = true, encodePlus = true)
 
     /** Doesn't encode any of the reserved characters, leaving intact all
       * characters allowed in the query string as defined by RFC3986.

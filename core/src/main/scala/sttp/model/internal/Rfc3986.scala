@@ -13,7 +13,6 @@ object Rfc3986 {
   val Query: Set[Char] = PChar ++ Set('/', '?')
   val Fragment: Set[Char] = Query
 
-  val QueryNoStandardDelims: Set[Char] = Query -- Set('&', '=')
   val QueryWithBrackets: Set[Char] = Query ++ Set('[', ']')
 
   /** @param spaceAsPlus In the query, space is encoded as a `+`. In other
