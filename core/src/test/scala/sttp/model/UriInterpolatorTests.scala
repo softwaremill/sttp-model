@@ -106,6 +106,10 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
       (uri"http://example.com?x=z$v1", s"http://example.com?x=z$v1"),
       (uri"http://example.com?x=a+b", s"http://example.com?x=a+b"),
       (uri"http://example.com?x=a=b", s"http://example.com?x=a%3Db"),
+      (
+        uri"http://example.com?x=a=b".querySegmentsEncoding(Uri.QuerySegmentEncoding.StandardValue),
+        s"http://example.com?x=a=b"
+      ),
       (uri"http://example.com?x=${"a=b"}", s"http://example.com?x=a%3Db"),
       (uri"http://example.com?x=a%3Db&y=c%3Dd", s"http://example.com?x=a%3Db&y=c%3Dd")
     ),

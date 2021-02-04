@@ -4,10 +4,11 @@ import java.net.URI
 import sttp.model.Uri.QuerySegment.{KeyValue, Plain, Value}
 import sttp.model.Uri.{
   Authority,
+  Encoding,
   FragmentSegment,
   HostSegment,
-  PathSegments,
   PathSegment,
+  PathSegments,
   QuerySegment,
   Segment,
   UserInfo
@@ -239,6 +240,34 @@ case class Uri(
   def isRelative: Boolean = !isAbsolute
 
   def resolve(other: Uri): Uri = Uri(toJavaUri.resolve(other.toJavaUri))
+
+  //
+
+  def hostSegmentEncoding(encoding: Encoding): Uri =
+    copy(authority = authority.map(a => a.copy(hostSegment = a.hostSegment.encoding(encoding))))
+
+  def pathSegmentsEncoding(encoding: Encoding): Uri = copy(pathSegments = pathSegments match {
+    case Uri.EmptyPath              => Uri.EmptyPath
+    case Uri.AbsolutePath(segments) => Uri.AbsolutePath(segments.map(_.encoding(encoding)))
+    case Uri.RelativePath(segments) => Uri.RelativePath(segments.map(_.encoding(encoding)))
+  })
+
+  /** Replace encoding for query segments: applies to key-value, only-value and plain ones. */
+  def querySegmentsEncoding(encoding: Encoding): Uri = copy(querySegments = querySegments.map {
+    case KeyValue(k, v, _, _) => KeyValue(k, v, encoding, encoding)
+    case Value(v, _)          => Value(v, encoding)
+    case Plain(v, _)          => Plain(v, encoding)
+  })
+
+  /** Replace encoding for the value part of key-value query segments and for only-value ones. */
+  def queryValueSegmentsEncoding(valueEncoding: Encoding): Uri = copy(querySegments = querySegments.map {
+    case KeyValue(k, v, keyEncoding, _) => KeyValue(k, v, keyEncoding, valueEncoding)
+    case Value(v, _)                    => Value(v, valueEncoding)
+    case s                              => s
+  })
+
+  def fragmentSegmentEncoding(encoding: Encoding): Uri =
+    copy(fragmentSegment = fragmentSegment.map(f => f.encoding(encoding)))
 
   override def toString: String = {
     @tailrec
@@ -552,6 +581,7 @@ object Uri extends UriInterpolator {
 
   case class Segment(v: String, encoding: Encoding) {
     def encoded: String = encoding(v)
+    def encoding(e: Encoding): Segment = copy(encoding = e)
   }
 
   object HostSegment {
