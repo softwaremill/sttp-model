@@ -612,8 +612,8 @@ object Uri extends UriInterpolator {
     case class KeyValue(
         k: String,
         v: String,
-        keyEncoding: Encoding = QuerySegmentEncoding.StandardKey,
-        valueEncoding: Encoding = QuerySegmentEncoding.StandardValue
+        keyEncoding: Encoding = QuerySegmentEncoding.Standard,
+        valueEncoding: Encoding = QuerySegmentEncoding.Standard
     ) extends QuerySegment {
       override def toString = s"KeyValue($k,$v,[keyEncoding],[valueEncoding])"
     }
@@ -673,7 +673,7 @@ object Uri extends UriInterpolator {
     /** Encodes only the `&` and `=` reserved characters, which are usually used to separate query parameter names and
       * values.
       */
-    val StandardKey: Encoding = encode(Rfc3986.Query -- Set('&', '='), spaceAsPlus = true, encodePlus = true)
+    val Standard: Encoding = encode(Rfc3986.Query -- Set('&', '='), spaceAsPlus = true, encodePlus = true)
 
     /** Encodes only the `&` reserved character, which is usually used to separate query parameter names and values.
       * The '=' sign is allowed in values.

@@ -10,8 +10,7 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
   val v2queryEncoded = "a+c"
   val v2encoded = "a%20c"
   val v3 = "a?=&c"
-  val v3encodedKey = "a?%3D%26c"
-  val v3encodedValue = "a?=%26c"
+  val v3encoded = "a?%3D%26c"
   val v4 = "f/g"
   val v4encoded = "f%2Fg"
   val v5 = "a:b"
@@ -102,13 +101,13 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
       (uri"http://example.com?x=$v1", s"http://example.com?x=$v1"),
       (uri"http://example.com/?x=$v1", s"http://example.com/?x=$v1"),
       (uri"http://example.com?x=$v2", s"http://example.com?x=$v2queryEncoded"),
-      (uri"http://example.com?x=$v3", s"http://example.com?x=$v3encodedValue"),
+      (uri"http://example.com?x=$v3", s"http://example.com?x=$v3encoded"),
       (uri"http://example.com?x=$v1$v1", s"http://example.com?x=$v1$v1"),
       (uri"http://example.com?x=z$v1", s"http://example.com?x=z$v1"),
       (uri"http://example.com?x=a+b", s"http://example.com?x=a+b"),
-      (uri"http://example.com?x=a=b", s"http://example.com?x=a=b"),
-      (uri"http://example.com?x=${"a=b"}", s"http://example.com?x=a=b"),
-      (uri"http://example.com?x=a=b&y=c=d", s"http://example.com?x=a=b&y=c=d")
+      (uri"http://example.com?x=a=b", s"http://example.com?x=a%3Db"),
+      (uri"http://example.com?x=${"a=b"}", s"http://example.com?x=a%3Db"),
+      (uri"http://example.com?x=a%3Db&y=c%3Dd", s"http://example.com?x=a%3Db&y=c%3Dd")
     ),
     "query parameter without value" -> List(
       (uri"http://example.com?$v1", s"http://example.com?$v1"),
@@ -144,7 +143,7 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
     "everything" -> List(
       (
         uri"${"http"}://$v1.$v2.com/$v1/$v2?$v1=$v2&$v3=$v4#$v1",
-        s"http://$v1.$v2encoded.com/$v1/$v2encoded?$v1=$v2queryEncoded&$v3encodedKey=$v4#$v1"
+        s"http://$v1.$v2encoded.com/$v1/$v2encoded?$v1=$v2queryEncoded&$v3encoded=$v4#$v1"
       )
     ),
     "embed whole url" -> List(
