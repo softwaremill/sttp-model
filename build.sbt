@@ -14,13 +14,7 @@ def dependenciesFor(version: String)(deps: (Option[(Long, Long)] => ModuleID)*):
   deps.map(_.apply(CrossVersion.partialVersion(version)))
 
 val commonSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
-  organization := "com.softwaremill.sttp.model",
-  // doc generation is broken in dotty
-  sources in (Compile, doc) := {
-    val scalaV = scalaVersion.value
-    val current = (sources in (Compile, doc)).value
-    if (scala3.contains(scalaV)) Seq() else current
-  }
+  organization := "com.softwaremill.sttp.model"
 )
 
 val commonJvmSettings = commonSettings ++ Seq(
