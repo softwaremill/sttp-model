@@ -1,7 +1,8 @@
 package sttp.model
 
+import sttp.model.Part._
+
 import scala.collection.immutable.Seq
-import Part._
 
 /** A decoded representation of a multipart part.
   */
@@ -51,9 +52,9 @@ case class Part[+T](
   def dispositionParamsSeq: Seq[(String, String)] = (NameDispositionParam -> name) :: otherDispositionParams.toList
 
   def addCharsetToContentType(charset: String): Part[T] = {
-    contentType.map(ct => if (!ct.contains("charset")) s"$ct; charset=$charset" else ct) match {
-      case Some(contentTypeWithCharset) => contentType(contentTypeWithCharset)
-      case None                         => this
+    contentType match {
+      case Some(ct) if !ct.toLowerCase.contains("charset") => contentType(s"$ct; charset=$charset")
+      case _                                               => this
     }
   }
 }
