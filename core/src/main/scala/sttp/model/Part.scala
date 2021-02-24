@@ -49,6 +49,13 @@ case class Part[+T](
   // some servers require 'name' disposition parameter to be first
   // see: https://stackoverflow.com/questions/20261088/certain-order-of-fields-in-content-disposition-with-jersey-client
   def dispositionParamsSeq: Seq[(String, String)] = (NameDispositionParam -> name) :: otherDispositionParams.toList
+
+  def addCharsetToContentType(charset: String): Part[T] = {
+    contentType.map(ct => if (!ct.contains("charset")) s"$ct; charset=$charset" else ct) match {
+      case Some(contentTypeWithCharset) => contentType(contentTypeWithCharset)
+      case None                         => this
+    }
+  }
 }
 
 object Part {
