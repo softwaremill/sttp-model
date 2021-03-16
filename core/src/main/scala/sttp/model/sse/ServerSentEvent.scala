@@ -3,11 +3,19 @@ package sttp.model.sse
 import scala.util.Try
 
 case class ServerSentEvent(
-                            data: Option[String] = None,
-                            eventType: Option[String] = None,
-                            id: Option[String] = None,
-                            retry: Option[Int] = None
-                          )
+    data: Option[String] = None,
+    eventType: Option[String] = None,
+    id: Option[String] = None,
+    retry: Option[Int] = None
+) {
+  override def toString: String = {
+    val _data = data.map(_.split("\n")).map(_.map(line => Some(s"data: $line"))).getOrElse(Array.empty[Option[String]])
+    val _event = eventType.map(event => s"event: $event")
+    val _id = id.map(id => s"id: $id")
+    val _retry = retry.map(retryCount => s"retry: $retryCount")
+    (_data :+ _event :+ _id :+ _retry).flatten.mkString("\n")
+  }
+}
 
 object ServerSentEvent {
   // https://html.spec.whatwg.org/multipage/server-sent-events.html
@@ -24,18 +32,10 @@ object ServerSentEvent {
     }
   }
 
-  def composeSSE(sse: ServerSentEvent): String = {
-    val data = sse.data.map(_.split("\n")).map(_.map(line => Some(s"data: $line"))).getOrElse(Array.empty[Option[String]])
-    val event = sse.eventType.map(event => s"event: $event")
-    val id = sse.id.map(id => s"id: $id")
-    val retry = sse.retry.map(retryCount => s"retry: $retryCount")
-    (data :+ event :+ id :+ retry).flatten.mkString("\n")
-  }
-
   private def combineData(event: ServerSentEvent, newData: String): ServerSentEvent = {
     event match {
-      case e@ServerSentEvent(Some(oldData), _, _, _) => e.copy(data = Some(s"$oldData\n$newData"))
-      case e@ServerSentEvent(None, _, _, _) => e.copy(data = Some(newData))
+      case e @ ServerSentEvent(Some(oldData), _, _, _) => e.copy(data = Some(s"$oldData\n$newData"))
+      case e @ ServerSentEvent(None, _, _, _)          => e.copy(data = Some(newData))
     }
   }
 
