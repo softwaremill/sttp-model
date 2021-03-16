@@ -30,7 +30,7 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
   }
 
 
-  "composeSSE" should "successfully serialise simple Server Sent Event to ByteString" in {
+  "composeSSE" should "successfully serialise Server Sent Event with all fields set" in {
     val sse = ServerSentEvent(Some("data"), Some("event"), Some("id1"), Some(10))
     ServerSentEvent.composeSSE(sse) shouldBe
       s"""data: data
