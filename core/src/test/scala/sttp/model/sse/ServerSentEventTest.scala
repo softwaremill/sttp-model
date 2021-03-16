@@ -28,4 +28,38 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
       ServerSentEvent.parse(lines) shouldBe expected
     }
   }
+
+
+  "composeSSE" should "successfully serialise Server Sent Event with all fields set" in {
+    val sse = ServerSentEvent(Some("data"), Some("event"), Some("id1"), Some(10))
+    ServerSentEvent.composeSSE(sse) shouldBe
+      s"""data: data
+         |event: event
+         |id: id1
+         |retry: 10""".stripMargin
+  }
+
+  "composeSSE" should "omit fields that are not set" in {
+    val sse = ServerSentEvent(Some("data"), None, Some("id1"), None)
+    ServerSentEvent.composeSSE(sse) shouldBe
+      s"""data: data
+         |id: id1""".stripMargin
+  }
+
+  "composeSSE" should "successfully serialise multiline data event" in {
+    val sse = ServerSentEvent(
+      Some(
+        """some data info 1
+          |some data info 2
+          |some data info 3""".stripMargin),
+      None,
+      None,
+      None
+    )
+
+    ServerSentEvent.composeSSE(sse) shouldBe
+      s"""data: some data info 1
+         |data: some data info 2
+         |data: some data info 3""".stripMargin
+  }
 }
