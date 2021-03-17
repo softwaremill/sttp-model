@@ -13,6 +13,20 @@ case class MediaType(mainType: String, subType: String, charset: Option[String] 
   def charset(c: String): MediaType = copy(charset = Some(c))
   def noCharset: MediaType = copy(charset = None)
 
+  def matches(other: MediaType): Boolean =
+    (this, other) match {
+      case (MediaType("*", _, _), MediaType("*", _, _))                                                                           => true
+      case (MediaType(mainA, "*", _), MediaType(mainB, "*", _)) if mainA.equalsIgnoreCase(mainB)                                  => true
+      case (MediaType(mainA, "*", _), MediaType(mainB, _, _)) if mainA.equalsIgnoreCase(mainB)                                    => true
+      case (MediaType(mainA, _, _), MediaType(mainB, "*", _)) if mainA.equalsIgnoreCase(mainB)                                    => true
+      case (MediaType(mainA, subA, _), MediaType(mainB, subB, _)) if mainA.equalsIgnoreCase(mainB) && subA.equalsIgnoreCase(subB) => true
+      case _                                                                                                                      => false
+    }
+
+  def isMainTypeAny: Boolean = mainType == "*"
+  def isSubTypeAny: Boolean = subType == "*"
+  def isTypeAny: Boolean = isMainTypeAny && isSubTypeAny
+
   override def toString: String = s"$mainType/$subType" + charset.fold("")(c => s"; charset=$c")
 }
 
