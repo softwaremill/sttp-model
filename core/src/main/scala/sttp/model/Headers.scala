@@ -25,6 +25,6 @@ trait HasHeaders {
   def unsafeCookies: Seq[CookieWithMeta] =
     cookies.map(_.fold(e => throw new RuntimeException(e), identity[CookieWithMeta]))
 
-  def accept: Seq[(MediaType, Float)] = AcceptHeader parse headers
-  def acceptCharset: Seq[(String, Float)] = AcceptCharsetHeader parse headers
+  def accept: Seq[(MediaType, Float)] = AcceptHeader.parse(headers)
+  def acceptCharset: Seq[(String, Float)] = AcceptCharsetHeader.parse(headers)
 }

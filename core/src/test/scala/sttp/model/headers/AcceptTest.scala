@@ -5,6 +5,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 import sttp.model.{Header, HeaderNames, MediaType}
 
+import scala.collection.immutable.Seq
+
 class AcceptTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChecks {
 
   private val acceptHeaderCases = Table(
@@ -16,7 +18,7 @@ class AcceptTest extends AnyFlatSpec with Matchers with TableDrivenPropertyCheck
       Seq((MediaType.ApplicationXml, 0.125f), (MediaType.ApplicationJson, 0.124f), (MediaType.TextHtml, 0.123f))
     ),
     ("text/*;q=0.5, application/xml;q=0.5", Seq((MediaType.ApplicationXml, 0.5f), (MediaType("text", "*"), 0.5f))),
-    ("*/*;q=0.55, text/*;q=0.55", Seq((MediaType("text", "*"), 0.55f), (MediaType("*", "*"), 0.55f)))
+    ("*/*;q=0.55, text/*;q=0.55, text/html;q=0.55", Seq((MediaType.TextHtml, 0.55f), (MediaType("text", "*"), 0.55f), (MediaType("*", "*"), 0.55f)))
   )
 
   private val otherHeaders = Seq(
