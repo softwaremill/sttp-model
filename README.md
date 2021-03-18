@@ -18,7 +18,7 @@ Add the following dependency:
 "com.softwaremill.sttp.model" %% "core" % "1.3.4"
 ```
 
-sttp model is available for Scala 2.11, 2.12, 2.13, 3.0.0-Mx, Scala.JS and Scala Native.
+sttp model is available for Scala 2.11, 2.12, 2.13, 3.0.0, Scala.JS and Scala Native.
 
 ## Project content
 
@@ -35,6 +35,7 @@ Available model classes include:
    * `Part`
    * `ServerSentEvent`  
 * header values:
+   * `CacheDirective`
    * `Cookie`
    * `ETag`
 
@@ -81,4 +82,4 @@ We offer commercial support for sttp and related technologies, as well as develo
 
 ## Copyright
 
-Copyright (C) 2017-2020 SoftwareMill [https://softwaremill.com](https://softwaremill.com).
+Copyright (C) 2017-2021 SoftwareMill [https://softwaremill.com](https://softwaremill.com).
