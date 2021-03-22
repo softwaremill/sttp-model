@@ -1,6 +1,6 @@
 package sttp.model
 
-import sttp.model.headers.{Accepts, CookieWithMeta}
+import sttp.model.headers.CookieWithMeta
 
 import scala.collection.immutable.Seq
 import scala.util.Try
@@ -24,6 +24,4 @@ trait HasHeaders {
   def cookies: Seq[Either[String, CookieWithMeta]] = headers(HeaderNames.SetCookie).map(h => CookieWithMeta.parse(h))
   def unsafeCookies: Seq[CookieWithMeta] =
     cookies.map(_.fold(e => throw new RuntimeException(e), identity[CookieWithMeta]))
-
-  def accepts: Seq[MediaType] = Accepts.unsafeParse(headers)
 }

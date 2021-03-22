@@ -5,6 +5,9 @@ import scala.util.matching.Regex
 
 private[model] object Patterns {
 
+  /** token can consist any char except separators defined in rfc
+    * https://tools.ietf.org/html/rfc2616#section-2.2
+    */
   private val Token = "([a-zA-Z0-9-!#$%&'*+.^_`{|}~]+)"
   private val Quoted = "\"([^\"]*)\""
 
@@ -15,7 +18,7 @@ private[model] object Patterns {
   val QValue: Regex = "[0-1](.\\d\\d?\\d?)?".r
   val WhiteSpaces: String = "\\s+"
 
-  def parseParameters(t: String, offset: Int): Either[String, Map[String, String]] = {
+  def parseMediaTypeParameters(t: String, offset: Int): Either[String, Map[String, String]] = {
     var parameters: Map[String, String] = Map.empty
     val parameter = Parameter.matcher(t)
     var s = offset

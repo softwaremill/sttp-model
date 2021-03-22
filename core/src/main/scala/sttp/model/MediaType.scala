@@ -18,35 +18,18 @@ case class MediaType(
   def noCharset: MediaType = copy(charset = None)
 
   def matches(other: MediaType): Boolean = {
-    val typeMatches = (this, other) match {
-      case (MediaType(Wildcard, Wildcard, _, _), _)                                                              => true
-      case (_, MediaType(Wildcard, Wildcard, _, _))                                                              => true
-      case (MediaType(Wildcard, _, _, _), MediaType(Wildcard, _, _, _))                                          => true
-      case (MediaType(mainA, Wildcard, _, _), MediaType(mainB, Wildcard, _, _)) if mainA.equalsIgnoreCase(mainB) => true
-      case (MediaType(mainA, Wildcard, _, _), MediaType(mainB, _, _, _)) if mainA.equalsIgnoreCase(mainB)        => true
-      case (MediaType(mainA, _, _, _), MediaType(mainB, Wildcard, _, _)) if mainA.equalsIgnoreCase(mainB)        => true
-      case (MediaType(mainA, subA, _, _), MediaType(mainB, subB, _, _))
-          if mainA.equalsIgnoreCase(mainB) && subA.equalsIgnoreCase(subB) =>
-        true
-      case _ => false
-    }
-
-    if (typeMatches) {
-      if (this.isCharsetAny || other.isCharsetAny) true
+    def charsetMatches: Boolean =
+      if (other.charset.forall(_ == Wildcard)) true
       else this.charset.map(_.toLowerCase) == other.charset.map(_.toLowerCase)
-    } else false
-  }
 
-  def matchesExact(other: MediaType): Boolean = {
-    this.mainType.equalsIgnoreCase(other.mainType) &&
-    this.subType.equalsIgnoreCase(other.subType) &&
-    this.charset.map(_.toLowerCase) == other.charset.map(_.toLowerCase)
+    (other match {
+      case MediaType(Wildcard, _, _, _)        => true
+      case MediaType(mainType, Wildcard, _, _) => this.mainType.equalsIgnoreCase(mainType)
+      case MediaType(mainType, subType, _, _) =>
+        this.mainType.equalsIgnoreCase(mainType) && this.subType.equalsIgnoreCase(subType)
+      case null => false
+    }) && charsetMatches
   }
-
-  def isMainTypeAny: Boolean = mainType == Wildcard
-  def isSubTypeAny: Boolean = subType == Wildcard
-  def isTypeAny: Boolean = isMainTypeAny && isSubTypeAny
-  def isCharsetAny: Boolean = charset.forall(_ == Wildcard)
 
   override def toString: String = s"$mainType/$subType" + charset.fold("")(c => s"; charset=$c") +
     parameters.foldLeft("") { case (s, (p, v)) => if (p == "charset") s else s"$s; $p=$v" }
@@ -92,18 +75,18 @@ object MediaType extends MediaTypes {
     val mainType = typeSubtype.group(1).toLowerCase
     val subType = typeSubtype.group(2).toLowerCase
 
-    val parameters = Patterns.parseParameters(t, offset = typeSubtype.end())
+    val parameters = Patterns.parseMediaTypeParameters(t, offset = typeSubtype.end())
 
     parameters match {
       case Right(params) =>
         Right(MediaType(mainType, subType, params.get("charset"), params.filter { case (p, _) => p != "charset" }))
-      case l @ Left(_) => l.asInstanceOf[Either[String, MediaType]]
+      case Left(error) => Left(error)
     }
   }
 
   def unsafeParse(s: String): MediaType = parse(s).getOrThrow
 
-  private val Wildcard = "*"
+  val Wildcard = "*"
 }
 
 // https://www.iana.org/assignments/media-types/media-types.xhtml
@@ -137,6 +120,4 @@ trait MediaTypes {
   val TextPlain: MediaType = MediaType("text", "plain")
 
   val TextPlainUtf8: MediaType = MediaType("text", "plain", Some("utf-8"))
-
-  val AnyType: MediaType = MediaType("*", "*", Some("*"))
 }

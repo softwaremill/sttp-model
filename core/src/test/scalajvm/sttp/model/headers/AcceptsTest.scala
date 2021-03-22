@@ -3,6 +3,7 @@ package sttp.model.headers
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
+import sttp.model.MediaType.Wildcard
 import sttp.model.{Header, HeaderNames, MediaType}
 
 import scala.collection.immutable.Seq
@@ -71,14 +72,15 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
 
   forAll(acceptsCases) { (accept, acceptCharset, result) =>
     it should s"parse Accept: $accept Accept-Charset: $acceptCharset" in {
-      Accepts.unsafeParse(
+      val headers =
         otherHeaders ++ Seq(Header(HeaderNames.Accept, accept), Header(HeaderNames.AcceptCharset, acceptCharset))
-      ) shouldBe result
+      Accepts.unsafeParse(headers) shouldBe result
+      Accepts.parse(headers) shouldBe Right(result)
     }
   }
 
   it should "parse to any when no accept headers" in {
-    Accepts.unsafeParse(otherHeaders) shouldBe Seq(MediaType.AnyType)
+    Accepts.unsafeParse(otherHeaders) shouldBe Seq(MediaType(Wildcard, Wildcard))
   }
 
   it should "parse when only Accept-Charset specified" in {
@@ -92,6 +94,23 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
     Accepts.unsafeParse(otherHeaders ++ Seq(Header(HeaderNames.Accept, "text/csv;q=0.1, text/plain"))) shouldBe Seq(
       MediaType.TextPlain,
       MediaType.TextCsv.copy(parameters = Map("q" -> "0.1"))
+    )
+  }
+
+  it should "return errors when invalid accept headers" in {
+    val invalidAccept = Header(HeaderNames.Accept, "text/html;=q=1")
+    Accepts.parse(Seq(invalidAccept)) shouldBe Left(
+      """Parameter is not formatted correctly: "=q=1" for: "text/html;=q=1""""
+    )
+
+    val invalidAcceptCharset = Header(HeaderNames.AcceptCharset, "utf-8;=a=1")
+    Accepts.parse(Seq(invalidAcceptCharset)) shouldBe Left(
+      """Parameter is not formatted correctly: "=a=1" for: "utf-8;=a=1""""
+    )
+
+    Accepts.parse(Seq(invalidAccept, invalidAcceptCharset)) shouldBe Left(
+      """Parameter is not formatted correctly: "=q=1" for: "text/html;=q=1"
+        |Parameter is not formatted correctly: "=a=1" for: "utf-8;=a=1"""".stripMargin
     )
   }
 }

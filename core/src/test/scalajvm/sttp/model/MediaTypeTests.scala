@@ -57,25 +57,20 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
   }
 
   private val matchCases = Table(
-    ("first media type", "second media type", "matches"),
-    (MediaType("*", "*"), MediaType.ApplicationJson, true),
+    ("media type", "other media type", "matches"),
     (MediaType.ApplicationJson, MediaType("*", "*"), true),
     (MediaType("*", "html"), MediaType("*", "json"), true),
     (MediaType("text", "*"), MediaType("text", "*"), true),
-    (MediaType("application", "*"), MediaType.ApplicationJson, true),
     (MediaType.ApplicationJson, MediaType("application", "*"), true),
     (MediaType.ApplicationJson, MediaType.ApplicationJson, true),
     //
-    (MediaType("*", "*").charset("utf-8"), MediaType.ApplicationJson.charset("utf-16"), false),
     (MediaType.ApplicationJson.charset("utf-8"), MediaType("*", "*").charset("utf-16"), false),
     (MediaType("*", "html").charset("utf-8"), MediaType("*", "json").charset("utf-16"), false),
     (MediaType("text", "*").charset("utf-8"), MediaType("text", "*").charset("utf-16"), false),
-    (MediaType("application", "*").charset("utf-8"), MediaType.ApplicationJson.charset("utf-16"), false),
     (MediaType.ApplicationJson.charset("utf-8"), MediaType("application", "*").charset("utf-16"), false),
     (MediaType.ApplicationJson.charset("utf-8"), MediaType.ApplicationJson.charset("utf-16"), false),
     //
-    (MediaType.ApplicationJson.charset("utf-8"), MediaType.ApplicationJson.charset("*"), true),
-    (MediaType.ApplicationJson.charset("*"), MediaType.ApplicationJson.charset("utf-16"), true)
+    (MediaType.ApplicationJson.charset("utf-8"), MediaType.ApplicationJson.charset("*"), true)
   )
 
   forAll(matchCases) { (mt1, mt2, matches) =>
