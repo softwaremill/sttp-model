@@ -1,33 +1,55 @@
 package sttp.model
 
+import sttp.model.MediaType.Wildcard
+import sttp.model.internal.Rfc2616._
+import sttp.model.internal.Validate._
+import sttp.model.internal.{Patterns, Validate}
+
 import java.nio.charset.Charset
 
-import internal.Validate._
-import java.util.regex.Pattern
-
-import sttp.model.internal.Validate
-import sttp.model.internal.Rfc2616._
-
-case class MediaType(mainType: String, subType: String, charset: Option[String] = None) {
+case class MediaType(
+    mainType: String,
+    subType: String,
+    charset: Option[String] = None,
+    parameters: Map[String, String] = Map.empty
+) {
   def charset(c: Charset): MediaType = charset(c.name())
   def charset(c: String): MediaType = copy(charset = Some(c))
   def noCharset: MediaType = copy(charset = None)
 
-  def matches(other: MediaType): Boolean =
-    (this, other) match {
-      case (MediaType("*", _, _), MediaType("*", _, _))                                                                           => true
-      case (MediaType(mainA, "*", _), MediaType(mainB, "*", _)) if mainA.equalsIgnoreCase(mainB)                                  => true
-      case (MediaType(mainA, "*", _), MediaType(mainB, _, _)) if mainA.equalsIgnoreCase(mainB)                                    => true
-      case (MediaType(mainA, _, _), MediaType(mainB, "*", _)) if mainA.equalsIgnoreCase(mainB)                                    => true
-      case (MediaType(mainA, subA, _), MediaType(mainB, subB, _)) if mainA.equalsIgnoreCase(mainB) && subA.equalsIgnoreCase(subB) => true
-      case _                                                                                                                      => false
+  def matches(other: MediaType): Boolean = {
+    val typeMatches = (this, other) match {
+      case (MediaType(Wildcard, Wildcard, _, _), _)                                                              => true
+      case (_, MediaType(Wildcard, Wildcard, _, _))                                                              => true
+      case (MediaType(Wildcard, _, _, _), MediaType(Wildcard, _, _, _))                                          => true
+      case (MediaType(mainA, Wildcard, _, _), MediaType(mainB, Wildcard, _, _)) if mainA.equalsIgnoreCase(mainB) => true
+      case (MediaType(mainA, Wildcard, _, _), MediaType(mainB, _, _, _)) if mainA.equalsIgnoreCase(mainB)        => true
+      case (MediaType(mainA, _, _, _), MediaType(mainB, Wildcard, _, _)) if mainA.equalsIgnoreCase(mainB)        => true
+      case (MediaType(mainA, subA, _, _), MediaType(mainB, subB, _, _))
+          if mainA.equalsIgnoreCase(mainB) && subA.equalsIgnoreCase(subB) =>
+        true
+      case _ => false
     }
 
-  def isMainTypeAny: Boolean = mainType == "*"
-  def isSubTypeAny: Boolean = subType == "*"
-  def isTypeAny: Boolean = isMainTypeAny && isSubTypeAny
+    if (typeMatches) {
+      if (this.isCharsetAny || other.isCharsetAny) true
+      else this.charset.map(_.toLowerCase) == other.charset.map(_.toLowerCase)
+    } else false
+  }
 
-  override def toString: String = s"$mainType/$subType" + charset.fold("")(c => s"; charset=$c")
+  def matchesExact(other: MediaType): Boolean = {
+    this.mainType.equalsIgnoreCase(other.mainType) &&
+    this.subType.equalsIgnoreCase(other.subType) &&
+    this.charset.map(_.toLowerCase) == other.charset.map(_.toLowerCase)
+  }
+
+  def isMainTypeAny: Boolean = mainType == Wildcard
+  def isSubTypeAny: Boolean = subType == Wildcard
+  def isTypeAny: Boolean = isMainTypeAny && isSubTypeAny
+  def isCharsetAny: Boolean = charset.forall(_ == Wildcard)
+
+  override def toString: String = s"$mainType/$subType" + charset.fold("")(c => s"; charset=$c") +
+    parameters.foldLeft("") { case (s, (p, v)) => if (p == "charset") s else s"$s; $p=$v" }
 }
 
 /** For a description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
@@ -36,68 +58,52 @@ object MediaType extends MediaTypes {
 
   /** @throws IllegalArgumentException If the main type or subt type contain illegal characters.
     */
-  def unsafeApply(mainType: String, subType: String, charset: Option[String] = None): MediaType =
-    safeApply(mainType, subType, charset).getOrThrow
-  def safeApply(mainType: String, subType: String, charset: Option[String] = None): Either[String, MediaType] = {
+  def unsafeApply(
+      mainType: String,
+      subType: String,
+      charset: Option[String] = None,
+      parameters: Map[String, String] = Map.empty
+  ): MediaType =
+    safeApply(mainType, subType, charset, parameters).getOrThrow
+
+  def safeApply(
+      mainType: String,
+      subType: String,
+      charset: Option[String] = None,
+      parameters: Map[String, String] = Map.empty
+  ): Either[String, MediaType] = {
     Validate.all(
-      validateToken("Main type", mainType),
-      validateToken("Sub type", subType),
-      charset.flatMap(validateToken("Charset", _))
+      Seq(
+        validateToken("Main type", mainType),
+        validateToken("Sub type", subType),
+        charset.flatMap(validateToken("Charset", _))
+      ) ++ parameters.map { case (p, v) => validateToken(p, v) }: _*
     )(
-      apply(mainType, subType, charset)
+      apply(mainType, subType, charset, parameters)
     )
   }
 
   // based on https://github.com/square/okhttp/blob/20cd3a0/okhttp/src/main/java/okhttp3/MediaType.kt#L94
-  private val TOKEN = "([a-zA-Z0-9-!#$%&'*+.^_`{|}~]+)"
-  private val QUOTED = "\"([^\"]*)\""
-  private val TYPE_SUBTYPE = Pattern.compile(s"$TOKEN/$TOKEN")
-  private val PARAMETER = Pattern.compile(s";\\s*(?:$TOKEN=(?:$TOKEN|$QUOTED))?")
-
   def parse(t: String): Either[String, MediaType] = {
-    val typeSubtype = TYPE_SUBTYPE.matcher(t)
+    val typeSubtype = Patterns.TypeSubtype.matcher(t)
     if (!typeSubtype.lookingAt()) {
       return Left(s"""No subtype found for: "$t"""")
     }
     val mainType = typeSubtype.group(1).toLowerCase
     val subType = typeSubtype.group(2).toLowerCase
 
-    var charset: Option[String] = None
-    val parameter = PARAMETER.matcher(t)
-    var s = typeSubtype.end()
-    val length = t.length
-    while (s < length) {
-      parameter.region(s, length)
-      if (!parameter.lookingAt()) {
-        return Left(s"""Parameter is not formatted correctly: \"${t.substring(s)}\" for: \"$t\"""")
-      }
+    val parameters = Patterns.parseParameters(t, offset = typeSubtype.end())
 
-      val name = parameter.group(1)
-      if (name == null || !name.equalsIgnoreCase("charset")) {
-        s = parameter.end()
-      } else {
-        val token = parameter.group(2)
-        val charsetParameter = token match {
-          case null =>
-            // Value is "double-quoted". That's valid and our regex group already strips the quotes.
-            parameter.group(3)
-          case _ if token.startsWith("'") && token.endsWith("'") && token.length > 2 =>
-            // If the token is 'single-quoted' it's invalid! But we're lenient and strip the quotes.
-            token.substring(1, token.length - 1)
-          case _ => token
-        }
-        if (charset.nonEmpty && charset.forall(charsetParameter.equalsIgnoreCase)) {
-          return Left(s"""Multiple charsets defined: \"$charset\" and: \"$charsetParameter\" for: \"$t\"""")
-        }
-        charset = Option(charsetParameter)
-        s = parameter.end()
-      }
+    parameters match {
+      case Right(params) =>
+        Right(MediaType(mainType, subType, params.get("charset"), params.filter { case (p, _) => p != "charset" }))
+      case l @ Left(_) => l.asInstanceOf[Either[String, MediaType]]
     }
-
-    Right(MediaType(mainType, subType, charset))
   }
 
   def unsafeParse(s: String): MediaType = parse(s).getOrThrow
+
+  private val Wildcard = "*"
 }
 
 // https://www.iana.org/assignments/media-types/media-types.xhtml
@@ -131,4 +137,6 @@ trait MediaTypes {
   val TextPlain: MediaType = MediaType("text", "plain")
 
   val TextPlainUtf8: MediaType = MediaType("text", "plain", Some("utf-8"))
+
+  val AnyType: MediaType = MediaType("*", "*", Some("*"))
 }
