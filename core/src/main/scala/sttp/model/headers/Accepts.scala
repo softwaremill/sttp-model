@@ -1,42 +1,43 @@
 package sttp.model.headers
 
-import sttp.model.MediaType.Wildcard
+import sttp.model.ContentTypeRange._
 import sttp.model.internal.Patterns
 import sttp.model.internal.Validate._
-import sttp.model.{Header, HeaderNames, MediaType}
+import sttp.model.{ContentTypeRange, Header, HeaderNames, MediaType}
 
 import scala.collection.immutable.{Map, Seq}
 
 object Accepts {
-  def parse(headers: Seq[Header]): Either[String, Seq[MediaType]] =
+  def parse(headers: Seq[Header]): Either[String, Seq[ContentTypeRange]] =
     (parseAcceptHeader(headers), parseAcceptCharsetHeader(headers)) match {
-      case (Right(mts), Right(chs))         => Right(toSortedMediaTypes(mts, chs))
+      case (Right(mts), Right(chs))         => Right(toContentTypeRanges(mts, chs))
       case (Left(errorMts), Left(errorChs)) => Left(s"$errorMts\n$errorChs")
       case (Left(error), _)                 => Left(error)
       case (_, Left(error))                 => Left(error)
     }
 
-  def unsafeParse(headers: Seq[Header]): Seq[MediaType] =
-    toSortedMediaTypes(
+  def unsafeParse(headers: Seq[Header]): Seq[ContentTypeRange] =
+    toContentTypeRanges(
       unsafeParseAcceptHeader(headers),
       unsafeParseAcceptCharsetHeader(headers)
     )
 
-  private def toSortedMediaTypes(
+  private def toContentTypeRanges(
       mediaTypes: Seq[(MediaType, Float)],
       charsets: Seq[(String, Float)]
-  ): Seq[MediaType] = {
+  ): Seq[ContentTypeRange] = {
     (mediaTypes, charsets) match {
-      case (Nil, Nil) => Seq(MediaType(Wildcard, Wildcard))
+      case (Nil, Nil) => Seq(AnyContentTypeRange)
       case (Nil, chs) =>
-        chs.sortBy({ case (_, q) => -q }).map { case (ch, _) => MediaType(Wildcard, Wildcard).charset(ch) }
-      case (mts, Nil) => mts.sortBy({ case (_, q) => -q }).map { case (mt, _) => mt }
+        chs.sortBy({ case (_, q) => -q }).map { case (ch, _) => ContentTypeRange(Wildcard, Wildcard, ch) }
+      case (mts, Nil) =>
+        mts.sortBy({ case (_, q) => -q }).map { case (mt, _) => ContentTypeRange(mt.mainType, mt.subType, Wildcard) }
       case (mts, chs) =>
         val merged = mts.flatMap { case (mt, mtQ) =>
           // if Accept-Charset is defined then any other charset specified in Accept header in not acceptable
-          chs.map { case (ch, chQ) => mt.charset(ch) -> math.min(mtQ, chQ) }
+          chs.map { case (ch, chQ) => (mt, ch) -> math.min(mtQ, chQ) }
         }
-        merged.sortBy({ case (_, q) => -q }).map { case (mt, _) => mt }
+        merged.sortBy({ case (_, q) => -q }).map { case ((mt, ch), _) => ContentTypeRange(mt.mainType, mt.subType, ch) }
     }
   }
 
@@ -86,7 +87,7 @@ object Accepts {
       .flatMap(_.value.split(","))
       .map(_.replaceAll(Patterns.WhiteSpaces, ""))
 
-  private def qValue(mt: MediaType): Float = qValueFrom(mt.parameters)
+  private def qValue(mt: MediaType): Float = qValueFrom(mt.otherParameters)
 
   private def qValueFrom(parameters: Map[String, String]): Float =
     (parameters.get("q") collect { case Patterns.QValue(q) => q.toFloat }).getOrElse(1f)

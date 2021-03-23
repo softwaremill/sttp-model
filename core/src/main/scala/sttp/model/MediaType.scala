@@ -1,38 +1,39 @@
 package sttp.model
 
-import sttp.model.MediaType.Wildcard
+import sttp.model.ContentTypeRange.Wildcard
 import sttp.model.internal.Rfc2616._
 import sttp.model.internal.Validate._
 import sttp.model.internal.{Patterns, Validate}
 
 import java.nio.charset.Charset
+import scala.collection.immutable.{Map, Seq}
 
 case class MediaType(
     mainType: String,
     subType: String,
     charset: Option[String] = None,
-    parameters: Map[String, String] = Map.empty
+    otherParameters: Map[String, String] = Map.empty
 ) {
   def charset(c: Charset): MediaType = charset(c.name())
   def charset(c: String): MediaType = copy(charset = Some(c))
   def noCharset: MediaType = copy(charset = None)
 
-  def matches(other: MediaType): Boolean = {
+  def matches(range: ContentTypeRange): Boolean = {
     def charsetMatches: Boolean =
-      if (other.charset.forall(_ == Wildcard)) true
-      else this.charset.map(_.toLowerCase) == other.charset.map(_.toLowerCase)
+      if (range.charset == Wildcard) true
+      else this.charset.map(_.toLowerCase).contains(range.charset.toLowerCase)
 
-    (other match {
-      case MediaType(Wildcard, _, _, _)        => true
-      case MediaType(mainType, Wildcard, _, _) => this.mainType.equalsIgnoreCase(mainType)
-      case MediaType(mainType, subType, _, _) =>
+    (range match {
+      case ContentTypeRange(Wildcard, _, _)        => true
+      case ContentTypeRange(mainType, Wildcard, _) => this.mainType.equalsIgnoreCase(mainType)
+      case ContentTypeRange(mainType, subType, _) =>
         this.mainType.equalsIgnoreCase(mainType) && this.subType.equalsIgnoreCase(subType)
       case null => false
     }) && charsetMatches
   }
 
   override def toString: String = s"$mainType/$subType" + charset.fold("")(c => s"; charset=$c") +
-    parameters.foldLeft("") { case (s, (p, v)) => if (p == "charset") s else s"$s; $p=$v" }
+    otherParameters.foldLeft("") { case (s, (p, v)) => if (p == "charset") s else s"$s; $p=$v" }
 }
 
 /** For a description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
@@ -86,7 +87,16 @@ object MediaType extends MediaTypes {
 
   def unsafeParse(s: String): MediaType = parse(s).getOrThrow
 
-  val Wildcard = "*"
+  def bestMatch(mediaTypes: Seq[MediaType], ranges: Seq[ContentTypeRange]): Option[MediaType] = {
+    mediaTypes
+      .map(mt => mt -> ranges.indexWhere(mt.matches))
+      .filter({ case (_, i) => i != NotFoundIndex }) // not acceptable
+      .sortBy({ case (_, i) => i })
+      .headOption
+      .map({ case (mt, _) => mt })
+  }
+
+  private val NotFoundIndex = -1
 }
 
 // https://www.iana.org/assignments/media-types/media-types.xhtml

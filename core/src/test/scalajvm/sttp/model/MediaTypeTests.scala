@@ -3,6 +3,9 @@ package sttp.model
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
+import sttp.model.ContentTypeRange.AnyContentTypeRange
+
+import scala.collection.immutable.Seq
 
 class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyChecks {
   val parseMediaTypeData = List(
@@ -57,25 +60,87 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
   }
 
   private val matchCases = Table(
-    ("media type", "other media type", "matches"),
-    (MediaType.ApplicationJson, MediaType("*", "*"), true),
-    (MediaType("*", "html"), MediaType("*", "json"), true),
-    (MediaType("text", "*"), MediaType("text", "*"), true),
-    (MediaType.ApplicationJson, MediaType("application", "*"), true),
-    (MediaType.ApplicationJson, MediaType.ApplicationJson, true),
+    ("media type", "content type range", "matches"),
+    (MediaType.ApplicationJson, AnyContentTypeRange, true),
+    (MediaType("*", "html"), ContentTypeRange("*", "json", "*"), true),
+    (MediaType("text", "*"), ContentTypeRange("text", "*", "*"), true),
+    (MediaType.ApplicationJson, ContentTypeRange("application", "*", "*"), true),
+    (MediaType.ApplicationJson, ContentTypeRange("application", "json", "*"), true),
     //
-    (MediaType.ApplicationJson.charset("utf-8"), MediaType("*", "*").charset("utf-16"), false),
-    (MediaType("*", "html").charset("utf-8"), MediaType("*", "json").charset("utf-16"), false),
-    (MediaType("text", "*").charset("utf-8"), MediaType("text", "*").charset("utf-16"), false),
-    (MediaType.ApplicationJson.charset("utf-8"), MediaType("application", "*").charset("utf-16"), false),
-    (MediaType.ApplicationJson.charset("utf-8"), MediaType.ApplicationJson.charset("utf-16"), false),
+    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("*", "*", "utf-16"), false),
+    (MediaType("*", "html").charset("utf-8"), ContentTypeRange("*", "json", "utf-16"), false),
+    (MediaType("text", "*").charset("utf-8"), ContentTypeRange("text", "*", "utf-16"), false),
+    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "*", "utf-16"), false),
+    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "json", "utf-16"), false),
     //
-    (MediaType.ApplicationJson.charset("utf-8"), MediaType.ApplicationJson.charset("*"), true)
+    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "json", "*"), true)
   )
 
-  forAll(matchCases) { (mt1, mt2, matches) =>
-    it should s"compare $mt1 with $mt2" in {
-      mt1.matches(mt2) shouldBe matches
+  forAll(matchCases) { (mt, range, matches) =>
+    it should s"check match of $mt to $range" in {
+      mt.matches(range) shouldBe matches
+    }
+  }
+
+  private val bestMatchCases = Table(
+    ("ranges", "best match"),
+    (Seq(AnyContentTypeRange), Some(MediaType.ApplicationJson.charset("utf-8"))),
+    (Seq(ContentTypeRange("application", "json", "*")), Some(MediaType.ApplicationJson.charset("utf-8"))),
+    (Seq(ContentTypeRange("application", "xml", "*")), Some(MediaType.ApplicationXml.charset("utf-8"))),
+    (
+      Seq(
+        ContentTypeRange("application", "xml", "*"),
+        ContentTypeRange("application", "json", "*")
+      ),
+      Some(MediaType.ApplicationXml.charset("utf-8"))
+    ),
+    (
+      Seq(
+        ContentTypeRange("application", "json", "*"),
+        ContentTypeRange("application", "xml", "*")
+      ),
+      Some(MediaType.ApplicationJson.charset("utf-8"))
+    ),
+    (
+      Seq(
+        ContentTypeRange("application", "xml", "*"),
+        ContentTypeRange("application", "json", "*"),
+        ContentTypeRange("text", "html", "*")
+      ),
+      Some(MediaType.ApplicationXml.charset("utf-8"))
+    ),
+    (
+      Seq(ContentTypeRange("text", "*", "*"), ContentTypeRange("application", "*", "*")),
+      Some(MediaType.TextHtml.charset("utf-8"))
+    ),
+    (
+      Seq(ContentTypeRange("*", "*", "iso-8859-1")),
+      Some(MediaType.TextHtml.charset("iso-8859-1"))
+    ),
+    (
+      Seq(ContentTypeRange("text", "html", "iso-8859-1"), ContentTypeRange("text", "html", "utf-8")),
+      Some(MediaType.TextHtml.charset("iso-8859-1"))
+    ),
+    (
+      Seq(ContentTypeRange("text", "csv", "*")),
+      None
+    ),
+    (
+      Seq(ContentTypeRange("text", "html", "utf-16")),
+      None
+    )
+  )
+
+  private val mediaTypesToBestMatch = Seq(
+    MediaType.ApplicationJson.charset("utf-8"),
+    MediaType.ApplicationXml.charset("utf-8"),
+    MediaType.TextHtml.charset("utf-8"),
+    MediaType.TextHtml.charset("iso-8859-1")
+  )
+
+  forAll(bestMatchCases) { (ranges, bestMatch) =>
+    it should s"select $bestMatch for ranges $ranges" in {
+      MediaType.bestMatch(mediaTypesToBestMatch, ranges) shouldBe bestMatch
     }
   }
 

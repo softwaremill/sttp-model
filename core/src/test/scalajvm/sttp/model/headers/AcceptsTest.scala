@@ -3,8 +3,8 @@ package sttp.model.headers
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
-import sttp.model.MediaType.Wildcard
-import sttp.model.{Header, HeaderNames, MediaType}
+import sttp.model.ContentTypeRange.AnyContentTypeRange
+import sttp.model.{ContentTypeRange, Header, HeaderNames}
 
 import scala.collection.immutable.Seq
 
@@ -12,55 +12,60 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
 
   private val acceptsCases = Table(
     ("Accept", "Accept-Charset", "result"),
-    ("application/json", "*", Seq(MediaType.ApplicationJson.charset("*"))),
-    ("application/json", "utf-8", Seq(MediaType.ApplicationJson.charset("utf-8"))),
-    ("application/json", "utf-8;a=1;b=2;c=3", Seq(MediaType.ApplicationJson.charset("utf-8"))),
+    ("application/json", "*", Seq(ContentTypeRange("application", "json", "*"))),
+    ("application/json", "utf-8", Seq(ContentTypeRange("application", "json", "utf-8"))),
+    ("application/json", "utf-8;a=1;b=2;c=3", Seq(ContentTypeRange("application", "json", "utf-8"))),
     (
       "text/plain",
       "utf-8, iso-8559-1",
-      Seq(MediaType.TextPlain.charset("utf-8"), MediaType.TextPlain.charset("iso-8559-1"))
+      Seq(ContentTypeRange("text", "plain", "utf-8"), ContentTypeRange("text", "plain", "iso-8559-1"))
     ),
     (
       "text/plain",
       "utf-8;q=0.9, iso-8559-1",
-      Seq(MediaType.TextPlain.charset("iso-8559-1"), MediaType.TextPlain.charset("utf-8"))
+      Seq(ContentTypeRange("text", "plain", "iso-8559-1"), ContentTypeRange("text", "plain", "utf-8"))
     ),
     (
       "text/plain",
       "utf-8;q=0.5, iso-8559-1;q=0.6, utf-16;q=0.7",
       Seq(
-        MediaType.TextPlain.charset("utf-16"),
-        MediaType.TextPlain.charset("iso-8559-1"),
-        MediaType.TextPlain.charset("utf-8")
+        ContentTypeRange("text", "plain", "utf-16"),
+        ContentTypeRange("text", "plain", "iso-8559-1"),
+        ContentTypeRange("text", "plain", "utf-8")
       )
     ),
     (
       "text/csv, text/plain",
       "utf-8, utf-16;q=0.5",
       Seq(
-        MediaType.TextCsv.charset("utf-8"),
-        MediaType.TextPlain.charset("utf-8"),
-        MediaType.TextCsv.charset("utf-16"),
-        MediaType.TextPlain.charset("utf-16")
+        ContentTypeRange("text", "csv", "utf-8"),
+        ContentTypeRange("text", "plain", "utf-8"),
+        ContentTypeRange("text", "csv", "utf-16"),
+        ContentTypeRange("text", "plain", "utf-16")
       )
     ),
     (
       "text/csv, text/plain;q=0.1",
       "utf-8, utf-16;q=0.5",
       Seq(
-        MediaType.TextCsv.charset("utf-8"),
-        MediaType.TextCsv.charset("utf-16"),
-        MediaType.apply("text", "plain", Some("utf-8"), Map("q" -> "0.1")),
-        MediaType.apply("text", "plain", Some("utf-16"), Map("q" -> "0.1"))
+        ContentTypeRange("text", "csv", "utf-8"),
+        ContentTypeRange("text", "csv", "utf-16"),
+        ContentTypeRange("text", "plain", "utf-8"),
+        ContentTypeRange("text", "plain", "utf-16")
       )
     ),
     (
       "text/*, application/json;q=0.9",
       "utf-8",
       Seq(
-        MediaType("text", "*", Some("utf-8")),
-        MediaType.ApplicationJson.charset("utf-8").copy(parameters = Map("q" -> "0.9"))
+        ContentTypeRange("text", "*", "utf-8"),
+        ContentTypeRange("application", "json", "utf-8")
       )
+    ),
+    (
+      "*/*",
+      "*",
+      Seq(AnyContentTypeRange)
     )
   )
 
@@ -80,20 +85,20 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
   }
 
   it should "parse to any when no accept headers" in {
-    Accepts.unsafeParse(otherHeaders) shouldBe Seq(MediaType(Wildcard, Wildcard))
+    Accepts.unsafeParse(otherHeaders) shouldBe Seq(AnyContentTypeRange)
   }
 
   it should "parse when only Accept-Charset specified" in {
     Accepts.unsafeParse(otherHeaders ++ Seq(Header(HeaderNames.AcceptCharset, "utf-16;q=0.5, utf-8"))) shouldBe Seq(
-      MediaType("*", "*", Some("utf-8")),
-      MediaType("*", "*", Some("utf-16"))
+      ContentTypeRange("*", "*", "utf-8"),
+      ContentTypeRange("*", "*", "utf-16")
     )
   }
 
   it should "parse when only Accept specified" in {
     Accepts.unsafeParse(otherHeaders ++ Seq(Header(HeaderNames.Accept, "text/csv;q=0.1, text/plain"))) shouldBe Seq(
-      MediaType.TextPlain,
-      MediaType.TextCsv.copy(parameters = Map("q" -> "0.1"))
+      ContentTypeRange("text", "plain", "*"),
+      ContentTypeRange("text", "csv", "*")
     )
   }
 
