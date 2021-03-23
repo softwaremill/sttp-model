@@ -1,19 +1,39 @@
 package sttp.model
 
-import java.nio.charset.Charset
-
-import internal.Validate._
-import java.util.regex.Pattern
-
-import sttp.model.internal.Validate
+import sttp.model.ContentTypeRange.Wildcard
 import sttp.model.internal.Rfc2616._
+import sttp.model.internal.Validate._
+import sttp.model.internal.{Patterns, Validate}
 
-case class MediaType(mainType: String, subType: String, charset: Option[String] = None) {
+import java.nio.charset.Charset
+import scala.collection.immutable.Seq
+
+case class MediaType(
+    mainType: String,
+    subType: String,
+    charset: Option[String] = None,
+    otherParameters: Map[String, String] = Map.empty
+) {
   def charset(c: Charset): MediaType = charset(c.name())
   def charset(c: String): MediaType = copy(charset = Some(c))
   def noCharset: MediaType = copy(charset = None)
 
-  override def toString: String = s"$mainType/$subType" + charset.fold("")(c => s"; charset=$c")
+  def matches(range: ContentTypeRange): Boolean = {
+    def charsetMatches: Boolean =
+      if (range.charset == Wildcard) true
+      else this.charset.map(_.toLowerCase).contains(range.charset.toLowerCase)
+
+    (range match {
+      case ContentTypeRange(Wildcard, _, _)        => true
+      case ContentTypeRange(mainType, Wildcard, _) => this.mainType.equalsIgnoreCase(mainType)
+      case ContentTypeRange(mainType, subType, _) =>
+        this.mainType.equalsIgnoreCase(mainType) && this.subType.equalsIgnoreCase(subType)
+      case null => false
+    }) && charsetMatches
+  }
+
+  override def toString: String = s"$mainType/$subType" + charset.fold("")(c => s"; charset=$c") +
+    otherParameters.foldLeft("") { case (s, (p, v)) => if (p == "charset") s else s"$s; $p=$v" }
 }
 
 /** For a description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
@@ -22,68 +42,62 @@ object MediaType extends MediaTypes {
 
   /** @throws IllegalArgumentException If the main type or subt type contain illegal characters.
     */
-  def unsafeApply(mainType: String, subType: String, charset: Option[String] = None): MediaType =
-    safeApply(mainType, subType, charset).getOrThrow
-  def safeApply(mainType: String, subType: String, charset: Option[String] = None): Either[String, MediaType] = {
+  def unsafeApply(
+      mainType: String,
+      subType: String,
+      charset: Option[String] = None,
+      parameters: Map[String, String] = Map.empty
+  ): MediaType =
+    safeApply(mainType, subType, charset, parameters).getOrThrow
+
+  def safeApply(
+      mainType: String,
+      subType: String,
+      charset: Option[String] = None,
+      parameters: Map[String, String] = Map.empty
+  ): Either[String, MediaType] = {
     Validate.all(
-      validateToken("Main type", mainType),
-      validateToken("Sub type", subType),
-      charset.flatMap(validateToken("Charset", _))
+      Seq(
+        validateToken("Main type", mainType),
+        validateToken("Sub type", subType),
+        charset.flatMap(validateToken("Charset", _))
+      ) ++ parameters.map { case (p, v) => validateToken(p, v) }: _*
     )(
-      apply(mainType, subType, charset)
+      apply(mainType, subType, charset, parameters)
     )
   }
 
   // based on https://github.com/square/okhttp/blob/20cd3a0/okhttp/src/main/java/okhttp3/MediaType.kt#L94
-  private val TOKEN = "([a-zA-Z0-9-!#$%&'*+.^_`{|}~]+)"
-  private val QUOTED = "\"([^\"]*)\""
-  private val TYPE_SUBTYPE = Pattern.compile(s"$TOKEN/$TOKEN")
-  private val PARAMETER = Pattern.compile(s";\\s*(?:$TOKEN=(?:$TOKEN|$QUOTED))?")
-
   def parse(t: String): Either[String, MediaType] = {
-    val typeSubtype = TYPE_SUBTYPE.matcher(t)
+    val typeSubtype = Patterns.TypeSubtype.matcher(t)
     if (!typeSubtype.lookingAt()) {
       return Left(s"""No subtype found for: "$t"""")
     }
     val mainType = typeSubtype.group(1).toLowerCase
     val subType = typeSubtype.group(2).toLowerCase
 
-    var charset: Option[String] = None
-    val parameter = PARAMETER.matcher(t)
-    var s = typeSubtype.end()
-    val length = t.length
-    while (s < length) {
-      parameter.region(s, length)
-      if (!parameter.lookingAt()) {
-        return Left(s"""Parameter is not formatted correctly: \"${t.substring(s)}\" for: \"$t\"""")
-      }
+    val parameters = Patterns.parseMediaTypeParameters(t, offset = typeSubtype.end())
 
-      val name = parameter.group(1)
-      if (name == null || !name.equalsIgnoreCase("charset")) {
-        s = parameter.end()
-      } else {
-        val token = parameter.group(2)
-        val charsetParameter = token match {
-          case null =>
-            // Value is "double-quoted". That's valid and our regex group already strips the quotes.
-            parameter.group(3)
-          case _ if token.startsWith("'") && token.endsWith("'") && token.length > 2 =>
-            // If the token is 'single-quoted' it's invalid! But we're lenient and strip the quotes.
-            token.substring(1, token.length - 1)
-          case _ => token
-        }
-        if (charset.nonEmpty && charset.forall(charsetParameter.equalsIgnoreCase)) {
-          return Left(s"""Multiple charsets defined: \"$charset\" and: \"$charsetParameter\" for: \"$t\"""")
-        }
-        charset = Option(charsetParameter)
-        s = parameter.end()
-      }
+    parameters match {
+      case Right(params) =>
+        Right(MediaType(mainType, subType, params.get("charset"), params.filter { case (p, _) => p != "charset" }))
+      case Left(error) => Left(error)
     }
-
-    Right(MediaType(mainType, subType, charset))
   }
 
   def unsafeParse(s: String): MediaType = parse(s).getOrThrow
+
+  def bestMatch(mediaTypes: Seq[MediaType], ranges: Seq[ContentTypeRange]): Option[MediaType] = {
+    mediaTypes
+      .map(mt => mt -> ranges.indexWhere(mt.matches))
+      .filter({ case (_, i) => i != NotFoundIndex }) // not acceptable
+    match {
+      case Nil => None
+      case mts => Some(mts.minBy({ case (_, i) => i })).map { case (mt, _) => mt }
+    }
+  }
+
+  private val NotFoundIndex = -1
 }
 
 // https://www.iana.org/assignments/media-types/media-types.xhtml
