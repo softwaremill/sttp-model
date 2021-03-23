@@ -18,8 +18,8 @@ object Accepts {
 
   def unsafeParse(headers: Seq[Header]): Seq[ContentTypeRange] =
     toContentTypeRanges(
-      unsafeParseAcceptHeader(headers),
-      unsafeParseAcceptCharsetHeader(headers)
+      parseAcceptHeader(headers).getOrThrow,
+      parseAcceptCharsetHeader(headers).getOrThrow
     )
 
   private def toContentTypeRanges(
@@ -50,13 +50,6 @@ object Accepts {
     }
   }
 
-  private def unsafeParseAcceptHeader(headers: Seq[Header]): Seq[(MediaType, Float)] =
-    extractEntries(headers, HeaderNames.Accept)
-      .map { entry =>
-        val mt = MediaType.unsafeParse(entry)
-        mt -> qValue(mt)
-      }
-
   private def parseAcceptCharsetHeader(headers: Seq[Header]): Either[String, Seq[(String, Float)]] =
     extractEntries(headers, HeaderNames.AcceptCharset)
       .map(parseAcceptCharsetEntry)
@@ -64,10 +57,6 @@ object Accepts {
       case (Nil, chs)  => Right(chs collect { case Right(ch) => ch })
       case (errors, _) => Left(errors collect { case Left(msg) => msg } mkString "\n")
     }
-
-  private def unsafeParseAcceptCharsetHeader(headers: Seq[Header]): Seq[(String, Float)] =
-    extractEntries(headers, HeaderNames.AcceptCharset)
-      .map { entry => parseAcceptCharsetEntry(entry).getOrThrow }
 
   private def parseAcceptCharsetEntry(entry: String): Either[String, (String, Float)] = {
     val name = Patterns.Type.matcher(entry)
