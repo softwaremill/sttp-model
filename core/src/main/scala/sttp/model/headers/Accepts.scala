@@ -43,16 +43,7 @@ object Accepts {
 
   private def parseAcceptHeader(headers: Seq[Header]): Either[String, Seq[(MediaType, Float)]] = {
     extractEntries(headers, HeaderNames.Accept)
-      .map(entry =>
-        MediaType.parse(entry) match {
-          case Right(mt) =>
-            qValue(mt) match {
-              case Right(q)    => Right(mt -> q)
-              case Left(error) => Left(error)
-            }
-          case Left(error) => Left(error)
-        }
-      )
+      .map(entry => MediaType.parse(entry).right.flatMap(mt => qValue(mt).right.map(mt -> _)))
       .partition(_.isLeft) match {
       case (Nil, mts)  => Right(mts collect { case Right(mtWithQ) => mtWithQ })
       case (errors, _) => Left(errors collect { case Left(msg) => msg } mkString "\n")

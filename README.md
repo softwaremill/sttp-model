@@ -35,6 +35,7 @@ Available model classes include:
    * `Part`
    * `ServerSentEvent`  
 * header values:
+   * `Accepts`
    * `CacheDirective`
    * `Cookie`
    * `ETag`
