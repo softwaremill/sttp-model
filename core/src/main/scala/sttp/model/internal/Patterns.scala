@@ -15,7 +15,7 @@ private[model] object Patterns {
   val TypeSubtype: Pattern = Pattern.compile(s"$Token/$Token")
   val Parameter: Pattern = Pattern.compile(s";\\s*(?:$Token=(?:$Token|$Quoted))?")
 
-  val QValue: Regex = "[0-1](.\\d\\d?\\d?)?".r
+  val QValue: Regex = "(0.?\\d{0,3}?|1.?0{0,3}?)".r
   val WhiteSpaces: String = "\\s+"
 
   def parseMediaTypeParameters(t: String, offset: Int): Either[String, Map[String, String]] = {

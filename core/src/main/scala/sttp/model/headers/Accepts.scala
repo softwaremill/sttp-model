@@ -43,9 +43,18 @@ object Accepts {
 
   private def parseAcceptHeader(headers: Seq[Header]): Either[String, Seq[(MediaType, Float)]] = {
     extractEntries(headers, HeaderNames.Accept)
-      .map(MediaType.parse)
+      .map(entry =>
+        MediaType.parse(entry) match {
+          case Right(mt) =>
+            qValue(mt) match {
+              case Right(q)    => Right(mt -> q)
+              case Left(error) => Left(error)
+            }
+          case Left(error) => Left(error)
+        }
+      )
       .partition(_.isLeft) match {
-      case (Nil, mts)  => Right(mts collect { case Right(mt) => mt -> qValue(mt) })
+      case (Nil, mts)  => Right(mts collect { case Right(mtWithQ) => mtWithQ })
       case (errors, _) => Left(errors collect { case Left(msg) => msg } mkString "\n")
     }
   }
@@ -64,8 +73,12 @@ object Accepts {
       Left(s"""No charset found for: "$entry"""")
     } else {
       Patterns.parseMediaTypeParameters(entry, offset = name.end()) match {
-        case Right(params) => Right(name.group(1).toLowerCase -> qValueFrom(params))
-        case Left(error)   => Left(error)
+        case Right(params) =>
+          qValueFrom(params) match {
+            case Right(q)    => Right(name.group(1).toLowerCase -> q)
+            case Left(error) => Left(error)
+          }
+        case Left(error) => Left(error)
       }
     }
   }
@@ -76,8 +89,15 @@ object Accepts {
       .flatMap(_.value.split(","))
       .map(_.replaceAll(Patterns.WhiteSpaces, ""))
 
-  private def qValue(mt: MediaType): Float = qValueFrom(mt.otherParameters)
+  private def qValue(mt: MediaType): Either[String, Float] = qValueFrom(mt.otherParameters)
 
-  private def qValueFrom(parameters: Map[String, String]): Float =
-    (parameters.get("q") collect { case Patterns.QValue(q) => q.toFloat }).getOrElse(1f)
+  private def qValueFrom(parameters: Map[String, String]): Either[String, Float] =
+    parameters.get("q") collect { case Patterns.QValue(q) => q.toFloat } match {
+      case Some(value) => Right(value)
+      case None =>
+        parameters
+          .get("q")
+          .map(q => Left(s"""q must be numeric value between <0, 1> with up to 3 decimal points, provided "$q""""))
+          .getOrElse(Right(1f))
+    }
 }

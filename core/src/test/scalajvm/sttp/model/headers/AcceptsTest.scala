@@ -22,12 +22,12 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
     ),
     (
       "text/plain",
-      "utf-8;q=0.9, iso-8559-1",
+      "utf-8;q=0.99, iso-8559-1",
       Seq(ContentTypeRange("text", "plain", "iso-8559-1"), ContentTypeRange("text", "plain", "utf-8"))
     ),
     (
       "text/plain",
-      "utf-8;q=0.5, iso-8559-1;q=0.6, utf-16;q=0.7",
+      "utf-8;q=0.55, iso-8559-1;q=0.66, utf-16;q=0.77",
       Seq(
         ContentTypeRange("text", "plain", "utf-16"),
         ContentTypeRange("text", "plain", "iso-8559-1"),
@@ -68,7 +68,7 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
       Seq(AnyRange)
     ),
     (
-      "text/plain;q=123",
+      "text/plain;q=1.000",
       "*",
       Seq(ContentTypeRange("text", "plain", "*"))
     )
@@ -122,5 +122,15 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
       """Parameter is not formatted correctly: "=q=1" for: "text/html;=q=1"
         |Parameter is not formatted correctly: "=a=1" for: "utf-8;=a=1"""".stripMargin
     )
+  }
+
+  it should "return error for invalid q" in {
+    val errorMsg =
+      (q: String) => s"""q must be numeric value between <0, 1> with up to 3 decimal points, provided "$q""""
+
+    Accepts.parse(Seq(Header(HeaderNames.Accept, "text/html;q=xxx"))) shouldBe Left(errorMsg("xxx"))
+    Accepts.parse(Seq(Header(HeaderNames.Accept, "text/html;q=123"))) shouldBe Left(errorMsg("123"))
+    Accepts.parse(Seq(Header(HeaderNames.Accept, "text/html;q=0.1234"))) shouldBe Left(errorMsg("0.1234"))
+    Accepts.parse(Seq(Header(HeaderNames.Accept, "text/html;q=1.0000"))) shouldBe Left(errorMsg("1.0000"))
   }
 }
