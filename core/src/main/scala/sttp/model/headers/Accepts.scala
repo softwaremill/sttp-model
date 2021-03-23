@@ -27,7 +27,7 @@ object Accepts {
       charsets: Seq[(String, Float)]
   ): Seq[ContentTypeRange] = {
     (mediaTypes, charsets) match {
-      case (Nil, Nil) => Seq(AnyContentTypeRange)
+      case (Nil, Nil) => Seq(AnyRange)
       case (Nil, chs) =>
         chs.sortBy({ case (_, q) => -q }).map { case (ch, _) => ContentTypeRange(Wildcard, Wildcard, ch) }
       case (mts, Nil) =>

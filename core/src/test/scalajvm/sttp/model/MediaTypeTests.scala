@@ -3,7 +3,7 @@ package sttp.model
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
-import sttp.model.ContentTypeRange.AnyContentTypeRange
+import sttp.model.ContentTypeRange.AnyRange
 
 import scala.collection.immutable.Seq
 
@@ -61,7 +61,7 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
 
   private val matchCases = Table(
     ("media type", "content type range", "matches"),
-    (MediaType.ApplicationJson, AnyContentTypeRange, true),
+    (MediaType.ApplicationJson, AnyRange, true),
     (MediaType("*", "html"), ContentTypeRange("*", "json", "*"), true),
     (MediaType("text", "*"), ContentTypeRange("text", "*", "*"), true),
     (MediaType.ApplicationJson, ContentTypeRange("application", "*", "*"), true),
@@ -84,7 +84,7 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
 
   private val bestMatchCases = Table(
     ("ranges", "best match"),
-    (Seq(AnyContentTypeRange), Some(MediaType.ApplicationJson.charset("utf-8"))),
+    (Seq(AnyRange), Some(MediaType.ApplicationJson.charset("utf-8"))),
     (Seq(ContentTypeRange("application", "json", "*")), Some(MediaType.ApplicationJson.charset("utf-8"))),
     (Seq(ContentTypeRange("application", "xml", "*")), Some(MediaType.ApplicationXml.charset("utf-8"))),
     (

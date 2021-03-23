@@ -4,5 +4,5 @@ case class ContentTypeRange(mainType: String, subType: String, charset: String)
 
 object ContentTypeRange {
   val Wildcard = "*"
-  val AnyContentTypeRange: ContentTypeRange = ContentTypeRange(Wildcard, Wildcard, Wildcard)
+  val AnyRange: ContentTypeRange = ContentTypeRange(Wildcard, Wildcard, Wildcard)
 }

@@ -3,7 +3,7 @@ package sttp.model.headers
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
-import sttp.model.ContentTypeRange.AnyContentTypeRange
+import sttp.model.ContentTypeRange.AnyRange
 import sttp.model.{ContentTypeRange, Header, HeaderNames}
 
 import scala.collection.immutable.Seq
@@ -65,7 +65,12 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
     (
       "*/*",
       "*",
-      Seq(AnyContentTypeRange)
+      Seq(AnyRange)
+    ),
+    (
+      "text/plain;q=123",
+      "*",
+      Seq(ContentTypeRange("text", "plain", "*"))
     )
   )
 
@@ -85,7 +90,7 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
   }
 
   it should "parse to any when no accept headers" in {
-    Accepts.unsafeParse(otherHeaders) shouldBe Seq(AnyContentTypeRange)
+    Accepts.unsafeParse(otherHeaders) shouldBe Seq(AnyRange)
   }
 
   it should "parse when only Accept-Charset specified" in {

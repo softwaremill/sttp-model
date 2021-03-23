@@ -6,7 +6,7 @@ import sttp.model.internal.Validate._
 import sttp.model.internal.{Patterns, Validate}
 
 import java.nio.charset.Charset
-import scala.collection.immutable.{Map, Seq}
+import scala.collection.immutable.Seq
 
 case class MediaType(
     mainType: String,
@@ -91,9 +91,10 @@ object MediaType extends MediaTypes {
     mediaTypes
       .map(mt => mt -> ranges.indexWhere(mt.matches))
       .filter({ case (_, i) => i != NotFoundIndex }) // not acceptable
-      .sortBy({ case (_, i) => i })
-      .headOption
-      .map({ case (mt, _) => mt })
+    match {
+      case Nil => None
+      case mts => Some(mts.minBy({ case (_, i) => i })).map { case (mt, _) => mt }
+    }
   }
 
   private val NotFoundIndex = -1
