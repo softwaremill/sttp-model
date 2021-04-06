@@ -29,7 +29,9 @@ jobs:
           ~/.coursier
         key: sbt-cache-${{ runner.os }}-${{ hashFiles('project/build.properties') }}
     - name: Install libidn11-dev
-      run: sudo apt-get install libidn11-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install libidn11-dev
     - name: Compile
       run: sbt -v compile
     - name: Test
