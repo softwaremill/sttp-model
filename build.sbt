@@ -2,11 +2,11 @@ import com.softwaremill.SbtSoftwareMillBrowserTestJS._
 
 val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.13"
-val scala2_13 = "2.13.4"
+val scala2_13 = "2.13.5"
 val scala2 = List(scala2_11, scala2_12, scala2_13)
-val scala3 = List("3.0.0-RC1")
+val scala3 = List("3.0.0-RC2")
 
-val scalaTestVersion = "3.2.6"
+val scalaTestVersion = "3.2.7"
 
 excludeLintKeys in Global ++= Set(ideSkipProject)
 
@@ -27,7 +27,7 @@ val commonJvmSettings = commonSettings ++ Seq(
 
 val commonJsSettings = commonSettings ++ Seq(
   ideSkipProject := true,
-  scalacOptions in Compile ++= {
+  Compile / scalacOptions ++= {
     if (isSnapshot.value) Seq.empty
     else
       Seq {
@@ -64,7 +64,7 @@ val compileAndTest = "compile->compile;test->test"
 
 lazy val rootProject = (project in file("."))
   .settings(commonSettings: _*)
-  .settings(skip in publish := true, name := "sttp-model", scalaVersion := scala2_13)
+  .settings(publish / skip := true, name := "sttp-model", scalaVersion := scala2_13)
   .aggregate(projectAggregates: _*)
 
 lazy val core = (projectMatrix in file("core"))
