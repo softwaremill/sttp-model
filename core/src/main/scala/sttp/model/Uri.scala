@@ -21,6 +21,8 @@ import scala.collection.immutable.Seq
 import scala.util.{Failure, Success, Try}
 import sttp.model.internal.Rfc3986.encode
 
+import scala.collection.mutable
+
 /** A [[https://en.wikipedia.org/wiki/Uniform_Resource_Identifier URI]]. Can represent both relative and absolute
   * URIs, hence in terms of [[https://tools.ietf.org/html/rfc3986]], this is a URI reference.
   *
@@ -204,14 +206,19 @@ case class Uri(
     KeyValue(k, v)
   }.toList)
 
-  def paramsMap: Map[String, String] = paramsSeq.toMap
+  def paramsMap: Map[String, String] = params.toMap
 
-  def params: QueryParams = QueryParams.fromSeq(paramsSeq)
-
-  def paramsSeq: Seq[(String, String)] =
-    querySegments.collect { case KeyValue(k, v, _, _) =>
-      k -> v
+  def params: QueryParams = {
+    val m = new mutable.LinkedHashMap[String, List[String]] // keeping parameter order
+    querySegments.foreach {
+      case KeyValue(k, v, _, _) => m.update(k, m.getOrElse(k, Nil) ++ List(v))
+      case Value(v, _)          => m.update(v, m.getOrElse(v, Nil))
+      case Plain(v, _)          => m.update(v, m.getOrElse(v, Nil))
     }
+    QueryParams.fromMultiSeq(m.toSeq)
+  }
+
+  def paramsSeq: Seq[(String, String)] = params.toSeq.toList
 
   /** Adds the given query segment. */
   @deprecated(message = "Use addQuerySegment", since = "1.2.0")

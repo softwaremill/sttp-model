@@ -173,9 +173,9 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
     uri"$uriAsString".params.toMultiMap should be(Map())
   }
 
-  test("should have empty multi params") {
+  test("should have non-empty multi params") {
     val uriAsString = "https://sub.example.com:8080?p1&p2"
-    uri"$uriAsString".params.toMultiMap should be(Map())
+    uri"$uriAsString".params.toMultiMap should be(Map("p1" -> Nil, "p2" -> Nil))
   }
 
   test("should have multi params with empty string values") {
@@ -196,6 +196,13 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
   test("should replace or append query parameter") {
     uri"http://example.org?x=1".addParam("y", "2").paramsMap shouldBe Map("x" -> "1", "y" -> "2")
     uri"http://example.org?x=1".withParam("y", "2").paramsMap shouldBe Map("y" -> "2")
+  }
+
+  test("should parse no-value parameters") {
+    val uriAsString = "https://sub.example.com:8080?p1&p2=v&p3"
+    uri"$uriAsString".params.getMulti("p1") shouldBe Some(Nil)
+    uri"$uriAsString".params.getMulti("p2") shouldBe Some(List("v"))
+    uri"$uriAsString".params.getMulti("p3") shouldBe Some(Nil)
   }
 
   val validationTestData = List(
