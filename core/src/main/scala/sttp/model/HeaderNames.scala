@@ -54,6 +54,7 @@ trait HeaderNames {
   val Referer = "Referer"
   val RemoteAddress = "Remote-Address"
   val RetryAfter = "Retry-After"
+  val SecWebSocketProtocol = "Sec-WebSocket-Protocol"
   val Server = "Server"
   val SetCookie = "Set-Cookie"
   val StrictTransportSecurity = "Strict-Transport-Security"
