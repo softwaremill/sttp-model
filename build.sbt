@@ -31,13 +31,17 @@ val commonJsSettings = commonSettings ++ Seq(
     if (isSnapshot.value) Seq.empty
     else
       Seq {
+        val mapSourcePrefix = if (ScalaArtifacts.isScala3(scalaVersion.value))
+          "-scalajs-mapSourceURI"
+        else
+          "-P:scalajs:mapSourceURI"
         val dir = project.base.toURI.toString.replaceFirst("[^/]+/?$", "")
         val url = "https://raw.githubusercontent.com/softwaremill/sttp-model"
-        s"-P:scalajs:mapSourceURI:$dir->$url/v${version.value}/"
+        s"$mapSourcePrefix:$dir->$url/v${version.value}/"
       }
   },
   libraryDependencies ++= Seq(
-    "org.scala-js" %%% "scalajs-dom" % "1.1.0",
+    ("org.scala-js" %%% "scalajs-dom" % "1.1.0").cross(CrossVersion.for3Use2_13),
     "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
   )
 )
@@ -56,6 +60,7 @@ lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STT
   println("[info] STTP_NATIVE *not* defined, *not* including sttp-native in the aggregate projects")
 
   scala3.map(core.jvm(_): ProjectReference) ++
+    scala3.map(core.js(_): ProjectReference) ++
     scala2.map(core.jvm(_): ProjectReference) ++
     scala2.map(core.js(_): ProjectReference)
 }
@@ -76,9 +81,9 @@ lazy val core = (projectMatrix in file("core"))
     settings = commonJvmSettings
   )
   .jsPlatform(
-    scalaVersions = scala2,
+    scalaVersions = scala2 ++ scala3,
     settings = commonJsSettings ++ browserChromeTestSettings ++ Seq(
-      libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.2.1"
+      libraryDependencies += ("io.github.cquiroz" %%% "scala-java-time" % "2.2.1").cross(CrossVersion.for3Use2_13)
     )
   )
   .nativePlatform(
