@@ -71,8 +71,11 @@ object MediaType extends MediaTypes {
     if (!typeSubtype.lookingAt()) {
       return Left(s"""No subtype found for: "$t"""")
     }
-    val mainType = typeSubtype.group(1).toLowerCase
-    val subType = typeSubtype.group(2).toLowerCase
+
+    val (mainType, subType) = (typeSubtype.group(1), typeSubtype.group(2), typeSubtype.group(3)) match {
+      case (null, null, Wildcard) => (Wildcard, Wildcard)
+      case (mainType, subType, _) => (mainType.toLowerCase, subType.toLowerCase)
+    }
 
     val parameters = Patterns.parseMediaTypeParameters(t, offset = typeSubtype.end())
 

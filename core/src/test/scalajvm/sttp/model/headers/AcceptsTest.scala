@@ -76,12 +76,13 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
       Seq(ContentTypeRange("text", "plain", "*"))
     ),
     (
-      "text/html, image/gif, image/jpeg, */*; q=.2",
+      "text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2",
       "*",
       Seq(
         ContentTypeRange("text", "html", "*"),
         ContentTypeRange("image", "gif", "*"),
         ContentTypeRange("image", "jpeg", "*"),
+        ContentTypeRange("*", "*", "*"),
         ContentTypeRange("*", "*", "*")
       )
     )

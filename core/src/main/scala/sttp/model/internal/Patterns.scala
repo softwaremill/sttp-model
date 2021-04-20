@@ -12,7 +12,7 @@ private[model] object Patterns {
   private val Quoted = "\"([^\"]*)\""
 
   val Type: Pattern = Pattern.compile(s"$Token")
-  val TypeSubtype: Pattern = Pattern.compile(s"$Token/$Token")
+  val TypeSubtype: Pattern = Pattern.compile(s"$Token/$Token|([*])")
   val Parameter: Pattern = Pattern.compile(s";\\s*(?:$Token=(?:$Token|$Quoted))?")
 
   val QValue: Regex = "(0\\.?\\d{0,3}?|\\.\\d{1,3}?|1\\.0{1,3}?)".r
