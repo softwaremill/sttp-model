@@ -6,7 +6,6 @@ import sttp.model.internal.Validate._
 import sttp.model.internal.{Patterns, Validate}
 
 import java.nio.charset.Charset
-import scala.collection.immutable.Seq
 
 case class MediaType(
     mainType: String,
