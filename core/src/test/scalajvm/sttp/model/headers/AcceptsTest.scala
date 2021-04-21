@@ -13,6 +13,9 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
   private val acceptsCases = Table(
     ("Accept", "Accept-Charset", "result"),
     ("application/json", "*", Seq(ContentTypeRange("application", "json", "*"))),
+    ("application/json;q=.8", "*", Seq(ContentTypeRange("application", "json", "*"))),
+    ("application/json;q=.88", "*", Seq(ContentTypeRange("application", "json", "*"))),
+    ("application/json;q=.888", "*", Seq(ContentTypeRange("application", "json", "*"))),
     ("application/json", "utf-8", Seq(ContentTypeRange("application", "json", "utf-8"))),
     ("application/json", "utf-8;a=1;b=2;c=3", Seq(ContentTypeRange("application", "json", "utf-8"))),
     (
@@ -71,6 +74,17 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
       "text/plain;q=1.000",
       "*",
       Seq(ContentTypeRange("text", "plain", "*"))
+    ),
+    (
+      "text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2",
+      "*",
+      Seq(
+        ContentTypeRange("text", "html", "*"),
+        ContentTypeRange("image", "gif", "*"),
+        ContentTypeRange("image", "jpeg", "*"),
+        ContentTypeRange("*", "*", "*"),
+        ContentTypeRange("*", "*", "*")
+      )
     )
   )
 
@@ -129,6 +143,10 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
       (q: String) => s"""q must be numeric value between <0, 1> with up to 3 decimal points, provided "$q""""
 
     Accepts.parse(Seq(Header(HeaderNames.Accept, "text/html;q=xxx"))) shouldBe Left(errorMsg("xxx"))
+    Accepts.parse(Seq(Header(HeaderNames.Accept, "text/html;q=."))) shouldBe Left(errorMsg("."))
+    Accepts.parse(Seq(Header(HeaderNames.Accept, "text/html;q=.1234"))) shouldBe Left(errorMsg(".1234"))
+    Accepts.parse(Seq(Header(HeaderNames.Accept, "text/html;q=1.123"))) shouldBe Left(errorMsg("1.123"))
+    Accepts.parse(Seq(Header(HeaderNames.Accept, "text/html;q=1."))) shouldBe Left(errorMsg("1."))
     Accepts.parse(Seq(Header(HeaderNames.Accept, "text/html;q=123"))) shouldBe Left(errorMsg("123"))
     Accepts.parse(Seq(Header(HeaderNames.Accept, "text/html;q=0.1234"))) shouldBe Left(errorMsg("0.1234"))
     Accepts.parse(Seq(Header(HeaderNames.Accept, "text/html;q=1.0000"))) shouldBe Left(errorMsg("1.0000"))

@@ -6,7 +6,6 @@ import sttp.model.internal.Validate._
 import sttp.model.internal.{Patterns, Validate}
 
 import java.nio.charset.Charset
-import scala.collection.immutable.Seq
 
 case class MediaType(
     mainType: String,
@@ -72,8 +71,13 @@ object MediaType extends MediaTypes {
     if (!typeSubtype.lookingAt()) {
       return Left(s"""No subtype found for: "$t"""")
     }
-    val mainType = typeSubtype.group(1).toLowerCase
-    val subType = typeSubtype.group(2).toLowerCase
+
+    val (mainType, subType) = (typeSubtype.group(1), typeSubtype.group(2), typeSubtype.group(3)) match {
+      // if there are nulls indicating no main and subtype then we expect a single * (group 3)
+      // it's invalid according to rfc but is used by `HttpUrlConnection` https://bugs.openjdk.java.net/browse/JDK-8163921
+      case (null, null, Wildcard) => (Wildcard, Wildcard)
+      case (mainType, subType, _) => (mainType.toLowerCase, subType.toLowerCase)
+    }
 
     val parameters = Patterns.parseMediaTypeParameters(t, offset = typeSubtype.end())
 
