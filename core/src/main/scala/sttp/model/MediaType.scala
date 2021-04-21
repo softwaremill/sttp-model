@@ -73,6 +73,8 @@ object MediaType extends MediaTypes {
     }
 
     val (mainType, subType) = (typeSubtype.group(1), typeSubtype.group(2), typeSubtype.group(3)) match {
+      // if there are nulls indicating no main and subtype then we expect a single * (group 3)
+      // it's invalid according to rfc but is used by `HttpUrlConnection` https://bugs.openjdk.java.net/browse/JDK-8163921
       case (null, null, Wildcard) => (Wildcard, Wildcard)
       case (mainType, subType, _) => (mainType.toLowerCase, subType.toLowerCase)
     }
