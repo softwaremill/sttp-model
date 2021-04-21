@@ -4,9 +4,9 @@ val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.13"
 val scala2_13 = "2.13.5"
 val scala2 = List(scala2_11, scala2_12, scala2_13)
-val scala3 = List("3.0.0-RC2")
+val scala3 = List("3.0.0-RC3")
 
-val scalaTestVersion = "3.2.7"
+val scalaTestVersion = "3.2.8"
 
 excludeLintKeys in Global ++= Set(ideSkipProject)
 
@@ -31,10 +31,11 @@ val commonJsSettings = commonSettings ++ Seq(
     if (isSnapshot.value) Seq.empty
     else
       Seq {
-        val mapSourcePrefix = if (ScalaArtifacts.isScala3(scalaVersion.value))
-          "-scalajs-mapSourceURI"
-        else
-          "-P:scalajs:mapSourceURI"
+        val mapSourcePrefix =
+          if (ScalaArtifacts.isScala3(scalaVersion.value))
+            "-scalajs-mapSourceURI"
+          else
+            "-P:scalajs:mapSourceURI"
         val dir = project.base.toURI.toString.replaceFirst("[^/]+/?$", "")
         val url = "https://raw.githubusercontent.com/softwaremill/sttp-model"
         s"$mapSourcePrefix:$dir->$url/v${version.value}/"
