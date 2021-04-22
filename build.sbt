@@ -84,7 +84,7 @@ lazy val core = (projectMatrix in file("core"))
   .jsPlatform(
     scalaVersions = scala2 ++ scala3,
     settings = commonJsSettings ++ browserChromeTestSettings ++ Seq(
-      libraryDependencies += ("io.github.cquiroz" %%% "scala-java-time" % "2.2.1").cross(CrossVersion.for3Use2_13)
+      libraryDependencies += ("io.github.cquiroz" %%% "scala-java-time" % "2.2.2").cross(CrossVersion.for3Use2_13)
     )
   )
   .nativePlatform(
