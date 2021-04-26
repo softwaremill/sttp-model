@@ -128,7 +128,7 @@ object CookieValueWithMeta {
   * All `String` values should be already encoded (if necessary), as when serialised, they end up unmodified in the
   * header.
   */
-case class CookieWithMeta private (
+case class CookieWithMeta(
     name: String,
     valueWithMeta: CookieValueWithMeta
 ) {

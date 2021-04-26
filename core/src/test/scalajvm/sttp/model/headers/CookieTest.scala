@@ -116,4 +116,9 @@ class CookieTest extends AnyFlatSpec with Matchers {
   it should "serialize cookie pair" in {
     Cookie.unsafeApply("x", "y").toString shouldBe "x=y"
   }
+
+  it should "create a cookie with meta" in {
+    CookieWithMeta("a", "b").value shouldBe "b"
+    CookieWithMeta("a", CookieValueWithMeta.unsafeApply("b")).value shouldBe "b"
+  }
 }
