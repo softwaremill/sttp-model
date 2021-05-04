@@ -6,14 +6,14 @@ import sttp.model.internal.Rfc2616.validateToken
 
 case class Method(method: String) extends AnyVal {
   override def toString: String = method
+  def is(m: Method): Boolean = method.equalsIgnoreCase(m.method)
 }
 
 /** For a description of the behavior of `apply`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
   */
 object Method extends Methods {
 
-  /** @throws IllegalArgumentException If the method value is not a valid token.
-    */
+  /** @throws IllegalArgumentException If the method value is not a valid token. */
   def unsafeApply(method: String): Method = safeApply(method.toUpperCase).getOrThrow
   def safeApply(method: String): Either[String, Method] =
     Validate.all(validateToken("Method", method))(apply(method.toUpperCase))

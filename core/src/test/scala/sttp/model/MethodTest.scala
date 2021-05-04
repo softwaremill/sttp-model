@@ -4,7 +4,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class MethodTest extends AnyFlatSpec with Matchers {
-  it should "method should not be case sensitive" in {
+  "unsafeApply" should "not be case sensitive" in {
     Method.unsafeApply("get") shouldBe Method.unsafeApply("GET")
     Method.unsafeApply("head") shouldBe Method.unsafeApply("HEAD")
     Method.unsafeApply("post") shouldBe Method.unsafeApply("POST")
