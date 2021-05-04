@@ -14,9 +14,9 @@ object Method extends Methods {
 
   /** @throws IllegalArgumentException If the method value is not a valid token.
     */
-  def unsafeApply(method: String): Method = safeApply(method).getOrThrow
+  def unsafeApply(method: String): Method = safeApply(method.toUpperCase).getOrThrow
   def safeApply(method: String): Either[String, Method] =
-    Validate.all(validateToken("Method", method))(apply(method))
+    Validate.all(validateToken("Method", method))(apply(method.toUpperCase))
 
   /** An HTTP method is idempotent if an identical request can be made once or several times in a row with the same
     * effect while leaving the server in the same state.
