@@ -233,4 +233,10 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
     uri"a".addPath("b").toString shouldBe "a/b"
     uri"a/".addPath("b").toString shouldBe "a/b"
   }
+
+  test("should parse a relative uri with an absolute path") {
+    def pathSegment(s: String) = Uri.Segment(s, Uri.PathSegmentEncoding.Standard)
+    uri"/x/y".pathSegments shouldBe Uri.AbsolutePath(List(pathSegment("x"), pathSegment("y")))
+    uri"${"/x/y"}".pathSegments shouldBe Uri.AbsolutePath(List(pathSegment("x"), pathSegment("y")))
+  }
 }
