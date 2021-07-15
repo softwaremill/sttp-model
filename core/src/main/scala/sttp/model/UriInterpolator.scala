@@ -338,21 +338,23 @@ object UriInterpolator {
         sep: Set[Char],
         escape: (Char, Char)
     ): Either[String, (String, Char, String)] = {
-      var inEscape: Boolean = false
-      for (i <- 0 until s.length) {
-        val c = s(i)
-        if (inEscape && c == escape._2) {
-          inEscape = false
-        } else if (!inEscape && c == escape._1) {
-          inEscape = true
-        } else if (!inEscape) {
-          if (sep.contains(c)) {
-            return Right((s.substring(0, i), s.charAt(i), s.substring(i + 1)))
-          }
+      val sLength = s.length
+      @tailrec
+      def run(i: Int, inEscape: Boolean): Either[String, (String, Char, String)] = {
+        if (i == sLength) Left(s)
+        else {
+          val c = s(i)
+          if (inEscape && c == escape._2) {
+            run(i + 1, inEscape = false)
+          } else if (!inEscape && c == escape._1) {
+            run(i + 1, inEscape = true)
+          } else if (!inEscape && sep.contains(c)) {
+            Right((s.substring(0, i), s.charAt(i), s.substring(i + 1)))
+          } else run(i + 1, inEscape)
         }
       }
 
-      Left(s)
+      run(0, inEscape = false)
     }
   }
 
