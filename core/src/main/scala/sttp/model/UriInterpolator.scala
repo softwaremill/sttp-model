@@ -462,13 +462,16 @@ object UriInterpolator {
     case object Path extends UriBuilder {
       override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
         val noSchemeAndAuthority = u.scheme.isEmpty && u.authority.isEmpty
-        val (uu, tt) = if (noSchemeAndAuthority && t.startsWith(List(PathStart, StringToken(""), SlashInPath))) {
-          // the uri is relative and starts with a /, which will be parsed as an empty initial component - removing
-          (u, PathStart +: t.drop(3))
-        } else if (noSchemeAndAuthority && t.headOption.contains(PathStart)) {
-          // the uri is relative and the path is relative as well - doesn't start with /
-          (u.copy(pathSegments = Uri.RelativePath(Nil)), t)
-        } else (u, t)
+
+        val (uu, tt) = withoutAbsolutePathPrefixTokens(t) match {
+          case Some(tt) if noSchemeAndAuthority =>
+            // the uri is relative and starts with a /, which will be parsed as an empty initial component - removing
+            (u, PathStart +: tt)
+          case _ if noSchemeAndAuthority && t.headOption.contains(PathStart) =>
+            // the uri is relative and the path is relative as well - doesn't start with /
+            (u.copy(pathSegments = Uri.RelativePath(Nil)), t)
+          case _ => (u, t)
+        }
 
         fromStartingToken(uu, tt, PathStart, Set[Token](QueryStart, FragmentStart), pathFromTokens)
       }
@@ -476,6 +479,13 @@ object UriInterpolator {
       private def pathFromTokens(u: Uri, tokens: Vector[Token]): Uri = {
         u.addPath(tokensToStringSeq(tokens))
       }
+
+      private def withoutAbsolutePathPrefixTokens(t: Vector[Token]): Option[Vector[Token]] =
+        if (t.startsWith(List(PathStart))) {
+          // there might be multiple empty string tokens, in case of an initial expression token with an absolute path
+          val t2 = t.tail.dropWhile(_ == StringToken(""))
+          if (t2.headOption.contains(SlashInPath)) Some(t2.tail) else None
+        } else None
     }
 
     case object Query extends UriBuilder {
