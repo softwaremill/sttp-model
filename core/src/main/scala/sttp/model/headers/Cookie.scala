@@ -47,7 +47,7 @@ object Cookie {
     */
   def parse(s: String): Either[String, List[Cookie]] = {
     val cs = s.split(";").toList.map { ss =>
-      ss.split("=", 2).map(_.trim) match {
+      (ss.split("=", 2).map(_.trim): @unchecked) match {
         case Array(v1)     => Cookie.safeApply(v1, "")
         case Array(v1, v2) => Cookie.safeApply(v1, v2)
       }
@@ -235,7 +235,7 @@ object CookieWithMeta {
     */
   def parse(s: String): Either[String, CookieWithMeta] = {
     def splitkv(kv: String): (String, Option[String]) =
-      kv.split("=", 2).map(_.trim) match {
+      (kv.split("=", 2).map(_.trim): @unchecked) match {
         case Array(v1)     => (v1, None)
         case Array(v1, v2) => (v1, Some(v2))
       }
