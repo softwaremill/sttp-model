@@ -9,3 +9,4 @@ addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-publish" % 
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-browser-test-js" % sbtSoftwareMillVersion)
 
 addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.1.0")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.9.2")

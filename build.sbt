@@ -14,7 +14,10 @@ def dependenciesFor(version: String)(deps: (Option[(Long, Long)] => ModuleID)*):
   deps.map(_.apply(CrossVersion.partialVersion(version)))
 
 val commonSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
-  organization := "com.softwaremill.sttp.model"
+  organization := "com.softwaremill.sttp.model",
+  mimaPreviousArtifacts := previousStableVersion.value.map(organization.value %% moduleName.value % _).toSet,
+  mimaReportBinaryIssues := { if ((publish / skip).value) {} else mimaReportBinaryIssues.value },
+  versionScheme := Some("semver-spec")
 )
 
 val commonJvmSettings = commonSettings ++ Seq(

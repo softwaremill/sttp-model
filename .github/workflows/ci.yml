@@ -34,6 +34,8 @@ jobs:
         sudo apt-get install libidn11-dev
     - name: Compile
       run: sbt -v compile
+    - name: Check MiMa # disable for major releases
+      run: sbt -v mimaReportBinaryIssues
     - name: Test
       run: sbt -v test
     - name: Cleanup
