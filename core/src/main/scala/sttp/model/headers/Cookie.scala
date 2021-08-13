@@ -158,7 +158,7 @@ case class CookieWithMeta(
   override def toString: String = {
     val components = List(
       Some(s"$name=$value"),
-      expires.map(e => s"Expires=${DateTimeFormatter.RFC_1123_DATE_TIME.format(e.atZone(ZoneId.of("GMT")))}"),
+      expires.map(e => s"Expires=${Header.toHttpDateString(e)}"),
       maxAge.map(a => s"Max-Age=$a"),
       domain.map(d => s"Domain=$d"),
       path.map(p => s"Path=$p"),

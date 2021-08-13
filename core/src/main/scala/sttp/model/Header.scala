@@ -95,10 +95,10 @@ object Header {
     Header(HeaderNames.Cookie, (firstCookie +: otherCookies).map(_.toString).mkString("; "))
   def etag(tag: String): Header = etag(ETag(tag))
   def etag(tag: ETag): Header = Header(HeaderNames.Etag, tag.toString)
-  def expires(i: Instant): Header =
-    Header(HeaderNames.Expires, DateTimeFormatter.RFC_1123_DATE_TIME.format(i.atZone(GMT)))
-  def lastModified(i: Instant): Header =
-    Header(HeaderNames.LastModified, DateTimeFormatter.RFC_1123_DATE_TIME.format(i.atZone(GMT)))
+  def expires(i: Instant): Header = Header(HeaderNames.Expires, toHttpDateString(i))
+  def ifNoneMatch(tags: List[ETag]): Header = Header(HeaderNames.IfNoneMatch, ETag.toString(tags))
+  def ifModifiedSince(i: Instant): Header = Header(HeaderNames.IfModifiedSince, toHttpDateString(i))
+  def lastModified(i: Instant): Header = Header(HeaderNames.LastModified, toHttpDateString(i))
   def location(uri: String): Header = Header(HeaderNames.Location, uri)
   def location(uri: Uri): Header = Header(HeaderNames.Location, uri.toString)
   def proxyAuthorization(authType: String, credentials: String): Header =
@@ -137,4 +137,6 @@ object Header {
         }
     }
   def unsafeParseHttpDate(s: String): Instant = parseHttpDate(s).getOrThrow
+
+  def toHttpDateString(i: Instant): String = DateTimeFormatter.RFC_1123_DATE_TIME.format(i.atZone(GMT))
 }
