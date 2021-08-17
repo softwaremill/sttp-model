@@ -11,4 +11,14 @@ class QueryParamsTests extends AnyFlatSpec with Matchers {
     qp.getMulti("r") shouldBe Some(List("1", "2"))
     qp.getMulti("s") shouldBe None
   }
+
+  it should "serialize to string" in {
+    val qp = QueryParams.fromMultiSeq(List(("p", Nil), ("q", List("1")), ("r", List("1", "2"))))
+    qp.toString shouldBe "p&q=1&r=1&r=2"
+  }
+
+  it should "serialize to string, encoding special character" in {
+    val qp = QueryParams.fromSeq(List(("p", "a b")))
+    qp.toString shouldBe "p=a+b"
+  }
 }

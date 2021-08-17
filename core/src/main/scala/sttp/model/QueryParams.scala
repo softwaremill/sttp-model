@@ -15,6 +15,14 @@ case class QueryParams(ps: Seq[(String, Seq[String])]) {
   def param(k: String, v: String): QueryParams = new QueryParams(ps :+ (k -> List(v)))
   def param(k: String, v: Seq[String]): QueryParams = new QueryParams(ps :+ (k -> v))
   def param(p: Map[String, String]): QueryParams = new QueryParams(ps ++ p.map { case (k, v) => (k -> List(v)) })
+
+  override def toString: String = toString(Uri.QuerySegmentEncoding.Standard, Uri.QuerySegmentEncoding.StandardValue)
+  def toString(keyEncoding: Uri.Encoding, valueEncoding: Uri.Encoding): String = {
+    ps.flatMap {
+      case (k, vs) if vs.isEmpty => List(keyEncoding(k))
+      case (k, vs)               => vs.map(v => s"${keyEncoding(k)}=${valueEncoding(v)}")
+    }.mkString("&")
+  }
 }
 
 object QueryParams {
