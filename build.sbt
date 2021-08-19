@@ -1,6 +1,6 @@
 import com.softwaremill.SbtSoftwareMillBrowserTestJS._
 import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
-import com.softwaremill.Publish.{updateDocs, ossPublishSettings}
+import com.softwaremill.Publish.ossPublishSettings
 
 val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.14"
