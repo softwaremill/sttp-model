@@ -5,8 +5,7 @@ import scala.util.matching.Regex
 
 private[model] object Patterns {
 
-  /** token can consist any char except separators defined in rfc
-    * https://tools.ietf.org/html/rfc2616#section-2.2
+  /** token can consist any char except separators defined in rfc https://tools.ietf.org/html/rfc2616#section-2.2
     */
   private val Token = "([a-zA-Z0-9-!#$%&'*+.^_`{|}~]+)"
   private val Quoted = "\"([^\"]*)\""

@@ -15,10 +15,10 @@ object Rfc3986 {
 
   val QueryWithBrackets: Set[Char] = Query ++ Set('[', ']')
 
-  /** @param spaceAsPlus In the query, space is encoded as a `+`. In other
-    * contexts, it should be %-encoded as `%20`.
-    * @param encodePlus Should `+` (which is the encoded form of space
-    * in the query) be %-encoded.
+  /** @param spaceAsPlus
+    *   In the query, space is encoded as a `+`. In other contexts, it should be %-encoded as `%20`.
+    * @param encodePlus
+    *   Should `+` (which is the encoded form of space in the query) be %-encoded.
     */
   def encode(allowedCharacters: Set[Char], spaceAsPlus: Boolean = false, encodePlus: Boolean = false)(
       s: String

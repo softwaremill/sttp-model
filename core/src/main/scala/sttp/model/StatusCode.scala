@@ -16,7 +16,8 @@ class StatusCode(val code: Int) extends AnyVal {
   */
 object StatusCode extends StatusCodes {
 
-  /** @throws IllegalArgumentException If the status code is out of range.
+  /** @throws IllegalArgumentException
+    *   If the status code is out of range.
     */
   def unsafeApply(code: Int): StatusCode = safeApply(code).getOrThrow
   def safeApply(code: Int): Either[String, StatusCode] = {

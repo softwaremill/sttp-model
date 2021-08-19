@@ -12,12 +12,13 @@ import scala.util.{Failure, Success, Try}
 
 /** A cookie name-value pair.
   *
-  * The `name` and `value` should be already encoded (if necessary), as when serialised, they end up unmodified in
-  * the header.
+  * The `name` and `value` should be already encoded (if necessary), as when serialised, they end up unmodified in the
+  * header.
   */
 case class Cookie(name: String, value: String) {
 
-  /** @return Representation of the cookie as in a header value, in the format: `[name]=[value]`.
+  /** @return
+    *   Representation of the cookie as in a header value, in the format: `[name]=[value]`.
     */
   override def toString: String = s"$name=$value"
 }
@@ -35,7 +36,8 @@ object Cookie {
       Some("Cookie value can not contain control characters")
     } else None
 
-  /** @throws IllegalArgumentException If the cookie name or value contain illegal characters.
+  /** @throws IllegalArgumentException
+    *   If the cookie name or value contain illegal characters.
     */
   def unsafeApply(name: String, value: String): Cookie = safeApply(name, value).getOrThrow
 
@@ -58,7 +60,8 @@ object Cookie {
 
   def unsafeParse(s: String): List[Cookie] = parse(s).getOrThrow
 
-  /** @return Representation of the cookies as in a header value, in the format: `[name]=[value]; [name]=[value]; ...`.
+  /** @return
+    *   Representation of the cookies as in a header value, in the format: `[name]=[value]; [name]=[value]; ...`.
     */
   def toString(cs: List[Cookie]): String = cs.map(_.toString).mkString("; ")
 
@@ -153,7 +156,8 @@ case class CookieWithMeta(
   def otherDirective(v: (String, Option[String])): CookieWithMeta =
     copy(valueWithMeta = valueWithMeta.copy(otherDirectives = otherDirectives + v))
 
-  /** @return Representation of the cookie as in a header value, in the format: `[name]=[value]; [directive]=[value]; ...`.
+  /** @return
+    *   Representation of the cookie as in a header value, in the format: `[name]=[value]; [directive]=[value]; ...`.
     */
   override def toString: String = {
     val components = List(
@@ -248,7 +252,7 @@ object CookieWithMeta {
       case (ci"expires", Some(v)) =>
         Header.parseHttpDate(v) match {
           case Right(expires) => result = result.right.map(_.expires(Some(expires)))
-          case Left(_)        => result = Left(s"Expires cookie directive is not a valid RFC1123 or RFC850 datetime: $v")
+          case Left(_) => result = Left(s"Expires cookie directive is not a valid RFC1123 or RFC850 datetime: $v")
         }
       case (ci"max-age", Some(v)) =>
         Try(v.toLong) match {

@@ -22,7 +22,8 @@ case class Part[+T](
   override def contentType: Option[String] = super.contentType
 
   /** Adds the given header to the end of the headers sequence.
-    * @param replaceExisting If there's already a header with the same name, should it be dropped?
+    * @param replaceExisting
+    *   If there's already a header with the same name, should it be dropped?
     */
   def header(h: Header, replaceExisting: Boolean = false): Part[T] = {
     val current = if (replaceExisting) headers.filterNot(_.is(h.name)) else headers
@@ -31,7 +32,8 @@ case class Part[+T](
   def header(k: String, v: String): Part[T] = header(Header(k, v))
 
   /** Adds the given header to the end of the headers sequence.
-    * @param replaceExisting If there's already a header with the same name, should it be dropped?
+    * @param replaceExisting
+    *   If there's already a header with the same name, should it be dropped?
     */
   def header(k: String, v: String, replaceExisting: Boolean): Part[T] =
     header(Header(k, v), replaceExisting)

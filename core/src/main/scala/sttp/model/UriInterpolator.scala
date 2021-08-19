@@ -17,9 +17,9 @@ trait UriInterpolator {
       * `None`, the appropriate URI component will be removed.
       *
       * Sequences in the host part will be expanded to a subdomain sequence, and sequences in the path will be expanded
-      * to path components. Maps, sequences of tuples and sequences of values can be embedded in the query part.
-      * They will be expanded into query parameters. Maps and sequences of tuples can also contain optional values,
-      * for which mappings will be removed if `None`.
+      * to path components. Maps, sequences of tuples and sequences of values can be embedded in the query part. They
+      * will be expanded into query parameters. Maps and sequences of tuples can also contain optional values, for which
+      * mappings will be removed if `None`.
       *
       * All components of the URI can be embedded from values: scheme, username/password, host, port, path, query and
       * fragment. The embedded values won't be further parsed, with the exception of the `:` in the host part, which is
@@ -30,7 +30,8 @@ trait UriInterpolator {
       * This is useful when a base URI is stored in a value, and can then be used as a base for constructing more
       * specific URIs.
       *
-      * @throws IllegalArgumentException In case of a validation error. For a safe version, see [[Uri.parse()]].
+      * @throws IllegalArgumentException
+      *   In case of a validation error. For a safe version, see [[Uri.parse()]].
       */
     def uri(args: Any*): Uri = UriInterpolator.interpolate(sc, args: _*)
   }
@@ -109,7 +110,7 @@ object UriInterpolator {
           // val b = uri"$a/xy" // "http://example.com/xy"
           (tokens, nextTokensWithoutEmptyPrefix) match {
             case (ts :+ t :+ StringToken(""), SlashInPath +: nt) if isSlash(t) => tokens = ts ++ (t +: nt)
-            case _                                                             => tokens = tokens ++ nextTokensWithoutEmptyPrefix
+            case _ => tokens = tokens ++ nextTokensWithoutEmptyPrefix
           }
         }
 
@@ -159,7 +160,7 @@ object UriInterpolator {
           // #59: if the entire string matches the pattern, then there's no scheme terminator (`:`). This means there's
           // no scheme, hence - tokenizing as a relative uri.
           case Some(scheme) if scheme.length == s.length => AfterScheme.tokenize(scheme)
-          case _ if s.isEmpty                            => (this, Vector(StringToken(""))) // scheme (or another component) might be continued
+          case _ if s.isEmpty => (this, Vector(StringToken(""))) // scheme (or another component) might be continued
           case Some(scheme) if s(scheme.length) == ':' =>
             val rest = s.substring(scheme.length + 1)
             val (next, afterSchemeTokens) = AfterScheme.tokenize(rest)
@@ -246,16 +247,14 @@ object UriInterpolator {
         (this, Vector(StringToken(s)))
     }
 
-    /** Tokenize the given string up to any of the given terminator characters
-      * by splitting it using the given separators and translating each
-      * separator to a token.
+    /** Tokenize the given string up to any of the given terminator characters by splitting it using the given
+      * separators and translating each separator to a token.
       *
-      * The rest of the string, after the terminators, is tokenized using
-      * a tokenizer determined by the type of the terminator.
+      * The rest of the string, after the terminators, is tokenized using a tokenizer determined by the type of the
+      * terminator.
       *
-      * @param separatorsEscape A context-specific pair of escape characters
-      *                         (start/stop), in which separators are not taken
-      *                         into account.
+      * @param separatorsEscape
+      *   A context-specific pair of escape characters (start/stop), in which separators are not taken into account.
       */
     private def tokenizeTerminatedFragment(
         s: String,
@@ -547,9 +546,8 @@ object UriInterpolator {
       }
     }
 
-    /** Parse a prefix of tokens `t` into a component of a URI. The component
-      * is only present in the tokens if there's a `startingToken`; otherwise
-      * the component is skipped.
+    /** Parse a prefix of tokens `t` into a component of a URI. The component is only present in the tokens if there's a
+      * `startingToken`; otherwise the component is skipped.
       *
       * The component is terminated by any of `nextComponentTokens`.
       */
@@ -667,14 +665,12 @@ object UriInterpolator {
     private def decode(s: String, decodePlusAsSpace: Boolean): String = Rfc3986.decode(decodePlusAsSpace)(s)
   }
 
-  /** After tokenizing, there might be extra empty string tokens
-    * (`StringToken("")`) before and after expressions. For example,
-    * `key=$value` will tokenize to:
+  /** After tokenizing, there might be extra empty string tokens (`StringToken("")`) before and after expressions. For
+    * example, `key=$value` will tokenize to:
     *
     * `Vector(StringToken("key"), EqInQuery, StringToken(""), ExpressionToken(value))`
     *
-    * These empty string tokens need to be removed so that e.g. extra key-value
-    * mappings are not generated.
+    * These empty string tokens need to be removed so that e.g. extra key-value mappings are not generated.
     */
   private def removeEmptyTokensAroundExp(tokens: Vector[Token]): Vector[Token] = {
     @tailrec
