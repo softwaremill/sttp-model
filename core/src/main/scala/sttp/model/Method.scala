@@ -20,12 +20,14 @@ object Method extends Methods {
 
   /** An HTTP method is idempotent if an identical request can be made once or several times in a row with the same
     * effect while leaving the server in the same state.
-    * @see https://developer.mozilla.org/en-US/docs/Glossary/Idempotent
+    * @see
+    *   https://developer.mozilla.org/en-US/docs/Glossary/Idempotent
     */
   def isIdempotent(m: Method): Boolean = idempotent.contains(m)
 
   /** An HTTP method is safe if it doesn't alter the state of the server.
-    * @see https://developer.mozilla.org/en-US/docs/Glossary/safe
+    * @see
+    *   https://developer.mozilla.org/en-US/docs/Glossary/safe
     */
   def isSafe(m: Method): Boolean = safe.contains(m)
 

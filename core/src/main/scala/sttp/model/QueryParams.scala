@@ -1,7 +1,7 @@
 package sttp.model
 
-/** Represents query parameters, where each parameter can have 0, 1, or more values.
-  * All query parameters are assumed to be decoded.
+/** Represents query parameters, where each parameter can have 0, 1, or more values. All query parameters are assumed to
+  * be decoded.
   */
 case class QueryParams(ps: Seq[(String, Seq[String])]) {
   def toMap: Map[String, String] = toSeq.toMap

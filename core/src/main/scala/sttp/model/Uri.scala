@@ -23,24 +23,23 @@ import sttp.model.internal.Rfc3986.encode
 
 import scala.collection.mutable
 
-/** A [[https://en.wikipedia.org/wiki/Uniform_Resource_Identifier URI]]. Can represent both relative and absolute
-  * URIs, hence in terms of [[https://tools.ietf.org/html/rfc3986]], this is a URI reference.
+/** A [[https://en.wikipedia.org/wiki/Uniform_Resource_Identifier URI]]. Can represent both relative and absolute URIs,
+  * hence in terms of [[https://tools.ietf.org/html/rfc3986]], this is a URI reference.
   *
-  * All components (scheme, host, query, ...) are stored decoded, and become encoded upon serialization
-  * (using [[toString]]).
+  * All components (scheme, host, query, ...) are stored decoded, and become encoded upon serialization (using
+  * [[toString]]).
   *
-  * Instances can be created using the uri interpolator: `uri"..."` (see [[UriInterpolator]]), or the factory methods
-  * on the [[Uri]] companion object.
+  * Instances can be created using the uri interpolator: `uri"..."` (see [[UriInterpolator]]), or the factory methods on
+  * the [[Uri]] companion object.
   *
-  * The `apply`/`safeApply`/`unsafeApply` methods create absolute URIs and require a host.
-  * The `relative` methods creates a relative URI, given path/query/fragment components.
+  * The `apply`/`safeApply`/`unsafeApply` methods create absolute URIs and require a host. The `relative` methods
+  * creates a relative URI, given path/query/fragment components.
   *
-  * @param querySegments Either key-value pairs, single values, or plain
-  * query segments. Key value pairs will be serialized as `k=v`, and blocks
-  * of key-value pairs/single values will be combined using `&`. Note that no
-  * `&` or other separators are added around plain query segments - if
-  * required, they need to be added manually as part of the plain query
-  * segment. Custom encoding logic can be provided when creating a segment.
+  * @param querySegments
+  *   Either key-value pairs, single values, or plain query segments. Key value pairs will be serialized as `k=v`, and
+  *   blocks of key-value pairs/single values will be combined using `&`. Note that no `&` or other separators are added
+  *   around plain query segments - if required, they need to be added manually as part of the plain query segment.
+  *   Custom encoding logic can be provided when creating a segment.
   */
 case class Uri(
     scheme: Option[String],
@@ -64,8 +63,8 @@ case class Uri(
   /** Replace the user info with username/password combination. Adds an empty host if one is absent. */
   def userInfo(username: String, password: String): Uri = userInfo(Some(UserInfo(username, Some(password))))
 
-  /** Replace the user info with username/password combination. Adds an empty host if one is absent, and user info
-    * is defined.
+  /** Replace the user info with username/password combination. Adds an empty host if one is absent, and user info is
+    * defined.
     */
   def userInfo(ui: Option[UserInfo]): Uri = ui match {
     case Some(v) => this.copy(authority = Some(authority.getOrElse(Authority.Empty).userInfo(Some(v))))
@@ -143,8 +142,8 @@ case class Uri(
   def withPathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = withPathSegments(s1 :: s2 :: ss.toList)
   def withPathSegments(ss: scala.collection.Seq[Segment]): Uri = copy(pathSegments = pathSegments.withSegments(ss))
 
-  /** Replace the whole path with the given one. Leading `/` will be removed, if present, and the path will be
-    * split into segments on `/`.
+  /** Replace the whole path with the given one. Leading `/` will be removed, if present, and the path will be split
+    * into segments on `/`.
     */
   def withWholePath(p: String): Uri = {
     // removing the leading slash, as it is added during serialization anyway
@@ -316,7 +315,8 @@ case class Uri(
   }
 }
 
-/** For a general description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
+/** For a general description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see
+  * [[sttp.model]].
   *
   * The `safeApply` methods return a validation error if the scheme contains illegal characters or if the host is empty.
   */
@@ -643,8 +643,10 @@ object Uri extends UriInterpolator {
   sealed trait QuerySegment
   object QuerySegment {
 
-    /** @param keyEncoding See [[Plain.encoding]]
-      * @param valueEncoding See [[Plain.encoding]]
+    /** @param keyEncoding
+      *   See [[Plain.encoding]]
+      * @param valueEncoding
+      *   See [[Plain.encoding]]
       */
     case class KeyValue(
         k: String,
@@ -660,17 +662,16 @@ object Uri extends UriInterpolator {
       override def toString = s"Value($v,[encoding])"
     }
 
-    /** A query fragment which will be inserted into the query, without and
-      * preceding or following separators. Allows constructing query strings
-      * which are not (only) &-separated key-value pairs.
+    /** A query fragment which will be inserted into the query, without and preceding or following separators. Allows
+      * constructing query strings which are not (only) &-separated key-value pairs.
       *
-      * @param encoding How to encode the value, and which characters should be escaped. The RFC3986 standard
-      * defines that the query can include these special characters, without escaping:
+      * @param encoding
+      *   How to encode the value, and which characters should be escaped. The RFC3986 standard defines that the query
+      *   can include these special characters, without escaping:
       * {{{
       * /?:@-._~!$&()*+,;=
       * }}}
-      * See:
-      * [[https://stackoverflow.com/questions/2322764/what-characters-must-be-escaped-in-an-http-query-string]]
+      * See: [[https://stackoverflow.com/questions/2322764/what-characters-must-be-escaped-in-an-http-query-string]]
       * [[https://stackoverflow.com/questions/2366260/whats-valid-and-whats-not-in-a-uri-query]]
       */
     case class Plain(v: String, encoding: Encoding = QuerySegmentEncoding.StandardValue) extends QuerySegment {
@@ -712,20 +713,19 @@ object Uri extends UriInterpolator {
       */
     val Standard: Encoding = encode(Rfc3986.Query -- Set('&', '='), spaceAsPlus = true, encodePlus = true)
 
-    /** Encodes only the `&` reserved character, which is usually used to separate query parameter names and values.
-      * The '=' sign is allowed in values.
+    /** Encodes only the `&` reserved character, which is usually used to separate query parameter names and values. The
+      * '=' sign is allowed in values.
       */
     val StandardValue: Encoding = encode(Rfc3986.Query -- Set('&'), spaceAsPlus = true, encodePlus = true)
 
-    /** Doesn't encode any of the reserved characters, leaving intact all
-      * characters allowed in the query string as defined by RFC3986.
+    /** Doesn't encode any of the reserved characters, leaving intact all characters allowed in the query string as
+      * defined by RFC3986.
       */
     val Relaxed: Encoding = encode(Rfc3986.Query, spaceAsPlus = true)
 
-    /** Doesn't encode any of the reserved characters, leaving intact all
-      * characters allowed in the query string as defined by RFC3986 as well
-      * as the characters `[` and `]`. These brackets aren't legal in the
-      * query part of the URI, but some servers use them unencoded. See
+    /** Doesn't encode any of the reserved characters, leaving intact all characters allowed in the query string as
+      * defined by RFC3986 as well as the characters `[` and `]`. These brackets aren't legal in the query part of the
+      * URI, but some servers use them unencoded. See
       * https://stackoverflow.com/questions/11490326/is-array-syntax-using-square-brackets-in-url-query-strings-valid
       * for discussion.
       */

@@ -14,8 +14,8 @@ import scala.util.hashing.MurmurHash3
 
 /** An HTTP header. The [[name]] property is case-insensitive during equality checks.
   *
-  * To compare if two headers have the same name, use the [[is]] method, which does a case-insensitive check,
-  * instead of comparing the [[name]] property.
+  * To compare if two headers have the same name, use the [[is]] method, which does a case-insensitive check, instead of
+  * comparing the [[name]] property.
   *
   * The [[name]] and [[value]] should be already encoded (if necessary), as when serialised, they end up unmodified in
   * the header.
@@ -26,7 +26,8 @@ class Header(val name: String, val value: String) {
     */
   def is(otherName: String): Boolean = name.equalsIgnoreCase(otherName)
 
-  /** @return Representation in the format: `[name]: [value]`.
+  /** @return
+    *   Representation in the format: `[name]: [value]`.
     */
   override def toString: String = s"$name: $value"
   override def hashCode(): Int = MurmurHash3.mixLast(name.toLowerCase.hashCode, value.hashCode)
@@ -37,8 +38,9 @@ class Header(val name: String, val value: String) {
       case _                       => false
     }
 
-  /** @return Representation in the format: `[name]: [value]`. If the header is sensitive
-    *         (see [[HeaderNames.SensitiveHeaders]]), the value is omitted.
+  /** @return
+    *   Representation in the format: `[name]: [value]`. If the header is sensitive (see
+    *   [[HeaderNames.SensitiveHeaders]]), the value is omitted.
     */
   def toStringSafe(sensitiveHeaders: Set[String] = SensitiveHeaders): String =
     s"$name: ${if (HeaderNames.isSensitive(name, sensitiveHeaders)) "***" else value}"
@@ -49,7 +51,8 @@ class Header(val name: String, val value: String) {
 object Header {
   def unapply(h: Header): Option[(String, String)] = Some((h.name, h.value))
 
-  /** @throws IllegalArgumentException If the header name contains illegal characters.
+  /** @throws IllegalArgumentException
+    *   If the header name contains illegal characters.
     */
   def unsafeApply(name: String, value: String): Header = safeApply(name, value).getOrThrow
 

@@ -38,7 +38,8 @@ case class MediaType(
 /** For a description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]]. */
 object MediaType extends MediaTypes {
 
-  /** @throws IllegalArgumentException If the main type or subt type contain illegal characters.
+  /** @throws IllegalArgumentException
+    *   If the main type or subt type contain illegal characters.
     */
   def unsafeApply(
       mainType: String,
@@ -90,8 +91,10 @@ object MediaType extends MediaTypes {
 
   def unsafeParse(s: String): MediaType = parse(s).getOrThrow
 
-  /** @param mediaTypes Candidate media types
-    * @param ranges Content type ranges, sorted in order of preference.
+  /** @param mediaTypes
+    *   Candidate media types
+    * @param ranges
+    *   Content type ranges, sorted in order of preference.
     */
   def bestMatch(mediaTypes: Seq[MediaType], ranges: Seq[ContentTypeRange]): Option[MediaType] = {
     mediaTypes
