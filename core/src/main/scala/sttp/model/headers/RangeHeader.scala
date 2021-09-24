@@ -9,7 +9,7 @@ case class RangeHeader(start: Int, end: Int, unit: String) {
 
   val range: Range = Range(start, end)
 
-  override def toString: String = s"${HeaderNames.Range} ${ContentRangeUnits.Bytes}=$start-$end"
+  override def toString: String = s"${HeaderNames.Range}: ${ContentRangeUnits.Bytes}=$start-$end"
 }
 
 object RangeHeader {
