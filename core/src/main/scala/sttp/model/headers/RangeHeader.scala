@@ -3,7 +3,7 @@ package sttp.model.headers
 import sttp.model.internal.Validate.RichEither
 import sttp.model.{ContentRangeUnits, HeaderNames}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 case class RangeHeader(start: Option[Int], end: Option[Int], unit: String) {
 
@@ -14,10 +14,12 @@ case class RangeHeader(start: Option[Int], end: Option[Int], unit: String) {
 
 object RangeHeader {
 
-  def parse(str: String): Either[String, List[RangeHeader]] = Try(parseString(str))
-    .filter(_.forall(r => isValid(r.start, r.end)))
-    .toEither.left
-    .map(_.getMessage)
+  def parse(str: String): Either[String, List[RangeHeader]] =
+    Try(parseString(str))
+    .filter(_.forall(isValid)) match {
+      case Success(value) => Right(value)
+      case Failure(exception) => Left(exception.getMessage)
+    }
 
   private def parseString(str: String): List[RangeHeader] = {
     val splited = str.split("=")
@@ -28,11 +30,18 @@ object RangeHeader {
 
   private def parsSingleRange(rangeString: String, unit: String): RangeHeader = {
     val strings = rangeString.trim.split("-")
-    if (strings.size == 2) RangeHeader(strings(0).toIntOption, strings(1).toIntOption, unit)
-    else RangeHeader(strings(0).toIntOption, None, unit)
+    if (strings.size == 2) RangeHeader(toIntOption(strings(0)), toIntOption(strings(1)), unit)
+    else RangeHeader(toIntOption(strings(0)), None, unit)
   }
 
-  private def isValid(start: Option[Int], end: Option[Int]): Boolean = {
+  private def toIntOption(s: String): Option[Int] = {
+    if(s != null) None
+    else Some(s.toInt)
+  }
+
+  private def isValid(range: RangeHeader): Boolean = {
+    val start = range.start
+    val end = range.end
     val isCorrectlyDefined = start.isDefined || end.isDefined
     if (start.isDefined && end.isDefined) {
       val isRangeValid = start.zip(end).exists(startToEnd => startToEnd._1 < startToEnd._2)
@@ -49,5 +58,5 @@ case class Range(start: Option[Int], end: Option[Int]) {
 
   def toContentRange(fileSize: Long, unit: String = ContentRangeUnits.Bytes): String = unit + " " + start.getOrElse(0) + "-" + end.getOrElse(0) + "/" + fileSize
 
-  val contentLength: Int = end.zip(start).map(r => r._1 - r._2).getOrElse(0)
+  val contentLength: Int = end.zip(start).map(r => r._1 - r._2).headOption.getOrElse(0)
 }

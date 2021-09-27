@@ -3,7 +3,7 @@ package sttp.model.headers
 import sttp.model.HeaderNames
 import sttp.model.internal.Validate.RichEither
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 case class ContentRange(unit: String, range: Option[(Long, Long)], size: Option[Long]) {
   override def toString: String = s"${HeaderNames.ContentRange}: $unit ${range.map(d => s"${d._1}-${d._2}").getOrElse("*")}/${size.getOrElse("*")}"
@@ -11,12 +11,12 @@ case class ContentRange(unit: String, range: Option[(Long, Long)], size: Option[
 
 object ContentRange {
 
-  def parse(str: String): Either[String, ContentRange] = {
+  def parse(str: String): Either[String, ContentRange] =
     Try(parseString(str))
-      .filter(isValid)
-      .toEither.left
-      .map(_.getMessage)
-  }
+      .filter(isValid) match {
+      case Success(value) => Right(value)
+      case Failure(exception) => Left(exception.getMessage)
+    }
 
   private def parseString(str: String): ContentRange = {
     val splited = str.trim.split(" ")
@@ -27,7 +27,7 @@ object ContentRange {
       if (possibleRange.equals("*")) None
       else {
       val longs = possibleRange.split("-").map(_.toLong)
-      Some(longs(0), longs(1))
+      Some((longs(0), longs(1)))
       }
     val possibleSize: String = rangeAndSize(1)
     val size = if (possibleSize.equals("*")) None else Some(possibleSize.toLong)
