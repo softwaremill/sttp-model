@@ -9,17 +9,15 @@ case class RangeHeader(start: Option[Int], end: Option[Int], unit: String) {
 
   val range: Range = Range(start, end)
 
-  override def toString: String = s"${HeaderNames.Range}: ${ContentRangeUnits.Bytes}=$start-$end"
+  override def toString: String = s"${HeaderNames.Range}: $unit=${start.getOrElse(0)}-${end.getOrElse(0)}"
 }
 
 object RangeHeader {
 
-  def parse(str: String): Either[String, List[RangeHeader]] = {
-    Try(parseString(str))
-      .filter(_.forall(r => isValid(r.start, r.end)))
-      .toEither.left
-      .map(_.getMessage)
-  }
+  def parse(str: String): Either[String, List[RangeHeader]] = Try(parseString(str))
+    .filter(_.forall(r => isValid(r.start, r.end)))
+    .toEither.left
+    .map(_.getMessage)
 
   private def parseString(str: String): List[RangeHeader] = {
     val splited = str.split("=")
@@ -29,11 +27,9 @@ object RangeHeader {
   }
 
   private def parsSingleRange(rangeString: String, unit: String): RangeHeader = {
-    val strings = rangeString.split("-")
-    val range = if (strings.size == 2)
-      RangeHeader(strings(0).toIntOption, strings(1).toIntOption, unit)
+    val strings = rangeString.trim.split("-")
+    if (strings.size == 2) RangeHeader(strings(0).toIntOption, strings(1).toIntOption, unit)
     else RangeHeader(strings(0).toIntOption, None, unit)
-    range
   }
 
   private def isValid(start: Option[Int], end: Option[Int]): Boolean = {
@@ -45,7 +41,6 @@ object RangeHeader {
   }
 
   def unsafeApply(s: String): List[RangeHeader] = safeApply(s).getOrThrow
-
   def safeApply(s: String): Either[String, List[RangeHeader]] = parse(s)
 }
 
