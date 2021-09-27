@@ -6,12 +6,12 @@ import sttp.model.ContentRangeUnits
 
 class RangeHeaderTest extends AnyFlatSpec with Matchers {
 
-  it should "properly pars simplest Range header" in {
+  it should "properly parse simplest Range header" in {
     val actual = Range.parse("bytes=200-1000")
     actual shouldBe Right(List(Range(Some(200), Some(1000), ContentRangeUnits.Bytes)))
   }
 
-  it should "properly parse Range without star" in {
+  it should "properly parse Range without start" in {
     val actual = Range.parse("bytes=-1000")
     actual shouldBe Right(List(Range(None, Some(1000), ContentRangeUnits.Bytes)))
   }

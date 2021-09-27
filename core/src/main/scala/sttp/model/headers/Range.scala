@@ -15,13 +15,13 @@ case class Range(start: Option[Long], end: Option[Long], unit: String) {
 object Range {
 
   def parse(str: String): Either[String, List[Range]] =
-    Try(parseString(str))
-    .filter(_.forall(isValid)) match {
+    Try(processString(str))
+      .filter(_.forall(isValid)) match {
       case Success(value) => Right(value)
       case Failure(exception) => Left(exception.getMessage)
     }
 
-  private def parseString(str: String): List[Range] = {
+  private def processString(str: String): List[Range] = {
     val splited = str.split("=")
     val unit = splited(0)
     if (splited(1).contains(",")) splited(1).split(",").map(s => parsSingleRange(s, unit)).toList
@@ -35,7 +35,7 @@ object Range {
   }
 
   private def toLongOption(s: String): Option[Long] = {
-    if(s.isEmpty) None
+    if (s.isEmpty) None
     else Some(s.toLong)
   }
 
@@ -50,13 +50,14 @@ object Range {
   }
 
   def unsafeApply(s: String): List[Range] = safeApply(s).getOrThrow
+
   def safeApply(s: String): Either[String, List[Range]] = parse(s)
 }
 
 case class RangeValue(start: Option[Long], end: Option[Long]) {
   def isValid(contentLength: Long): Boolean = if (end.exists(e => e < contentLength)) true else false
 
-  def toContentRange(fileSize: Long, unit: String = ContentRangeUnits.Bytes): String = unit + " " + start.getOrElse(0) + "-" + end.getOrElse(0) + "/" + fileSize
+  def toContentRange(fileSize: Long, unit: String = ContentRangeUnits.Bytes): ContentRange = ContentRange(unit, start.zip(end).headOption, Some(fileSize))
 
   val contentLength: Long = end.zip(start).map(r => r._1 - r._2).headOption.getOrElse(0)
 }
