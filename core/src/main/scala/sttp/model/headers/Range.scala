@@ -49,9 +49,15 @@ object Range {
     } else isCorrectlyDefined
   }
 
-  def unsafeApply(s: String): List[Range] = safeApply(s).getOrThrow
+  def unsafeParse(s: String): List[Range] = parse(s).getOrThrow
 
-  def safeApply(s: String): Either[String, List[Range]] = parse(s)
+  def unsafeApply(start: Option[Long], end: Option[Long], unit: String): List[Range] = safeApply(start, end, unit).getOrThrow
+
+  def safeApply(start: Option[Long], end: Option[Long], unit: String): Either[String, List[Range]] = {
+    val range = Range(start, end, unit)
+    if (isValid(range)) Right(List(range))
+    else Left("Invalid Range")
+  }
 }
 
 case class RangeValue(start: Option[Long], end: Option[Long]) {

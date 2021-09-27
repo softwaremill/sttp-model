@@ -26,8 +26,8 @@ object ContentRange {
     val range =
       if (possibleRange.equals("*")) None
       else {
-      val longs = possibleRange.split("-").map(_.toLong)
-      Some((longs(0), longs(1)))
+        val longs = possibleRange.split("-").map(_.toLong)
+        Some((longs(0), longs(1)))
       }
     val possibleSize: String = rangeAndSize(1)
     val size = if (possibleSize.equals("*")) None else Some(possibleSize.toLong)
@@ -46,6 +46,13 @@ object ContentRange {
     } else !isSyntaxInvalid
   }
 
-  def unsafeApply(s: String): ContentRange = safeApply(s).getOrThrow
-  def safeApply(s: String): Either[String, ContentRange] = parse(s)
+  def unsafeParse(s: String): ContentRange = parse(s).getOrThrow
+
+  def unsafeApply(unit: String, range: Option[(Long, Long)], size: Option[Long]): ContentRange = safeApply(unit, range, size).getOrThrow
+
+  def safeApply(unit: String, range: Option[(Long, Long)], size: Option[Long]): Either[String, ContentRange] = {
+    val contentRange = ContentRange(unit, range, size)
+    if (isValid(contentRange)) Right(contentRange)
+    else Left("Invalid Content Range")
+  }
 }
