@@ -20,6 +20,6 @@ class RangeValueTest extends AnyFlatSpec with Matchers {
 
   it should "map RangeValue to content type" in {
     val actual = RangeValue(Some(100), Some(200)).toContentRange(400)
-    actual shouldBe ContentRange(ContentRangeUnits.Bytes, Some(100, 200), Some(400))
+    actual shouldBe ContentRange(ContentRangeUnits.Bytes, Some((100, 200)), Some(400))
   }
 }
