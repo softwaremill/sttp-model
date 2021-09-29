@@ -3,7 +3,7 @@ package sttp.model.headers
 import sttp.model.internal.Validate.RichEither
 import sttp.model.{ContentRangeUnits, HeaderNames}
 
-import scala.util.{Failure, Success, Try}
+import scala.annotation.tailrec
 
 case class Range(start: Option[Long], end: Option[Long], unit: String) {
 
@@ -14,24 +14,32 @@ case class Range(start: Option[Long], end: Option[Long], unit: String) {
 
 object Range {
 
-  def parse(str: String): Either[String, List[Range]] =
-    Try(processString(str))
-      .filter(_.forall(isValid)) match {
-      case Success(value) => Right(value)
-      case Failure(exception) => Left(exception.getMessage)
+  def parse(str: String): Either[String, List[Range]] = {
+    str.split("=") match {
+      case Array(unit, s) =>
+        val ranges = processString(s, unit, List.empty)
+        if (ranges.forall(isValid) && ranges.nonEmpty) Right(ranges.reverse)
+        else Left("Invalid Range")
+      case _ => Left("Unable to parse incorrect string: %s".format(str))
     }
+  }
 
-  private def processString(str: String): List[Range] = {
-    val splited = str.split("=")
-    val unit = splited(0)
-    if (splited(1).contains(",")) splited(1).split(",").map(s => parsSingleRange(s, unit)).toList
-    else List(parsSingleRange(splited(1), unit))
+  @tailrec
+  private def processString(v2: String, unit: String, acc: List[Range]): List[Range] = {
+    v2.split(",").toList match {
+      case x :: tail if x.nonEmpty =>
+        val range = parsSingleRange(x, unit)
+        processString(tail.mkString(","), unit, range :: acc)
+      case Nil => List(parsSingleRange(v2, unit))
+      case _   => acc
+    }
   }
 
   private def parsSingleRange(rangeString: String, unit: String): Range = {
     val strings = rangeString.trim.split("-")
     if (strings.size == 2) Range(toLongOption(strings(0)), toLongOption(strings(1)), unit)
-    else Range(toLongOption(strings(0)), None, unit)
+    else if (strings.size == 1) Range(toLongOption(strings(0)), None, unit)
+    else Range(None, None, unit)
   }
 
   private def toLongOption(s: String): Option[Long] = {
@@ -51,7 +59,8 @@ object Range {
 
   def unsafeParse(s: String): List[Range] = parse(s).getOrThrow
 
-  def unsafeApply(start: Option[Long], end: Option[Long], unit: String): List[Range] = safeApply(start, end, unit).getOrThrow
+  def unsafeApply(start: Option[Long], end: Option[Long], unit: String): List[Range] =
+    safeApply(start, end, unit).getOrThrow
 
   def safeApply(start: Option[Long], end: Option[Long], unit: String): Either[String, List[Range]] = {
     val range = Range(start, end, unit)
@@ -63,7 +72,8 @@ object Range {
 case class RangeValue(start: Option[Long], end: Option[Long]) {
   def isValid(contentLength: Long): Boolean = if (end.exists(e => e < contentLength)) true else false
 
-  def toContentRange(fileSize: Long, unit: String = ContentRangeUnits.Bytes): ContentRange = ContentRange(unit, start.zip(end).headOption, Some(fileSize))
+  def toContentRange(fileSize: Long, unit: String = ContentRangeUnits.Bytes): ContentRange =
+    ContentRange(unit, start.zip(end).headOption, Some(fileSize))
 
   val contentLength: Long = end.zip(start).map(r => r._1 - r._2).headOption.getOrElse(0)
 }

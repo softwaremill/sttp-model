@@ -20,4 +20,24 @@ class ContentRangeTest extends AnyFlatSpec with Matchers {
     val actual = ContentRange.parse("bytes */300")
     actual shouldBe Right(ContentRange(ContentRangeUnits.Bytes, None, Some(300)))
   }
+
+  it should "fail parsing random string" in {
+    ContentRange.parse("Opuncja") shouldBe Left("Unable to parse incorrect string: Opuncja")
+  }
+
+  it should "fail parsing ContentRange without range and size" in {
+    ContentRange.parse("bytes */*") shouldBe Left("Invalid Content-Range")
+  }
+
+  it should "fail parsing ContentRange with incorrect range" in {
+    ContentRange.parse("bytes 555-500/*") shouldBe Left("Invalid Content-Range")
+  }
+
+  it should "fail parsing ContentRange with incorrect range end" in {
+    ContentRange.parse("bytes 5-500/499") shouldBe Left("Invalid Content-Range")
+  }
+
+  it should "fail parsing ContentRange with incorrect range start" in {
+    ContentRange.parse("bytes 555-550/480") shouldBe Left("Invalid Content-Range")
+  }
 }

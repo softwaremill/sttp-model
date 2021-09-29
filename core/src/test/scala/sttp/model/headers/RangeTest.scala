@@ -62,4 +62,20 @@ class RangeTest extends AnyFlatSpec with Matchers {
       Range(None, Some(1300), ContentRangeUnits.Bytes))
     actual shouldBe Right(expectedHeaders)
   }
+
+  it should "fail parsing random string" in {
+    Range.parse("Opuncja") shouldBe Left("Unable to parse incorrect string: Opuncja")
+  }
+
+  it should "fail parsing header with incorrect range" in {
+    Range.parse("bytes=700-500") shouldBe Left("Invalid Range")
+  }
+
+  it should "fail parsing header without correct range" in {
+    Range.parse("bytes=-") shouldBe Left("Invalid Range")
+  }
+
+  it should "fail for partially correct multiheader" in {
+    Range.parse("bytes=500-700, 900-800") shouldBe Left("Invalid Range")
+  }
 }
