@@ -64,7 +64,7 @@ class RangeTest extends AnyFlatSpec with Matchers {
   }
 
   it should "fail parsing random string" in {
-    Range.parse("Opuncja") shouldBe Left("Unable to parse incorrect string: Opuncja")
+    Range.parse("Opuncja") shouldBe Left("Expected range in the format: \"unit=start/end\", but got: Opuncja")
   }
 
   it should "fail parsing header with incorrect range" in {

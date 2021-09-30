@@ -1,5 +1,6 @@
 package sttp.model.headers
 
+import sttp.model.internal.ParseUtils
 import sttp.model.internal.Validate.RichEither
 import sttp.model.{ContentRangeUnits, HeaderNames}
 
@@ -20,7 +21,7 @@ object Range {
         val ranges = processString(s, unit, List.empty)
         if (ranges.forall(isValid) && ranges.nonEmpty) Right(ranges.reverse)
         else Left("Invalid Range")
-      case _ => Left("Unable to parse incorrect string: %s".format(str))
+      case _ => Left("Expected range in the format: \"unit=start/end\", but got: %s".format(str))
     }
   }
 
@@ -35,27 +36,20 @@ object Range {
     }
   }
 
-  private def parsSingleRange(rangeString: String, unit: String): Range = {
-    val strings = rangeString.trim.split("-")
-    if (strings.size == 2) Range(toLongOption(strings(0)), toLongOption(strings(1)), unit)
-    else if (strings.size == 1) Range(toLongOption(strings(0)), None, unit)
-    else Range(None, None, unit)
-  }
+  private def parsSingleRange(rangeString: String, unit: String): Range =
+    rangeString.trim.split("-") match {
+      case Array(start, end) => Range(ParseUtils.toLongOption(start), ParseUtils.toLongOption(end), unit)
+      case Array(start)      => Range(ParseUtils.toLongOption(start), None, unit)
+      case _                 => Range(None, None, unit)
+    }
 
-  private def toLongOption(s: String): Option[Long] = {
-    if (s.isEmpty) None
-    else Some(s.toLong)
-  }
-
-  private def isValid(range: Range): Boolean = {
-    val start = range.start
-    val end = range.end
-    val isCorrectlyDefined = start.isDefined || end.isDefined
-    if (start.isDefined && end.isDefined) {
-      val isRangeValid = start.zip(end).exists(startToEnd => startToEnd._1 < startToEnd._2)
-      isCorrectlyDefined && isRangeValid
-    } else isCorrectlyDefined
-  }
+  private def isValid(range: Range): Boolean =
+    (range.start, range.end) match {
+      case (Some(start), Some(end)) => start < end
+      case (Some(_), None)          => true
+      case (None, Some(_))          => true
+      case _                        => false
+    }
 
   def unsafeParse(s: String): List[Range] = parse(s).getOrThrow
 

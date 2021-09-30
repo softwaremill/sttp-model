@@ -15,9 +15,9 @@ object ContentRange {
       case Array(unit, s) =>
         s.split("/") match {
           case Array(possibleRange, possibleSize) => processString(unit, possibleRange, possibleSize)
-          case _                                  => Left("Unable to parse incorrect string: %s".format(s))
+          case _ => Left("Expected string in the format: \"range/size\", but got: %s".format(s))
         }
-      case _ => Left("Unable to parse incorrect string: %s".format(str))
+      case _ => Left("Expected content-range in the format: \"unit range/size\", but got: %s".format(str))
     }
 
   private def processString(unit: String, possibleRange: String, possibleSize: String): Either[String, ContentRange] = {
@@ -34,14 +34,17 @@ object ContentRange {
 
   private def isValid(contentRange: ContentRange): Boolean = {
     val isSyntaxInvalid = contentRange.range.isEmpty && contentRange.size.isEmpty
-    if (contentRange.range.isDefined) {
-      val isRangeValid = contentRange.range.exists(r => r._1 < r._2)
-      if (contentRange.range.isDefined && contentRange.size.isDefined) {
-        val isRangeAndSizeValid =
-          contentRange.range.exists(range => contentRange.size.exists(size => range._1 < size & range._2 <= size))
-        isRangeValid && !isSyntaxInvalid && isRangeAndSizeValid
-      } else isRangeValid && !isSyntaxInvalid
-    } else !isSyntaxInvalid
+    contentRange.range match {
+      case Some(range) =>
+        val isRangeValid = range._1 < range._2
+        contentRange.size match {
+          case Some(size) =>
+            val isRangeAndSizeValid = range._1 < size & range._2 <= size
+            isRangeValid && !isSyntaxInvalid && isRangeAndSizeValid
+          case None => isRangeValid && !isSyntaxInvalid
+        }
+      case None => !isSyntaxInvalid
+    }
   }
 
   def unsafeParse(s: String): ContentRange = parse(s).getOrThrow
