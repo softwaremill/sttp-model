@@ -2,8 +2,6 @@ package sttp.model.sse
 
 import sttp.model.internal.ParseUtils
 
-import scala.util.Try
-
 case class ServerSentEvent(
     data: Option[String] = None,
     eventType: Option[String] = None,
