@@ -1,6 +1,7 @@
 package sttp.model.headers
 
 import sttp.model.HeaderNames
+import sttp.model.internal.ParseUtils
 import sttp.model.internal.Validate.RichEither
 
 case class ContentRange(unit: String, range: Option[(Long, Long)], size: Option[Long]) {
@@ -23,10 +24,10 @@ object ContentRange {
   private def processString(unit: String, possibleRange: String, possibleSize: String): Either[String, ContentRange] = {
     val range = possibleRange.split("-") match {
       case Array("*")        => None
-      case Array(start, end) => Some((start.toLong, end.toLong))
+      case Array(start, end) => ParseUtils.toLongOption(start).zip(ParseUtils.toLongOption(end)).headOption
       case _                 => None
     }
-    val size = if (possibleSize.equals("*")) None else Some(possibleSize.toLong)
+    val size = if (possibleSize.equals("*")) None else ParseUtils.toLongOption(possibleSize)
     val contentRange = ContentRange(unit, range, size)
     if (isValid(contentRange)) Right(contentRange)
     else Left("Invalid Content-Range")
