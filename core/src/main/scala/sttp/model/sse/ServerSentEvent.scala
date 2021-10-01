@@ -1,5 +1,7 @@
 package sttp.model.sse
 
+import sttp.model.internal.ParseUtils
+
 import scala.util.Try
 
 case class ServerSentEvent(
@@ -23,7 +25,7 @@ object ServerSentEvent {
     event.foldLeft(ServerSentEvent()) { (event, line) =>
       if (line.startsWith("data:")) combineData(event, removeLeadingSpace(line.substring(5)))
       else if (line.startsWith("id:")) event.copy(id = Some(removeLeadingSpace(line.substring(3))))
-      else if (line.startsWith("retry:")) event.copy(retry = Try(removeLeadingSpace(line.substring(6)).toInt).toOption)
+      else if (line.startsWith("retry:")) event.copy(retry = ParseUtils.toIntOption(line.substring(6)))
       else if (line.startsWith("event:")) event.copy(eventType = Some(removeLeadingSpace(line.substring(6))))
       else if (line == "data") combineData(event, "")
       else if (line == "id") event.copy(id = Some(""))

@@ -1,6 +1,6 @@
 package sttp.model
 
-import sttp.model.internal.Rfc3986
+import sttp.model.internal.{ParseUtils, Rfc3986}
 
 import scala.annotation.tailrec
 
@@ -454,7 +454,7 @@ object UriInterpolator {
       }
 
       private def portFromTokens(u: Uri, tokens: Vector[Token]): Uri = {
-        u.port(tokensToStringOpt(tokens).map(_.toInt))
+        u.port(tokensToStringOpt(tokens).flatMap(ParseUtils.toIntOption))
       }
     }
 
