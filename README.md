@@ -39,6 +39,8 @@ Available model classes include:
    * `CacheDirective`
    * `Cookie`
    * `ETag`
+   * `Range`
+   * `ContentRange`
 
 Most classes contain both serialisation & parsing functionality, following these conventions:
 

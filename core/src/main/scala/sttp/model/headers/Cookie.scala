@@ -6,8 +6,7 @@ import sttp.model.internal.Rfc2616.validateToken
 import sttp.model.internal.Validate._
 import sttp.model.internal.{Rfc2616, Validate}
 
-import java.time.format.DateTimeFormatter
-import java.time.{Instant, ZoneId}
+import java.time.Instant
 import scala.util.{Failure, Success, Try}
 
 /** A cookie name-value pair.
