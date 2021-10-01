@@ -1,12 +1,11 @@
 package sttp.model.headers
 
-import sttp.model.HeaderNames
 import sttp.model.internal.ParseUtils
 import sttp.model.internal.Validate.RichEither
 
 case class ContentRange(unit: String, range: Option[(Long, Long)], size: Option[Long]) {
   override def toString: String =
-    s"${HeaderNames.ContentRange}: $unit ${range.map(r => s"${r._1}-${r._2}").getOrElse("*")}/${size.getOrElse("*")}"
+    s"$unit ${range.map(r => s"${r._1}-${r._2}").getOrElse("*")}/${size.getOrElse("*")}"
 }
 
 object ContentRange {

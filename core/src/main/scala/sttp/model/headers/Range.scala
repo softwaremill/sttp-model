@@ -1,14 +1,14 @@
 package sttp.model.headers
 
+import sttp.model.ContentRangeUnits
 import sttp.model.internal.ParseUtils
 import sttp.model.internal.Validate.RichEither
-import sttp.model.{ContentRangeUnits, HeaderNames}
 
 import scala.annotation.tailrec
 
 case class Range(start: Option[Long], end: Option[Long], unit: String) {
 
-  override def toString: String = s"${HeaderNames.Range}: $unit=${start.getOrElse("")}-${end.getOrElse("")}"
+  override def toString: String = s"$unit=${start.getOrElse("")}-${end.getOrElse("")}"
 
   def toContentRange(fileSize: Long, unit: String = ContentRangeUnits.Bytes): ContentRange =
     ContentRange(unit, start.zip(end).headOption, Some(fileSize))

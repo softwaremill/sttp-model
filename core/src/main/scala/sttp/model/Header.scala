@@ -1,7 +1,7 @@
 package sttp.model
 
 import sttp.model.HeaderNames.SensitiveHeaders
-import sttp.model.headers.{CacheDirective, Cookie, CookieWithMeta, ETag}
+import sttp.model.headers.{CacheDirective, ContentRange, Cookie, CookieWithMeta, ETag, Range}
 import sttp.model.internal.Validate
 import sttp.model.internal.Rfc2616.validateToken
 import sttp.model.internal.Validate._
@@ -94,6 +94,7 @@ object Header {
   def contentLength(length: Long): Header = Header(HeaderNames.ContentLength, length.toString)
   def contentEncoding(encoding: String): Header = Header(HeaderNames.ContentEncoding, encoding)
   def contentType(mediaType: MediaType): Header = Header(HeaderNames.ContentType, mediaType.toString)
+  def contentRange(contentRange: ContentRange): Header = Header(HeaderNames.ContentRange, contentRange.toString)
   def cookie(firstCookie: Cookie, otherCookies: Cookie*): Header =
     Header(HeaderNames.Cookie, (firstCookie +: otherCookies).map(_.toString).mkString("; "))
   def etag(tag: String): Header = etag(ETag(tag))
@@ -106,6 +107,7 @@ object Header {
   def location(uri: Uri): Header = Header(HeaderNames.Location, uri.toString)
   def proxyAuthorization(authType: String, credentials: String): Header =
     Header(HeaderNames.ProxyAuthorization, s"$authType $credentials")
+  def range(range: Range): Header = Header(HeaderNames.Range, range.toString)
   def setCookie(cookie: CookieWithMeta): Header = Header(HeaderNames.SetCookie, cookie.toString)
   def userAgent(userAgent: String): Header = Header(HeaderNames.UserAgent, userAgent)
   def xForwardedFor(firstAddress: String, otherAddresses: String*): Header =
