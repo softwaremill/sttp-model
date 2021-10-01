@@ -1,9 +1,9 @@
 package sttp.model
 
 import sttp.model.headers.CookieWithMeta
+import sttp.model.internal.ParseUtils
 
 import scala.collection.immutable.Seq
-import scala.util.Try
 
 case class Headers(headers: Seq[Header]) extends HasHeaders {
   override def toString: String = s"Headers(${Headers.toStringSafe(headers)})"
@@ -19,7 +19,7 @@ trait HasHeaders {
   def headers(h: String): Seq[String] = headers.filter(_.is(h)).map(_.value)
 
   def contentType: Option[String] = header(HeaderNames.ContentType)
-  def contentLength: Option[Long] = header(HeaderNames.ContentLength).flatMap(cl => Try(cl.toLong).toOption)
+  def contentLength: Option[Long] = header(HeaderNames.ContentLength).flatMap(ParseUtils.toLongOption)
 
   def cookies: Seq[Either[String, CookieWithMeta]] = headers(HeaderNames.SetCookie).map(h => CookieWithMeta.parse(h))
   def unsafeCookies: Seq[CookieWithMeta] =
