@@ -8,9 +8,18 @@ import scala.annotation.tailrec
 
 case class Range(start: Option[Long], end: Option[Long], unit: String) {
 
-  val range: RangeValue = RangeValue(start, end)
-
   override def toString: String = s"${HeaderNames.Range}: $unit=${start.getOrElse("")}-${end.getOrElse("")}"
+
+  def toContentRange(fileSize: Long, unit: String = ContentRangeUnits.Bytes): ContentRange =
+    ContentRange(unit, start.zip(end).headOption, Some(fileSize))
+
+  val contentLength: Long = end.zip(start).map(r => r._1 - r._2).headOption.getOrElse(0)
+
+  def isValid(contentSize: Long): Boolean =
+    end match {
+      case Some(_end) => _end < contentSize
+      case _          => false
+    }
 }
 
 object Range {
@@ -19,19 +28,19 @@ object Range {
     str.split("=") match {
       case Array(unit, s) =>
         val ranges = processString(s, unit, List.empty)
-        if (ranges.forall(isValid) && ranges.nonEmpty) Right(ranges.reverse)
+        if (ranges.forall(validateRange) && ranges.nonEmpty) Right(ranges.reverse)
         else Left("Invalid Range")
       case _ => Left("Expected range in the format: \"unit=start/end\", but got: %s".format(str))
     }
   }
 
   @tailrec
-  private def processString(v2: String, unit: String, acc: List[Range]): List[Range] = {
-    v2.split(",").toList match {
+  private def processString(s: String, unit: String, acc: List[Range]): List[Range] = {
+    s.split(",").toList match {
       case x :: tail if x.nonEmpty =>
         val range = parsSingleRange(x, unit)
         processString(tail.mkString(","), unit, range :: acc)
-      case Nil => List(parsSingleRange(v2, unit))
+      case Nil => List(parsSingleRange(s, unit))
       case _   => acc
     }
   }
@@ -43,7 +52,7 @@ object Range {
       case _                 => Range(None, None, unit)
     }
 
-  private def isValid(range: Range): Boolean =
+  private def validateRange(range: Range): Boolean =
     (range.start, range.end) match {
       case (Some(start), Some(end)) => start < end
       case (Some(_), None)          => true
@@ -58,16 +67,7 @@ object Range {
 
   def safeApply(start: Option[Long], end: Option[Long], unit: String): Either[String, List[Range]] = {
     val range = Range(start, end, unit)
-    if (isValid(range)) Right(List(range))
+    if (validateRange(range)) Right(List(range))
     else Left("Invalid Range")
   }
-}
-
-case class RangeValue(start: Option[Long], end: Option[Long]) {
-  def isValid(contentLength: Long): Boolean = if (end.exists(e => e < contentLength)) true else false
-
-  def toContentRange(fileSize: Long, unit: String = ContentRangeUnits.Bytes): ContentRange =
-    ContentRange(unit, start.zip(end).headOption, Some(fileSize))
-
-  val contentLength: Long = end.zip(start).map(r => r._1 - r._2).headOption.getOrElse(0)
 }
