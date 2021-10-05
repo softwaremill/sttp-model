@@ -22,7 +22,9 @@ class ContentRangeTest extends AnyFlatSpec with Matchers {
   }
 
   it should "fail parsing random string" in {
-    ContentRange.parse("Opuncja") shouldBe Left("Expected content-range in the format: \"unit range/size\", but got: Opuncja")
+    ContentRange.parse("Opuncja") shouldBe Left(
+      "Expected content-range in the format: \"unit range/size\", but got: Opuncja"
+    )
   }
 
   it should "fail parsing ContentRange without range and size" in {

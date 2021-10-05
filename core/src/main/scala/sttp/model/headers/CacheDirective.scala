@@ -39,22 +39,31 @@ object CacheDirective {
 
   def parse(s: String): List[Either[String, CacheDirective]] = {
     s.split(",").map(_.trim.toLowerCase).toList.map {
-      case MaxAgePattern(c)               => ParseUtils.toIntOption(c).map(s => MaxAge(s.seconds)).toRight("Unable to parse string: %s".format(c))
-      case MaxStalePattern(c)             => Right(MaxStale(Option(c).flatMap(c => ParseUtils.toIntOption(c.substring(1))).map(_.seconds)))
-      case MinFreshPattern(c)             => ParseUtils.toIntOption(c).map(s => MinFresh(s.seconds)).toRight("Unable to parse string: %s".format(c))
-      case "no-cache"                     => Right(NoCache)
-      case "no-store"                     => Right(NoStore)
-      case "no-transform"                 => Right(NoTransform)
-      case "only-if-cached"               => Right(OnlyIfCached)
-      case "must-revalidate"              => Right(MustRevalidate)
-      case "public"                       => Right(Public)
-      case "private"                      => Right(Private)
-      case "proxy-revalidate"             => Right(ProxyRevalidate)
-      case SMaxagePattern(c)              => ParseUtils.toIntOption(c).map(s => SMaxage(s.seconds)).toRight("Unable to parse string: %s".format(c))
-      case "immutable"                    => Right(Immutable)
-      case StaleWhileRevalidatePattern(c) => ParseUtils.toIntOption(c).map(s => StaleWhileRevalidate(s.seconds)).toRight("Unable to parse string: %s".format(c))
-      case StaleIfErrorPattern(c)         => ParseUtils.toIntOption(c).map(s => StaleIfError(s.seconds)).toRight("Unable to parse string: %s".format(c))
-      case v                              => Left(s"Unknown cache directive: $v")
+      case MaxAgePattern(c) =>
+        ParseUtils.toIntOption(c).map(s => MaxAge(s.seconds)).toRight("Unable to parse string: %s".format(c))
+      case MaxStalePattern(c) =>
+        Right(MaxStale(Option(c).flatMap(c => ParseUtils.toIntOption(c.substring(1))).map(_.seconds)))
+      case MinFreshPattern(c) =>
+        ParseUtils.toIntOption(c).map(s => MinFresh(s.seconds)).toRight("Unable to parse string: %s".format(c))
+      case "no-cache"         => Right(NoCache)
+      case "no-store"         => Right(NoStore)
+      case "no-transform"     => Right(NoTransform)
+      case "only-if-cached"   => Right(OnlyIfCached)
+      case "must-revalidate"  => Right(MustRevalidate)
+      case "public"           => Right(Public)
+      case "private"          => Right(Private)
+      case "proxy-revalidate" => Right(ProxyRevalidate)
+      case SMaxagePattern(c) =>
+        ParseUtils.toIntOption(c).map(s => SMaxage(s.seconds)).toRight("Unable to parse string: %s".format(c))
+      case "immutable" => Right(Immutable)
+      case StaleWhileRevalidatePattern(c) =>
+        ParseUtils
+          .toIntOption(c)
+          .map(s => StaleWhileRevalidate(s.seconds))
+          .toRight("Unable to parse string: %s".format(c))
+      case StaleIfErrorPattern(c) =>
+        ParseUtils.toIntOption(c).map(s => StaleIfError(s.seconds)).toRight("Unable to parse string: %s".format(c))
+      case v => Left(s"Unknown cache directive: $v")
     }
   }
   def unsafeParse(s: String): List[CacheDirective] = parse(s).map(_.getOrThrow)
