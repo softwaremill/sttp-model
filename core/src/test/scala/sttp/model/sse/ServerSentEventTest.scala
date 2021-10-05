@@ -20,6 +20,10 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
     (
       List("data:x", "retry:50"),
       ServerSentEvent(Some("x"), retry = Some(50))
+    ),
+    (
+      List("data: event1 data", "event: event1", "id: id1", "retry: 5"),
+      ServerSentEvent(Some("event1 data"), Some("event1"), Some("id1"), Some(5))
     )
   )
 
