@@ -16,9 +16,11 @@ case class Range(start: Option[Long], end: Option[Long], unit: String) {
   val contentLength: Long = end.zip(start).map(r => r._1 - r._2).headOption.getOrElse(0)
 
   def isValid(contentSize: Long): Boolean =
-    end match {
-      case Some(_end) => _end < contentSize
-      case _          => false
+    (start, end) match {
+      case (Some(_start), Some(_end)) => _start < _end && _end < contentSize
+      case (Some(_start), None)       => _start < contentSize
+      case (None, Some(_end))         => _end < contentSize
+      case _                          => false
     }
 }
 
