@@ -88,6 +88,26 @@ class RangeTest extends AnyFlatSpec with Matchers {
     Range(Some(100), Some(200), ContentRangeUnits.Bytes).isValid(100) shouldBe false
   }
 
+  it should "return true for range with only start" in {
+    Range(Some(200), None, ContentRangeUnits.Bytes).isValid(400) shouldBe true
+  }
+
+  it should "return false for incorrect range with only start" in {
+    Range(Some(200), None, ContentRangeUnits.Bytes).isValid(150) shouldBe false
+  }
+
+  it should "return true for range with only end" in {
+    Range(None, Some(500), ContentRangeUnits.Bytes).isValid(600) shouldBe true
+  }
+
+  it should "return false for incorrect range with only end" in {
+    Range(None, Some(500), ContentRangeUnits.Bytes).isValid(350) shouldBe false
+  }
+
+  it should "return false for range without start and end" in {
+    Range(None, None, ContentRangeUnits.Bytes).isValid(250) shouldBe false
+  }
+
   it should "calculate content length" in {
     Range(Some(100), Some(200), ContentRangeUnits.Bytes).contentLength shouldBe 100
   }
