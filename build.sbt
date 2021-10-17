@@ -47,7 +47,7 @@ val commonJsSettings = commonSettings ++ Seq(
       }
   },
   libraryDependencies ++= Seq(
-    ("org.scala-js" %%% "scalajs-dom" % "1.2.0").cross(CrossVersion.for3Use2_13),
+    "org.scala-js" %%% "scalajs-dom" % "2.0.0-RC1",
     "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
   )
 )
@@ -89,7 +89,7 @@ lazy val core = (projectMatrix in file("core"))
   .jsPlatform(
     scalaVersions = scala2 ++ scala3,
     settings = commonJsSettings ++ browserChromeTestSettings ++ Seq(
-      libraryDependencies += ("io.github.cquiroz" %%% "scala-java-time" % "2.3.0").cross(CrossVersion.for3Use2_13)
+      libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.3.0"
     )
   )
   .nativePlatform(
