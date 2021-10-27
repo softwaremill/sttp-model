@@ -121,4 +121,8 @@ class CookieTest extends AnyFlatSpec with Matchers {
     CookieWithMeta("a", "b").value shouldBe "b"
     CookieWithMeta("a", CookieValueWithMeta.unsafeApply("b")).value shouldBe "b"
   }
+
+  it should "not create a cookie containing control characters" in {
+    Cookie.parse("x=y\ra=b") shouldBe Left("Cookie value can not contain control characters")
+  }
 }
