@@ -221,9 +221,10 @@ case class Uri(
 
   /** Adds the given query segment. */
   @deprecated(message = "Use addQuerySegment", since = "1.2.0")
-  def querySegment(qf: QuerySegment): Uri = addQuerySegment(qf)
+  def querySegment(qs: QuerySegment): Uri = addQuerySegment(qs)
 
-  def addQuerySegment(qf: QuerySegment): Uri = this.copy(querySegments = querySegments :+ qf)
+  def addQuerySegment(qs: QuerySegment): Uri = addQuerySegments(qs)
+  def addQuerySegments(qss: QuerySegment*): Uri = this.copy(querySegments = querySegments ++ qss)
 
   //
 
