@@ -224,7 +224,8 @@ case class Uri(
   def querySegment(qs: QuerySegment): Uri = addQuerySegment(qs)
 
   def addQuerySegment(qs: QuerySegment): Uri = addQuerySegments(qs)
-  def addQuerySegments(qss: QuerySegment*): Uri = this.copy(querySegments = querySegments ++ qss)
+  def addQuerySegments(qs: QuerySegment, qss: QuerySegment*): Uri = addQuerySegments(qs +: qss)
+  def addQuerySegments(qss: scala.collection.Seq[QuerySegment]): Uri = this.copy(querySegments = querySegments ++ qss)
 
   //
 
