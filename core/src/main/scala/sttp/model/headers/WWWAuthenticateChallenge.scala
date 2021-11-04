@@ -30,6 +30,6 @@ object WWWAuthenticateChallenge {
   def apply(scheme: String): WWWAuthenticateChallenge = WWWAuthenticateChallenge(scheme, ListMap.empty)
   def basic: WWWAuthenticateChallenge = WWWAuthenticateChallenge(BasicScheme)
   def basic(realm: String): WWWAuthenticateChallenge = WWWAuthenticateChallenge(BasicScheme).realm(realm)
-  def bearer: WWWAuthenticateChallenge = WWWAuthenticateChallenge(BasicScheme)
-  def bearer(realm: String): WWWAuthenticateChallenge = WWWAuthenticateChallenge(BasicScheme).realm(realm)
+  def bearer: WWWAuthenticateChallenge = WWWAuthenticateChallenge(BearerScheme)
+  def bearer(realm: String): WWWAuthenticateChallenge = WWWAuthenticateChallenge(BearerScheme).realm(realm)
 }

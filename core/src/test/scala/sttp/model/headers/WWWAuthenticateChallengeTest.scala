@@ -13,6 +13,10 @@ class WWWAuthenticateChallengeTest extends AnyFlatSpec with Matchers {
     WWWAuthenticateChallenge.basic("xyz").toString shouldBe "Basic realm=\"xyz\""
   }
 
+  it should "properly serialise a bearer header value with realm" in {
+    WWWAuthenticateChallenge.bearer("xyz").toString shouldBe "Bearer realm=\"xyz\""
+  }
+
   it should "properly serialise a header value with params" in {
     WWWAuthenticateChallenge("Digest")
       .realm("http-auth@example.org")
