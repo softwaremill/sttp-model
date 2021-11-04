@@ -1,7 +1,7 @@
 package sttp.model
 
 import sttp.model.HeaderNames.SensitiveHeaders
-import sttp.model.headers.{CacheDirective, ContentRange, Cookie, CookieWithMeta, ETag, Range}
+import sttp.model.headers.{CacheDirective, ContentRange, Cookie, CookieWithMeta, ETag, Range, WWWAuthenticateChallenge}
 import sttp.model.internal.Validate
 import sttp.model.internal.Rfc2616.validateToken
 import sttp.model.internal.Validate._
@@ -110,6 +110,14 @@ object Header {
   def range(range: Range): Header = Header(HeaderNames.Range, range.toString)
   def setCookie(cookie: CookieWithMeta): Header = Header(HeaderNames.SetCookie, cookie.toString)
   def userAgent(userAgent: String): Header = Header(HeaderNames.UserAgent, userAgent)
+  def wwwAuthenticate(challenge: WWWAuthenticateChallenge): Header =
+    Header(HeaderNames.WwwAuthenticate, challenge.toString)
+  def wwwAuthenticate(
+      firstChallenge: WWWAuthenticateChallenge,
+      otherChallenges: WWWAuthenticateChallenge*
+  ): List[Header] =
+    (firstChallenge :: otherChallenges.toList).map(c => Header(HeaderNames.WwwAuthenticate, c.toString))
+
   def xForwardedFor(firstAddress: String, otherAddresses: String*): Header =
     Header(HeaderNames.XForwardedFor, (firstAddress +: otherAddresses).mkString(", "))
 
