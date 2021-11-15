@@ -35,8 +35,8 @@ object AcceptEncoding {
 
   private def isValid(acceptEncoding: AcceptEncoding): Boolean = {
     acceptEncoding.weight match {
-      case None        => !acceptEncoding.compressionAlgorithm.isBlank
-      case Some(value) => (value <= 1 && value >= 0) && !acceptEncoding.compressionAlgorithm.isBlank
+      case None        => acceptEncoding.compressionAlgorithm.nonEmpty
+      case Some(value) => (value <= 1 && value >= 0) && acceptEncoding.compressionAlgorithm.nonEmpty
     }
   }
 
