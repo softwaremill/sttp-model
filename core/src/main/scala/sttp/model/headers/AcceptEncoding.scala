@@ -9,7 +9,6 @@ case class AcceptEncoding(compressionAlgorithm: String, weight: Option[BigDecima
 
 object AcceptEncoding {
 
-  "Accept-Encoding: deflate, gzip;q=1.0, *;q=0.5"
   def parse(str: String): List[Either[String, AcceptEncoding]] =
     str.trim
       .split(",")
@@ -17,11 +16,15 @@ object AcceptEncoding {
       .map(processString)
 
   private def processString(s: String): Either[String, AcceptEncoding] = {
-    s.split(";") match {
+    s.trim.split(";") match {
       case Array(algorithm, weight) =>
-        val encoding = AcceptEncoding(algorithm, Some(BigDecimal(weight)))
-        if (isValid(encoding)) Right(encoding)
-        else Left("Invalid Encoding")
+        weight.split("=") match {
+          case Array(_, value) =>
+            val encoding = AcceptEncoding(algorithm, Some(BigDecimal(value)))
+            if (isValid(encoding)) Right(encoding)
+            else Left("Invalid Encoding")
+          case _ =>  Left("Expected accept-encoding weight in the format: \"q=1.0\", but got: %s".format(weight))
+        }
       case Array(algorithm) =>
         val encoding = AcceptEncoding(algorithm, None)
         if (isValid(encoding)) Right(encoding)

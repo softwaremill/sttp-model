@@ -33,11 +33,11 @@ class AcceptEncodingTest extends AnyFlatSpec with Matchers {
 
   it should "properly parse AcceptEncoding header with weight" in {
     val actual = AcceptEncoding.parse("deflate;q=1.0").head
-    actual shouldBe AcceptEncoding(Encodings.Deflate, Some(BigDecimal("1.0")))
+    actual shouldBe Right(AcceptEncoding(Encodings.Deflate, Some(BigDecimal("1.0"))))
   }
 
   it should "properly parse complex AcceptEncoding header" in {
-    val actual = AcceptEncoding.parse("deflate, gzip;q=0.75, *;q=0.5").head
+    val actual = AcceptEncoding.parse("deflate, gzip;q=0.75, *;q=0.5")
     val deflate = Right(AcceptEncoding(Encodings.Deflate, None))
     val gzip = Right(AcceptEncoding(Encodings.Gzip, Some(BigDecimal("0.75"))))
     val wildcard= Right(AcceptEncoding(Encodings.Wildcard, Some(BigDecimal("0.5"))))
@@ -56,16 +56,31 @@ class AcceptEncodingTest extends AnyFlatSpec with Matchers {
 
   it should "properly parse custom encoding with weight" in {
     val actual = AcceptEncoding.parse("tapirus;q=0.1").head
-    actual shouldBe Right(AcceptEncoding("tapirus", Some(BigDecimal("1.0"))))
+    actual shouldBe Right(AcceptEncoding("tapirus", Some(BigDecimal("0.1"))))
   }
 
-  it should "fail while validating header" in {
-    val actual = AcceptEncoding.parse("gzip;q=10").head
+  it should "fail while validating header with q more then 1" in {
+    val actual = AcceptEncoding.parse("gzip;q=1.1").head
     actual shouldBe Left("Invalid Encoding")
   }
 
   it should "fail while validating empty header" in {
     val actual = AcceptEncoding.parse("").head
+    actual shouldBe Left("Invalid Encoding")
+  }
+
+  it should "fail while parsing header with incorrect q" in {
+    val actual = AcceptEncoding.parse("gzip;q1.1").head
+    actual shouldBe Left("Expected accept-encoding weight in the format: \"q=1.0\", but got: q1.1")
+  }
+
+  it should "fail while parsing incorrect header" in {
+    val actual = AcceptEncoding.parse(";").head
+    actual shouldBe Left("Expected accept-encoding in the format: \"deflate or gzip;q=1.0\", but got: ;")
+  }
+
+  it should "fail while validating header without algorithm" in {
+    val actual = AcceptEncoding.parse(";q=1.0").head
     actual shouldBe Left("Invalid Encoding")
   }
 }
