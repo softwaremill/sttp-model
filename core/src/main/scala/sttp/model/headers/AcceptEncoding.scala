@@ -23,13 +23,13 @@ object AcceptEncoding {
             val encoding = AcceptEncoding(algorithm, Some(BigDecimal(value)))
             if (isValid(encoding)) Right(encoding)
             else Left("Invalid Encoding")
-          case _ =>  Left("Expected accept-encoding weight in the format: \"q=1.0\", but got: %s".format(weight))
+          case _ =>  Left("Expected Accept-Encoding weight in the format: \"q=1.0\", but got: %s".format(weight))
         }
       case Array(algorithm) =>
         val encoding = AcceptEncoding(algorithm, None)
         if (isValid(encoding)) Right(encoding)
         else Left("Invalid Encoding")
-      case _ => Left("Expected accept-encoding in the format: \"deflate or gzip;q=1.0\", but got: %s".format(s))
+      case _ => Left("Expected Accept-Encoding in the format: \"deflate or gzip;q=1.0\", but got: %s".format(s))
     }
   }
 
