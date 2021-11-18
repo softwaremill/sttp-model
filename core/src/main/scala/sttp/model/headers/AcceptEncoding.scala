@@ -48,6 +48,6 @@ object AcceptEncoding {
   def safeApply(compressionAlgorithm: String, weight: Option[BigDecimal]): Either[String, AcceptEncoding] = {
     val encoding = AcceptEncoding(compressionAlgorithm, weight)
     if (isValid(encoding)) Right(encoding)
-    else Left("Invalid Content Range")
+    else Left("Invalid Accept-Encoding header")
   }
 }
