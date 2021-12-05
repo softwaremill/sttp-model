@@ -1,6 +1,6 @@
 package sttp.model.headers
 
-import sttp.model.headers.WWWAuthenticateChallenge.{CharsetParam, RealmParam}
+import sttp.model.{AuthenticationSchemes, Basic, Bearer, Digiset}
 
 import scala.collection.immutable.ListMap
 
@@ -11,25 +11,63 @@ case class WWWAuthenticateChallenge(scheme: String, params: ListMap[String, Stri
     s"$scheme$sep$paramsAsString"
   }
 
-  def realm: Option[String] = param(RealmParam)
-  def realm(r: String): WWWAuthenticateChallenge = addParam(RealmParam, r)
+  def realm: Option[String] = param(AuthenticationSchemes.RealmParam)
+  def realm(r: String): WWWAuthenticateChallenge = addParam(AuthenticationSchemes.RealmParam, r)
 
-  def charset: Option[String] = param(CharsetParam)
-  def charset(c: String): WWWAuthenticateChallenge = addParam(CharsetParam, c)
+  def charset: Option[String] = param(AuthenticationSchemes.CharsetParam)
+  def charset(c: String): WWWAuthenticateChallenge = addParam(AuthenticationSchemes.CharsetParam, c)
 
   def param(key: String): Option[String] = params.get(key)
   def addParam(key: String, value: String): WWWAuthenticateChallenge = copy(params = params + (key -> value))
 }
 
 object WWWAuthenticateChallenge {
-  val RealmParam = "realm"
-  val CharsetParam = "charset"
-  val BasicScheme = "Basic"
-  val BearerScheme = "Bearer"
+
+  def parseSingle(str: String): Either[String, WWWAuthenticateChallenge] = {
+    str.trim.split(" ") match {
+      case Array(x, possibleParams) =>
+        if (AuthenticationSchemes.supportedSchems.forall(possibleParams.contains))
+          Left(s"Multiple challenges in single header not supported but found in: $str")
+        else {
+          val params = creteParamsMap(possibleParams.trim)
+          x.trim match {
+            case AuthenticationSchemes.BasicScheme =>
+              if (params.size > Basic.maxParametersCount) Left(s"To much params for Basic in: $possibleParams")
+              else Right(WWWAuthenticateChallenge(Basic.name, Basic.getParams(params)))
+            case AuthenticationSchemes.BearerScheme =>
+              if (params.size > Bearer.maxParametersCount) Left(s"To much params for Bearer in: $possibleParams")
+              else Right(WWWAuthenticateChallenge(Bearer.name, Bearer.getParams(params)))
+            case AuthenticationSchemes.DigisetScheme =>
+              if (params.size > Digiset.maxParametersCount) Left(s"To much params for Digiset in: $possibleParams")
+              else Right(WWWAuthenticateChallenge(Digiset.name, Digiset.getParams(params)))
+            case _ => Left(s"$x authentication scheme not supported")
+          }
+        }
+      case Array(schema) =>
+        schema.trim match {
+          case AuthenticationSchemes.BasicScheme   => Right(WWWAuthenticateChallenge(schema))
+          case AuthenticationSchemes.BearerScheme  => Right(WWWAuthenticateChallenge(schema))
+          case AuthenticationSchemes.DigisetScheme => Right(WWWAuthenticateChallenge(schema))
+          case _                                   => Left(s"$schema authentication scheme not supported")
+        }
+      case _ => Left(s"$str is not valid value of header")
+    }
+  }
+
+  private def creteParamsMap(possibleParams: String): Map[String, String] =
+    possibleParams
+      .split(",")
+      .map(s => {
+        val strings = s.split("=")
+        (strings(0), strings(1))
+      })
+      .toMap
 
   def apply(scheme: String): WWWAuthenticateChallenge = WWWAuthenticateChallenge(scheme, ListMap.empty)
-  def basic: WWWAuthenticateChallenge = WWWAuthenticateChallenge(BasicScheme)
-  def basic(realm: String): WWWAuthenticateChallenge = WWWAuthenticateChallenge(BasicScheme).realm(realm)
-  def bearer: WWWAuthenticateChallenge = WWWAuthenticateChallenge(BearerScheme)
-  def bearer(realm: String): WWWAuthenticateChallenge = WWWAuthenticateChallenge(BearerScheme).realm(realm)
+  def basic: WWWAuthenticateChallenge = WWWAuthenticateChallenge(AuthenticationSchemes.BearerScheme)
+  def basic(realm: String): WWWAuthenticateChallenge =
+    WWWAuthenticateChallenge(AuthenticationSchemes.BasicScheme).realm(realm)
+  def bearer: WWWAuthenticateChallenge = WWWAuthenticateChallenge(AuthenticationSchemes.BearerScheme)
+  def bearer(realm: String): WWWAuthenticateChallenge =
+    WWWAuthenticateChallenge(AuthenticationSchemes.BearerScheme).realm(realm)
 }
