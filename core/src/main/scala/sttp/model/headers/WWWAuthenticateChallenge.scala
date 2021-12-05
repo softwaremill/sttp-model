@@ -1,14 +1,15 @@
 package sttp.model.headers
 
-import sttp.model.{AuthenticationSchemes, Basic, Bearer, Digiset}
+import sttp.model.{AuthenticationSchemes, Basic, Bearer, Digest}
 
 import scala.collection.immutable.ListMap
 
 case class WWWAuthenticateChallenge(scheme: String, params: ListMap[String, String]) {
   override def toString: String = {
-    val paramsAsString = params.map { case (k, v) => s"""$k="$v"""" }.mkString(", ")
+    val paramsAsString = params.map { case (k, v) => s"$k=$v" }.mkString(", ")
     val sep = if (paramsAsString.nonEmpty) " " else ""
-    s"$scheme$sep$paramsAsString"
+    val d = s"$scheme$sep$paramsAsString"
+    d
   }
 
   def realm: Option[String] = param(AuthenticationSchemes.RealmParam)
@@ -24,7 +25,7 @@ case class WWWAuthenticateChallenge(scheme: String, params: ListMap[String, Stri
 object WWWAuthenticateChallenge {
 
   def parseSingle(str: String): Either[String, WWWAuthenticateChallenge] = {
-    str.trim.split(" ") match {
+    str.trim.replaceFirst(" ", "_").split("_") match {
       case Array(x, possibleParams) =>
         if (AuthenticationSchemes.supportedSchems.forall(possibleParams.contains))
           Left(s"Multiple challenges in single header not supported but found in: $str")
@@ -37,9 +38,9 @@ object WWWAuthenticateChallenge {
             case AuthenticationSchemes.BearerScheme =>
               if (params.size > Bearer.maxParametersCount) Left(s"To much params for Bearer in: $possibleParams")
               else Right(WWWAuthenticateChallenge(Bearer.name, Bearer.getParams(params)))
-            case AuthenticationSchemes.DigisetScheme =>
-              if (params.size > Digiset.maxParametersCount) Left(s"To much params for Digiset in: $possibleParams")
-              else Right(WWWAuthenticateChallenge(Digiset.name, Digiset.getParams(params)))
+            case AuthenticationSchemes.DigestScheme =>
+              if (params.size > Digest.maxParametersCount) Left(s"To much params for Digiset in: $possibleParams")
+              else Right(WWWAuthenticateChallenge(Digest.name, Digest.getParams(params)))
             case _ => Left(s"$x authentication scheme not supported")
           }
         }
@@ -47,7 +48,7 @@ object WWWAuthenticateChallenge {
         schema.trim match {
           case AuthenticationSchemes.BasicScheme   => Right(WWWAuthenticateChallenge(schema))
           case AuthenticationSchemes.BearerScheme  => Right(WWWAuthenticateChallenge(schema))
-          case AuthenticationSchemes.DigisetScheme => Right(WWWAuthenticateChallenge(schema))
+          case AuthenticationSchemes.DigestScheme => Right(WWWAuthenticateChallenge(schema))
           case _                                   => Left(s"$schema authentication scheme not supported")
         }
       case _ => Left(s"$str is not valid value of header")
@@ -56,10 +57,10 @@ object WWWAuthenticateChallenge {
 
   private def creteParamsMap(possibleParams: String): Map[String, String] =
     possibleParams
-      .split(",")
+      .split("\",")
       .map(s => {
         val strings = s.split("=")
-        (strings(0), strings(1))
+        (strings(0).trim.replace("\"", ""), strings(1).trim.replace("\"", ""))
       })
       .toMap
 

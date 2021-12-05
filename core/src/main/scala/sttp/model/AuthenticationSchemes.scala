@@ -8,8 +8,8 @@ object AuthenticationSchemes {
   val CharsetParam = "charset"
   val BasicScheme: String = Basic.name
   val BearerScheme: String = Bearer.name
-  val DigisetScheme: String = Digiset.name
-  val supportedSchems: List[String] = List(Basic.name, Bearer.name, Digiset.name)
+  val DigestScheme: String = Digest.name
+  val supportedSchems: List[String] = List(Basic.name, Bearer.name, Digest.name)
 
 }
 
@@ -26,7 +26,7 @@ object Basic {
       realm -> params.getOrElse(realm, ""),
       charset -> params.getOrElse(charset, "")
     )
-      .filter(_._2.isEmpty)
+      .filter(_._2.nonEmpty)
 }
 
 object Bearer {
@@ -47,12 +47,12 @@ object Bearer {
       errorDescription -> params.getOrElse(errorDescription, ""),
       errorUri -> params.getOrElse(errorUri, "")
     )
-      .filter(_._2.isEmpty)
+      .filter(_._2.nonEmpty)
 }
 
-object Digiset {
+object Digest {
   val maxParametersCount = 9
-  val name = "Digiset"
+  val name = "Digest"
 
   private val realm: String = "realm"
   private val domain: String = "domain"
@@ -76,5 +76,5 @@ object Digiset {
       charset -> params.getOrElse(charset, ""),
       userhash -> params.getOrElse(userhash, "")
     )
-      .filter(_._2.isEmpty)
+      .filter(_._2.nonEmpty)
 }
