@@ -6,10 +6,9 @@ import scala.collection.immutable.ListMap
 
 case class WWWAuthenticateChallenge(scheme: String, params: ListMap[String, String]) {
   override def toString: String = {
-    val paramsAsString = params.map { case (k, v) => s"$k=$v" }.mkString(", ")
+    val paramsAsString = params.map { case (k, v) => s"""$k="$v"""" }.mkString(", ")
     val sep = if (paramsAsString.nonEmpty) " " else ""
-    val d = s"$scheme$sep$paramsAsString"
-    d
+    s"$scheme$sep$paramsAsString"
   }
 
   def realm: Option[String] = param(AuthenticationSchemes.RealmParam)
