@@ -66,7 +66,7 @@ jobs:
             ~/.sbt
             ~/.ivy2/cache
             ~/.coursier
-          key: sbt-cache-${{ runner.os }}-JVM-${{ hashFiles('project/build.properties') }}
+          key: sbt-cache-${{ runner.os }}-${{ hashFiles('project/build.properties') }}
       - name: Check MiMa # disable for major releases
         run: sbt -v mimaReportBinaryIssues
       - name: Cleanup
