@@ -20,7 +20,7 @@ object AcceptEncoding {
     val encodings = processString(str, List.empty)
     if (encodings.forall(isValid) && encodings.nonEmpty) Right(AcceptEncoding(encodings.reverse))
     else if (encodings.isEmpty)
-      Left("Expected Accept-Encoding in the format: \"deflate or gzip;q=1.0\", but got: %s".format(str))
+      Left("Expected Accept-Encoding in the format: \"deflate\" or \"gzip;q=1.0\", but got: %s".format(str))
     else Left("Invalid Encoding")
   }
 
