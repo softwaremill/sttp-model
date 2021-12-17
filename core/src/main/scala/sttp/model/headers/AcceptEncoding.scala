@@ -1,12 +1,9 @@
 package sttp.model.headers
 
+import sttp.model.headers.AcceptEncoding.Encoding
 import sttp.model.internal.Validate.RichEither
 
 import scala.annotation.tailrec
-
-case class Encoding(encoding: String, weight: Option[BigDecimal]) {
-  override def toString: String = s"$encoding${weight.map(w => s";q=$w").getOrElse("")}"
-}
 
 case class AcceptEncoding(encodings: List[Encoding]) {
 
@@ -14,6 +11,10 @@ case class AcceptEncoding(encodings: List[Encoding]) {
 }
 
 object AcceptEncoding {
+
+  case class Encoding(encoding: String, weight: Option[BigDecimal]) {
+    override def toString: String = s"$encoding${weight.map(w => s";q=$w").getOrElse("")}"
+  }
 
   def parse(str: String): Either[String, AcceptEncoding] = {
     val encodings = processString(str, List.empty)
