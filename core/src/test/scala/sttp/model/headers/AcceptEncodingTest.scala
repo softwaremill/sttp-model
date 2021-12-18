@@ -3,6 +3,7 @@ package sttp.model.headers
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import sttp.model.Encodings
+import sttp.model.headers.AcceptEncoding.Encoding
 
 class AcceptEncodingTest extends AnyFlatSpec with Matchers {
 
@@ -62,25 +63,25 @@ class AcceptEncodingTest extends AnyFlatSpec with Matchers {
   }
 
   it should "fail while validating header with q more then 1" in {
-    AcceptEncoding.parse("gzip;q=1.1") shouldBe Left("Invalid Encoding")
+    AcceptEncoding.parse("gzip;q=1.1") shouldBe Left("gzip;q=1.1 contains one or more Encodings with empty name or incorrect weight")
   }
 
   it should "fail while validating empty header" in {
     AcceptEncoding.parse("") shouldBe Left(
-      "Expected Accept-Encoding in the format: \"deflate or gzip;q=1.0\", but got: "
+      "Expected Accept-Encoding in the format: \"deflate\" or \"gzip;q=1.0\", but got: "
     )
   }
 
   it should "fail while parsing header with incorrect q" in {
-    AcceptEncoding.parse("gzip;q1.1") shouldBe Left("Invalid Encoding")
+    AcceptEncoding.parse("gzip;q1.1") shouldBe Left("gzip;q1.1 contains one or more Encodings with empty name or incorrect weight")
   }
 
   it should "fail while parsing incorrect header" in {
-    AcceptEncoding.parse(";") shouldBe Left("Invalid Encoding")
+    AcceptEncoding.parse(";") shouldBe Left("; contains one or more Encodings with empty name or incorrect weight")
   }
 
   it should "fail while validating header without algorithm" in {
-    AcceptEncoding.parse(";q=1.0") shouldBe Left("Invalid Encoding")
+    AcceptEncoding.parse(";q=1.0") shouldBe Left(";q=1.0 contains one or more Encodings with empty name or incorrect weight")
   }
 
   it should "display correct header string" in {

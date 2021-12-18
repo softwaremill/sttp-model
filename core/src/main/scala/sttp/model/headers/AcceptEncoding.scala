@@ -21,7 +21,7 @@ object AcceptEncoding {
     if (encodings.forall(isValid) && encodings.nonEmpty) Right(AcceptEncoding(encodings.reverse))
     else if (encodings.isEmpty)
       Left("Expected Accept-Encoding in the format: \"deflate\" or \"gzip;q=1.0\", but got: %s".format(str))
-    else Left("Invalid Encoding")
+    else Left("%s contains one or more Encodings with empty name or incorrect weight".format(str))
   }
 
   @tailrec
@@ -62,6 +62,6 @@ object AcceptEncoding {
   def safeApply(encoding: String, weight: Option[BigDecimal]): Either[String, AcceptEncoding] = {
     val encodingObject = Encoding(encoding, weight)
     if (isValid(encodingObject)) Right(AcceptEncoding(List(encodingObject)))
-    else Left("Invalid Accept-Encoding header")
+    else Left("Expected Encoding in the format: \"deflate\" or \"gzip;q=1.0\", but got: %s".format(encodingObject.toString))
   }
 }
