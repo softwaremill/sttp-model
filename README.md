@@ -36,6 +36,7 @@ Available model classes include:
    * `ServerSentEvent`  
 * header values:
    * `Accepts`
+   * `Accept-Encoding`
    * `CacheDirective`
    * `Cookie`
    * `ETag`
