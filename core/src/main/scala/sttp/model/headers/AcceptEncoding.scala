@@ -18,10 +18,20 @@ object AcceptEncoding {
 
   def parse(str: String): Either[String, AcceptEncoding] = {
     val encodings = processString(str, List.empty)
-    if (encodings.forall(isValid) && encodings.nonEmpty) Right(AcceptEncoding(encodings.reverse))
-    else if (encodings.isEmpty)
-      Left("Expected Accept-Encoding in the format: \"deflate\" or \"gzip;q=1.0\", but got: %s".format(str))
-    else Left("%s contains one or more Encodings with empty name or incorrect weight".format(str))
+    if (encodings.isEmpty) Left(s"No encodings found in: $str")
+    else {
+      @tailrec
+      def go(es: List[WeightedEncoding], validated: List[WeightedEncoding]): Either[String, AcceptEncoding] = es match {
+        case Nil => Right(AcceptEncoding(validated))
+        case head :: tail =>
+          validate(head, str) match {
+            case Left(s)  => Left(s)
+            case Right(e) => go(tail, e :: validated)
+          }
+      }
+
+      go(encodings, Nil)
+    }
   }
 
   @tailrec
@@ -47,10 +57,15 @@ object AcceptEncoding {
     }
   }
 
-  private def isValid(acceptEncoding: WeightedEncoding): Boolean = {
-    acceptEncoding.weight match {
-      case None        => acceptEncoding.encoding.nonEmpty
-      case Some(value) => (value <= 1 && value >= 0) && acceptEncoding.encoding.nonEmpty
+  private def validate(acceptEncoding: WeightedEncoding, original: => String): Either[String, WeightedEncoding] = {
+    if (acceptEncoding.encoding.isEmpty) {
+      Left(s"Invalid empty encoding in: $original")
+    } else {
+      acceptEncoding.weight match {
+        case Some(value) if value < 0 || value > 1 =>
+          Left(s"Invalid weight, expected a number between 0 and 1, but got: $value in $original.")
+        case _ => Right(acceptEncoding)
+      }
     }
   }
 
@@ -61,10 +76,6 @@ object AcceptEncoding {
 
   def safeApply(encoding: String, weight: Option[BigDecimal]): Either[String, AcceptEncoding] = {
     val encodingObject = WeightedEncoding(encoding, weight)
-    if (isValid(encodingObject)) Right(AcceptEncoding(List(encodingObject)))
-    else
-      Left(
-        "Expected Encoding in the format: \"deflate\" or \"gzip;q=1.0\", but got: %s".format(encodingObject.toString)
-      )
+    validate(encodingObject, encodingObject.toString).map(e => AcceptEncoding(List(e)))
   }
 }

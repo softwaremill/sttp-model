@@ -67,31 +67,23 @@ class AcceptEncodingTest extends AnyFlatSpec with Matchers {
   }
 
   it should "fail while validating header with q more then 1" in {
-    AcceptEncoding.parse("gzip;q=1.1") shouldBe Left(
-      "gzip;q=1.1 contains one or more Encodings with empty name or incorrect weight"
-    )
+    AcceptEncoding.parse("gzip;q=1.1") should matchPattern { case Left(_) => }
   }
 
   it should "fail while validating empty header" in {
-    AcceptEncoding.parse("") shouldBe Left(
-      "Expected Accept-Encoding in the format: \"deflate\" or \"gzip;q=1.0\", but got: "
-    )
+    AcceptEncoding.parse("") should matchPattern { case Left(_) => }
   }
 
   it should "fail while parsing header with incorrect q" in {
-    AcceptEncoding.parse("gzip;q1.1") shouldBe Left(
-      "gzip;q1.1 contains one or more Encodings with empty name or incorrect weight"
-    )
+    AcceptEncoding.parse("gzip;q1.1") should matchPattern { case Left(_) => }
   }
 
   it should "fail while parsing incorrect header" in {
-    AcceptEncoding.parse(";") shouldBe Left("; contains one or more Encodings with empty name or incorrect weight")
+    AcceptEncoding.parse(";") should matchPattern { case Left(_) => }
   }
 
   it should "fail while validating header without algorithm" in {
-    AcceptEncoding.parse(";q=1.0") shouldBe Left(
-      ";q=1.0 contains one or more Encodings with empty name or incorrect weight"
-    )
+    AcceptEncoding.parse(";q=1.0") should matchPattern { case Left(_) => }
   }
 
   it should "display correct header string" in {
