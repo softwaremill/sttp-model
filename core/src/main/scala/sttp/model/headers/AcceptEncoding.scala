@@ -1,18 +1,18 @@
 package sttp.model.headers
 
-import sttp.model.headers.AcceptEncoding.Encoding
+import sttp.model.headers.AcceptEncoding.WeightedEncoding
 import sttp.model.internal.Validate.RichEither
 
 import scala.annotation.tailrec
 
-case class AcceptEncoding(encodings: List[Encoding]) {
+case class AcceptEncoding(encodings: List[WeightedEncoding]) {
 
   override def toString: String = encodings.map(_.toString).mkString(",")
 }
 
 object AcceptEncoding {
 
-  case class Encoding(encoding: String, weight: Option[BigDecimal]) {
+  case class WeightedEncoding(encoding: String, weight: Option[BigDecimal]) {
     override def toString: String = s"$encoding${weight.map(w => s";q=$w").getOrElse("")}"
   }
 
@@ -25,7 +25,7 @@ object AcceptEncoding {
   }
 
   @tailrec
-  private def processString(str: String, acc: List[Encoding]): List[Encoding] = {
+  private def processString(str: String, acc: List[WeightedEncoding]): List[WeightedEncoding] = {
     str.trim.split(",").toList match {
       case x :: tail if x.nonEmpty =>
         val range = parsSingleEncoding(x)
@@ -35,19 +35,19 @@ object AcceptEncoding {
     }
   }
 
-  private def parsSingleEncoding(s: String): Encoding = {
+  private def parsSingleEncoding(s: String): WeightedEncoding = {
     s.split(";") match {
       case Array(algorithm, weight) =>
         weight.split("=") match {
-          case Array(_, value) => Encoding(algorithm, Some(BigDecimal(value)))
-          case _               => Encoding("", None)
+          case Array(_, value) => WeightedEncoding(algorithm, Some(BigDecimal(value)))
+          case _               => WeightedEncoding("", None)
         }
-      case Array(algorithm) => Encoding(algorithm, None)
-      case _                => Encoding("", None)
+      case Array(algorithm) => WeightedEncoding(algorithm, None)
+      case _                => WeightedEncoding("", None)
     }
   }
 
-  private def isValid(acceptEncoding: Encoding): Boolean = {
+  private def isValid(acceptEncoding: WeightedEncoding): Boolean = {
     acceptEncoding.weight match {
       case None        => acceptEncoding.encoding.nonEmpty
       case Some(value) => (value <= 1 && value >= 0) && acceptEncoding.encoding.nonEmpty
@@ -60,8 +60,11 @@ object AcceptEncoding {
     safeApply(encoding, weight).getOrThrow
 
   def safeApply(encoding: String, weight: Option[BigDecimal]): Either[String, AcceptEncoding] = {
-    val encodingObject = Encoding(encoding, weight)
+    val encodingObject = WeightedEncoding(encoding, weight)
     if (isValid(encodingObject)) Right(AcceptEncoding(List(encodingObject)))
-    else Left("Expected Encoding in the format: \"deflate\" or \"gzip;q=1.0\", but got: %s".format(encodingObject.toString))
+    else
+      Left(
+        "Expected Encoding in the format: \"deflate\" or \"gzip;q=1.0\", but got: %s".format(encodingObject.toString)
+      )
   }
 }
