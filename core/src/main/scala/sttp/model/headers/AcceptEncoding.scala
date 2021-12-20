@@ -76,6 +76,6 @@ object AcceptEncoding {
 
   def safeApply(encoding: String, weight: Option[BigDecimal]): Either[String, AcceptEncoding] = {
     val encodingObject = WeightedEncoding(encoding, weight)
-    validate(encodingObject, encodingObject.toString).map(e => AcceptEncoding(List(e)))
+    validate(encodingObject, encodingObject.toString).right.map(e => AcceptEncoding(List(e)))
   }
 }
