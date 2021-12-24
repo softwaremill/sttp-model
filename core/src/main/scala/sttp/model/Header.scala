@@ -1,7 +1,16 @@
 package sttp.model
 
 import sttp.model.HeaderNames.SensitiveHeaders
-import sttp.model.headers.{AcceptEncoding, CacheDirective, ContentRange, Cookie, CookieWithMeta, ETag, Range, WWWAuthenticateChallenge}
+import sttp.model.headers.{
+  AcceptEncoding,
+  CacheDirective,
+  ContentRange,
+  Cookie,
+  CookieWithMeta,
+  ETag,
+  Range,
+  WWWAuthenticateChallenge
+}
 import sttp.model.internal.Validate
 import sttp.model.internal.Rfc2616.validateToken
 import sttp.model.internal.Validate._
