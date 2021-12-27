@@ -32,14 +32,14 @@ object WWWAuthenticateChallenge {
           val params = creteParamsMap(possibleParams.trim)
           x.trim match {
             case AuthenticationSchemes.BasicScheme =>
-              if (params.size > Basic.maxParametersCount) Left(s"To much params for Basic in: $possibleParams")
-              else Right(WWWAuthenticateChallenge(Basic.name, Basic.getParams(params)))
+              if (params.size > AuthenticationSchemes.Basic.maxParametersCount) Left(s"To much params for Basic in: $possibleParams")
+              else Right(WWWAuthenticateChallenge(AuthenticationSchemes.Basic.name, AuthenticationSchemes.Basic.getParams(params)))
             case AuthenticationSchemes.BearerScheme =>
-              if (params.size > Bearer.maxParametersCount) Left(s"To much params for Bearer in: $possibleParams")
-              else Right(WWWAuthenticateChallenge(Bearer.name, Bearer.getParams(params)))
+              if (params.size > AuthenticationSchemes.Bearer.maxParametersCount) Left(s"To much params for Bearer in: $possibleParams")
+              else Right(WWWAuthenticateChallenge(AuthenticationSchemes.Bearer.name, AuthenticationSchemes.Bearer.getParams(params)))
             case AuthenticationSchemes.DigestScheme =>
-              if (params.size > Digest.maxParametersCount) Left(s"To much params for Digiset in: $possibleParams")
-              else Right(WWWAuthenticateChallenge(Digest.name, Digest.getParams(params)))
+              if (params.size > AuthenticationSchemes.Digest.maxParametersCount) Left(s"To much params for Digiset in: $possibleParams")
+              else Right(WWWAuthenticateChallenge(AuthenticationSchemes.Digest.name, AuthenticationSchemes.Digest.getParams(params)))
             case _ => Left(s"$x authentication scheme not supported")
           }
         }
