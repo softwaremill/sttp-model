@@ -1,7 +1,16 @@
 package sttp.model
 
 import sttp.model.HeaderNames.SensitiveHeaders
-import sttp.model.headers.{CacheDirective, ContentRange, Cookie, CookieWithMeta, ETag, Range, WWWAuthenticateChallenge}
+import sttp.model.headers.{
+  AcceptEncoding,
+  CacheDirective,
+  ContentRange,
+  Cookie,
+  CookieWithMeta,
+  ETag,
+  Range,
+  WWWAuthenticateChallenge
+}
 import sttp.model.internal.Validate
 import sttp.model.internal.Rfc2616.validateToken
 import sttp.model.internal.Validate._
@@ -88,6 +97,8 @@ object Header {
     Header(HeaderNames.AccessControlRequestMethod, method.toString)
   def authorization(authType: String, credentials: String): Header =
     Header(HeaderNames.Authorization, s"$authType $credentials")
+  def acceptEncoding(acceptEncoding: AcceptEncoding): Header =
+    Header(HeaderNames.AcceptEncoding, acceptEncoding.toString)
   def cacheControl(first: CacheDirective, other: CacheDirective*): Header = cacheControl(first +: other)
   def cacheControl(directives: Iterable[CacheDirective]): Header =
     Header(HeaderNames.CacheControl, directives.map(_.toString).mkString(", "))

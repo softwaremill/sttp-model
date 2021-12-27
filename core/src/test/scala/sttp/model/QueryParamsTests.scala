@@ -21,4 +21,14 @@ class QueryParamsTests extends AnyFlatSpec with Matchers {
     val qp = QueryParams.fromSeq(List(("p", "a b")))
     qp.toString shouldBe "p=a+b"
   }
+
+  it should "serialize to string with a boundary if there are query params" in {
+    val qp = QueryParams.fromSeq(List(("p", "1"), ("q", "2")))
+    qp.toString(includeBoundary = true) shouldBe "?p=1&q=2"
+  }
+
+  it should "serialize to string without boundary if there are no query params" in {
+    val qp = QueryParams.fromSeq(Nil)
+    qp.toString(includeBoundary = true) shouldBe ""
+  }
 }
