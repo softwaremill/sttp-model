@@ -1,6 +1,6 @@
 package sttp.model.headers
 
-import sttp.model.{AuthenticationChallengeParams, AuthenticationSchemes, Basic, Bearer, Digest}
+import sttp.model.{AuthenticationChallengeParams, AuthenticationSchemes}
 
 import scala.collection.immutable.ListMap
 
