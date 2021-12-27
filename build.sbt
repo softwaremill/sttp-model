@@ -28,7 +28,7 @@ val commonJvmSettings = commonSettings ++ Seq(
     "org.scalatest" %% "scalatest" % scalaTestVersion % Test
   ),
   mimaPreviousArtifacts := previousStableVersion.value.map(organization.value %% moduleName.value % _).toSet,
-  mimaReportBinaryIssues := { if ((publish / skip).value) {} else mimaReportBinaryIssues.value },
+  mimaReportBinaryIssues := { if ((publish / skip).value) {} else mimaReportBinaryIssues.value }
 )
 
 val commonJsSettings = commonSettings ++ Seq(
