@@ -1,6 +1,6 @@
 package sttp.model.headers
 
-import sttp.model.{AuthenticationSchemes, Basic, Bearer, Digest}
+import sttp.model.{AuthenticationChallengeParams, AuthenticationSchemes, Basic, Bearer, Digest}
 
 import scala.collection.immutable.ListMap
 
@@ -11,11 +11,11 @@ case class WWWAuthenticateChallenge(scheme: String, params: ListMap[String, Stri
     s"$scheme$sep$paramsAsString"
   }
 
-  def realm: Option[String] = param(AuthenticationSchemes.RealmParam)
-  def realm(r: String): WWWAuthenticateChallenge = addParam(AuthenticationSchemes.RealmParam, r)
+  def realm: Option[String] = param(AuthenticationChallengeParams.RealmParam)
+  def realm(r: String): WWWAuthenticateChallenge = addParam(AuthenticationChallengeParams.RealmParam, r)
 
-  def charset: Option[String] = param(AuthenticationSchemes.CharsetParam)
-  def charset(c: String): WWWAuthenticateChallenge = addParam(AuthenticationSchemes.CharsetParam, c)
+  def charset: Option[String] = param(AuthenticationChallengeParams.CharsetParam)
+  def charset(c: String): WWWAuthenticateChallenge = addParam(AuthenticationChallengeParams.CharsetParam, c)
 
   def param(key: String): Option[String] = params.get(key)
   def addParam(key: String, value: String): WWWAuthenticateChallenge = copy(params = params + (key -> value))

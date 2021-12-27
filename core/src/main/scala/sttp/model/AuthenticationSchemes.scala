@@ -4,8 +4,6 @@ import scala.collection.immutable.ListMap
 
 object AuthenticationSchemes {
 
-  val RealmParam = "realm"
-  val CharsetParam = "charset"
   val BasicScheme: String = Basic.name
   val BearerScheme: String = Bearer.name
   val DigestScheme: String = Digest.name
