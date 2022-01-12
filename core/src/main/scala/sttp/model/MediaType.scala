@@ -44,6 +44,17 @@ case class MediaType(
 
   override def toString: String = s"$mainType/$subType" + charset.fold("")(c => s"; charset=$c") +
     otherParameters.foldLeft("") { case (s, (p, v)) => if (p == "charset") s else s"$s; $p=$v" }
+
+  override def hashCode(): Int = toString.toLowerCase.hashCode
+  override def equals(that: Any): Boolean =
+    that match {
+      case t: AnyRef if this.eq(t) => true
+      case t: MediaType            => toString.equalsIgnoreCase(t.toString)
+      case _                       => false
+    }
+
+  def equalsIgnoreParameters(that: MediaType): Boolean =
+    mainType.equalsIgnoreCase(that.mainType) && subType.equalsIgnoreCase(that.subType)
 }
 
 /** For a description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]]. */
