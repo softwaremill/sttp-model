@@ -52,6 +52,9 @@ case class MediaType(
       case t: MediaType            => toString.equalsIgnoreCase(t.toString)
       case _                       => false
     }
+
+  def equalsIgnoreParameters(that: MediaType): Boolean =
+    mainType.equalsIgnoreCase(that.mainType) && subType.equalsIgnoreCase(that.subType)
 }
 
 /** For a description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]]. */
