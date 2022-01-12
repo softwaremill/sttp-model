@@ -31,6 +31,17 @@ case class MediaType(
     }) && charsetMatches
   }
 
+  def isApplication: Boolean = mainType.equalsIgnoreCase("application")
+  def isAudio: Boolean = mainType.equalsIgnoreCase("audio")
+  def isImage: Boolean = mainType.equalsIgnoreCase("image")
+  def isMessage: Boolean = mainType.equalsIgnoreCase("message")
+  def isMultipart: Boolean = mainType.equalsIgnoreCase("multipart")
+  def isText: Boolean = mainType.equalsIgnoreCase("text")
+  def isVideo: Boolean = mainType.equalsIgnoreCase("video")
+  def isFont: Boolean = mainType.equalsIgnoreCase("font")
+  def isExample: Boolean = mainType.equalsIgnoreCase("example")
+  def isModel: Boolean = mainType.equalsIgnoreCase("model")
+
   override def toString: String = s"$mainType/$subType" + charset.fold("")(c => s"; charset=$c") +
     otherParameters.foldLeft("") { case (s, (p, v)) => if (p == "charset") s else s"$s; $p=$v" }
 }
