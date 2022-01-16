@@ -61,7 +61,7 @@ object WWWAuthenticateChallenge {
                 )
             case DigestScheme =>
               if (params.size > AuthenticationSchemes.Digest.maxParametersCount)
-                Left(s"To much params for Digiset in: $possibleParams")
+                Left(s"To much params for Digest in: $possibleParams")
               else
                 Right(
                   WWWAuthenticateChallenge(
