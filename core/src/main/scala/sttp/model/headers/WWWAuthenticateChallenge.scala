@@ -1,8 +1,8 @@
 package sttp.model.headers
 
-import sttp.model.AuthenticationSchemes.{Basic, Bearer}
-import sttp.model.headers.WWWAuthenticateChallenge.{CharsetParam, RealmParam}
 import sttp.model.AuthenticationSchemes
+import sttp.model.AuthenticationSchemes.{Basic, Bearer, Digest}
+import sttp.model.headers.WWWAuthenticateChallenge.{CharsetParam, RealmParam}
 
 import scala.collection.immutable.ListMap
 
@@ -29,6 +29,7 @@ object WWWAuthenticateChallenge {
   val CharsetParam: String = "charset"
   val BasicScheme: String = Basic.name
   val BearerScheme: String = Bearer.name
+  val DigestScheme: String = Digest.name
 
   def parseSingle(str: String): Either[String, WWWAuthenticateChallenge] = {
     str.trim.replaceFirst(" ", "_").split("_") match {
@@ -39,23 +40,44 @@ object WWWAuthenticateChallenge {
           val params = creteParamsMap(possibleParams.trim)
           x.trim match {
             case BasicScheme =>
-              if (params.size > AuthenticationSchemes.Basic.maxParametersCount) Left(s"To much params for Basic in: $possibleParams")
-              else Right(WWWAuthenticateChallenge(AuthenticationSchemes.Basic.name, AuthenticationSchemes.Basic.getParams(params)))
+              if (params.size > AuthenticationSchemes.Basic.maxParametersCount)
+                Left(s"To much params for Basic in: $possibleParams")
+              else
+                Right(
+                  WWWAuthenticateChallenge(
+                    AuthenticationSchemes.Basic.name,
+                    AuthenticationSchemes.Basic.getParams(params)
+                  )
+                )
             case BearerScheme =>
-              if (params.size > AuthenticationSchemes.Bearer.maxParametersCount) Left(s"To much params for Bearer in: $possibleParams")
-              else Right(WWWAuthenticateChallenge(AuthenticationSchemes.Bearer.name, AuthenticationSchemes.Bearer.getParams(params)))
-            case AuthenticationSchemes.DigestScheme =>
-              if (params.size > AuthenticationSchemes.Digest.maxParametersCount) Left(s"To much params for Digiset in: $possibleParams")
-              else Right(WWWAuthenticateChallenge(AuthenticationSchemes.Digest.name, AuthenticationSchemes.Digest.getParams(params)))
+              if (params.size > AuthenticationSchemes.Bearer.maxParametersCount)
+                Left(s"To much params for Bearer in: $possibleParams")
+              else
+                Right(
+                  WWWAuthenticateChallenge(
+                    AuthenticationSchemes.Bearer.name,
+                    AuthenticationSchemes.Bearer.getParams(params)
+                  )
+                )
+            case DigestScheme =>
+              if (params.size > AuthenticationSchemes.Digest.maxParametersCount)
+                Left(s"To much params for Digiset in: $possibleParams")
+              else
+                Right(
+                  WWWAuthenticateChallenge(
+                    AuthenticationSchemes.Digest.name,
+                    AuthenticationSchemes.Digest.getParams(params)
+                  )
+                )
             case _ => Left(s"$x authentication scheme not supported")
           }
         }
       case Array(schema) =>
         schema.trim match {
-          case BasicScheme   => Right(WWWAuthenticateChallenge(schema))
-          case BearerScheme  => Right(WWWAuthenticateChallenge(schema))
-          case AuthenticationSchemes.DigestScheme => Right(WWWAuthenticateChallenge(schema))
-          case _                                   => Left(s"$schema authentication scheme not supported")
+          case BasicScheme  => Right(WWWAuthenticateChallenge(schema))
+          case BearerScheme => Right(WWWAuthenticateChallenge(schema))
+          case DigestScheme => Right(WWWAuthenticateChallenge(schema))
+          case _            => Left(s"$schema authentication scheme not supported")
         }
       case _ => Left(s"$str is not valid value of header")
     }

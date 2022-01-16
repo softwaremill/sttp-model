@@ -4,7 +4,6 @@ import scala.collection.immutable.ListMap
 
 object AuthenticationSchemes {
 
-  val DigestScheme: String = Digest.name
   val supportedSchemes: List[String] = List(Basic.name, Bearer.name, Digest.name)
 
   object Basic {
