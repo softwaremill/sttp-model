@@ -44,6 +44,7 @@ object AuthenticationSchemes {
   }
 
   object Digest {
+
     val maxParametersCount = 9
     val name = "Digest"
 
@@ -54,8 +55,18 @@ object AuthenticationSchemes {
     private val stale: String = "stale"
     private val algorithm: String = "algorithm"
     private val qop: String = "qop"
+    private val qopValues = List("auth", "auth-int")
     private val charset: String = "charset"
     private val userhash: String = "userhash"
+
+    def paramsValid(params: Map[String, String]): Boolean = {
+      val matchingParamsNumber = params.size <= maxParametersCount
+      val containsNonce = params.contains(nonce)
+      val containsOpaque = params.contains(opaque)
+      val qopValue = params.getOrElse(qop, "")
+      val qopValueMatch = qopValues.exists(_.equals(qopValue))
+      matchingParamsNumber && containsNonce && containsOpaque && qopValueMatch
+    }
 
     def getParams(params: Map[String, String]): ListMap[String, String] =
       ListMap(

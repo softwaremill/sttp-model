@@ -57,14 +57,24 @@ class WWWAuthenticateChallengeTest extends AnyFlatSpec with Matchers {
   }
 
   it should "properly parse a header value with params" in {
-    val actual = WWWAuthenticateChallenge.parseSingle("Digest realm=\"http-auth@example.org\", qop=\"auth, auth-int\", nonce=\"xxxx\"")
-    val params = ListMap("realm" -> "http-auth@example.org", "qop" -> "auth, auth-int", "nonce" -> "xxxx")
+    val actual = WWWAuthenticateChallenge.parseSingle("Digest realm=\"http-auth@example.org\", qop=\"auth\", opaque=\"test\", nonce=\"xxxx\"")
+    val params = ListMap("realm" -> "http-auth@example.org", "qop" -> "auth", "nonce" -> "xxxx", "opaque" -> "test")
     actual shouldBe Right(WWWAuthenticateChallenge("Digest", params))
   }
 
   it should "properly parse a Digest challenge" in {
-    val actual = WWWAuthenticateChallenge.parseSingle("Digest realm=\"http-auth@example.org\", qop=\"auth, auth-int\", nonce=\"xxxx\", algorithm=\"MD5\"")
-    val params = ListMap("realm" -> "http-auth@example.org", "qop" -> "auth, auth-int", "nonce" -> "xxxx", "algorithm" -> "MD5")
+    val actual = WWWAuthenticateChallenge.parseSingle("Digest realm=\"http-auth@example.org\", qop=\"auth\", opaque=\"test\", nonce=\"xxxx\"")
+    val params = ListMap("realm" -> "http-auth@example.org", "qop" -> "auth", "nonce" -> "xxxx", "opaque" -> "test")
     actual shouldBe Right(WWWAuthenticateChallenge("Digest", params))
+  }
+
+  it should "fail while parsing a Digest challenge without nonce" in {
+    val actual = WWWAuthenticateChallenge.parseSingle("Digest realm=\"http-auth@example.org\", qop=\"auth-int\", algorithm=\"MD5\"")
+    actual shouldBe Left("Incorrect params for Digest in: realm=\"http-auth@example.org\", qop=\"auth-int\", algorithm=\"MD5\"")
+  }
+
+  it should "fail while parsing a Digest with incorrect qop" in {
+    val actual = WWWAuthenticateChallenge.parseSingle("Digest realm=\"http-auth@example.org\", qop=\"incorrect\", algorithm=\"MD5\"")
+    actual shouldBe Left("Incorrect params for Digest in: realm=\"http-auth@example.org\", qop=\"incorrect\", algorithm=\"MD5\"")
   }
 }
