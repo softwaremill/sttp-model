@@ -46,6 +46,11 @@ class WWWAuthenticateChallengeTest extends AnyFlatSpec with Matchers {
     actual shouldBe Right(WWWAuthenticateChallenge("Basic", ListMap("charset" -> "UTF-8")))
   }
 
+  it should "fail to parse string with multiple challenges" in {
+    val actual = WWWAuthenticateChallenge.parseSingle("Basic charset=\"UTF-8\", Bearer realm=\"xyz\"")
+    actual shouldBe Left("Multiple challenges in single header not supported but found in: Basic charset=\"UTF-8\", Bearer realm=\"xyz\"")
+  }
+
   it should "properly parse a bearer header value with realm" in {
     val actual = WWWAuthenticateChallenge.parseSingle("Bearer realm=\"xyz\"")
     actual shouldBe Right(WWWAuthenticateChallenge("Bearer", ListMap("realm" -> "xyz")))

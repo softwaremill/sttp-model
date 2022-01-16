@@ -34,7 +34,7 @@ object WWWAuthenticateChallenge {
   def parseSingle(str: String): Either[String, WWWAuthenticateChallenge] = {
     str.trim.replaceFirst(" ", "_").split("_") match {
       case Array(x, possibleParams) =>
-        if (AuthenticationSchemes.supportedSchemes.forall(possibleParams.contains))
+        if (AuthenticationSchemes.supportedSchemes.exists(possibleParams.contains))
           Left(s"Multiple challenges in single header not supported but found in: $str")
         else {
           val params = creteParamsMap(possibleParams.trim)
