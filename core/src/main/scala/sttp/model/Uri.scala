@@ -672,11 +672,11 @@ object Uri extends UriInterpolator {
       * @param encoding
       *   How to encode the value, and which characters should be escaped. The RFC3986 standard defines that the query
       *   can include these special characters, without escaping:
-      * {{{
+      *   {{{
       * /?:@-._~!$&()*+,;=
-      * }}}
-      * See: [[https://stackoverflow.com/questions/2322764/what-characters-must-be-escaped-in-an-http-query-string]]
-      * [[https://stackoverflow.com/questions/2366260/whats-valid-and-whats-not-in-a-uri-query]]
+      *   }}}
+      *   See: [[https://stackoverflow.com/questions/2322764/what-characters-must-be-escaped-in-an-http-query-string]]
+      *   [[https://stackoverflow.com/questions/2366260/whats-valid-and-whats-not-in-a-uri-query]]
       */
     case class Plain(v: String, encoding: Encoding = QuerySegmentEncoding.StandardValue) extends QuerySegment {
       override def toString = s"Plain($v,[encoding])"
