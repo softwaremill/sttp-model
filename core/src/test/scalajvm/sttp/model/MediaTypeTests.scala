@@ -144,4 +144,20 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
     }
   }
 
+  it should "be case-insensitive when comparing instances" in {
+    MediaType.TextPlain.equals(MediaType.TextPlain) shouldBe true
+    MediaType.TextPlain.equals(MediaType.TextPlain.copy(mainType = "TEXT")) shouldBe true
+    MediaType.TextPlain.equals(MediaType.TextPlain.copy(subType = "PLAIN")) shouldBe true
+
+    MediaType.TextPlain.equals(MediaType.TextPlainUtf8) shouldBe false
+    MediaType.TextPlain.equals(MediaType.TextHtml) shouldBe false
+  }
+
+  it should "compare if media types are equal ignoring parameters" in {
+    MediaType.TextPlain.equalsIgnoreParameters(MediaType.TextPlain) shouldBe true
+    MediaType.TextPlain.equalsIgnoreParameters(MediaType.TextPlainUtf8) shouldBe true
+    MediaType.TextPlainUtf8.equalsIgnoreParameters(MediaType.TextPlain) shouldBe true
+
+    MediaType.TextPlain.equalsIgnoreParameters(MediaType.TextHtml) shouldBe false
+  }
 }

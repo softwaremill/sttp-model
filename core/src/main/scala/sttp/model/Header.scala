@@ -113,6 +113,7 @@ object Header {
   def expires(i: Instant): Header = Header(HeaderNames.Expires, toHttpDateString(i))
   def ifNoneMatch(tags: List[ETag]): Header = Header(HeaderNames.IfNoneMatch, ETag.toString(tags))
   def ifModifiedSince(i: Instant): Header = Header(HeaderNames.IfModifiedSince, toHttpDateString(i))
+  def ifUnmodifiedSince(i: Instant): Header = Header(HeaderNames.IfUnmodifiedSince, toHttpDateString(i))
   def lastModified(i: Instant): Header = Header(HeaderNames.LastModified, toHttpDateString(i))
   def location(uri: String): Header = Header(HeaderNames.Location, uri)
   def location(uri: Uri): Header = Header(HeaderNames.Location, uri.toString)
