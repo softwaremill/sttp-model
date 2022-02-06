@@ -63,7 +63,7 @@ object WWWAuthenticateChallenge {
                 )
             case DigestScheme =>
               AuthenticationSchemes.Digest
-                .paramsValid(params)
+                .paramsValid(params).right
                 .map(_ =>
                   WWWAuthenticateChallenge(
                     AuthenticationSchemes.Digest.name,
