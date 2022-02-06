@@ -1,8 +1,8 @@
-package sttp.model
+package sttp.model.headers
 
 import scala.collection.immutable.ListMap
 
-object AuthenticationSchemes {
+private[headers] object AuthenticationSchemes {
 
   val supportedSchemes: List[String] = List(Basic.name, Bearer.name, Digest.name)
 
@@ -59,13 +59,15 @@ object AuthenticationSchemes {
     private val charset: String = "charset"
     private val userhash: String = "userhash"
 
-    def paramsValid(params: Map[String, String]): Boolean = {
-      val matchingParamsNumber = params.size <= maxParametersCount
+    def paramsValid(params: Map[String, String]): Either[String, Unit] = {
       val containsNonce = params.contains(nonce)
       val containsOpaque = params.contains(opaque)
       val qopValue = params.getOrElse(qop, "")
       val qopValueMatch = qopValues.exists(_.equals(qopValue))
-      matchingParamsNumber && containsNonce && containsOpaque && qopValueMatch
+      if (!containsNonce) Left(s"Missing nonce parameter in: $params")
+      else if (!containsOpaque) Left("Missing opaque parameter in: $params")
+      else if (!qopValueMatch) Left("qop value incorrect in: $params")
+      else Right(())
     }
 
     def getParams(params: Map[String, String]): ListMap[String, String] =

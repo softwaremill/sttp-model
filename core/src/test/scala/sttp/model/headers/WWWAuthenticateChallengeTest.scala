@@ -79,7 +79,7 @@ class WWWAuthenticateChallengeTest extends AnyFlatSpec with Matchers {
       "Digest realm=\"http-auth@example.org\", qop=\"auth-int\", algorithm=\"MD5\""
     )
     actual shouldBe Left(
-      "Incorrect params for Digest in: realm=\"http-auth@example.org\", qop=\"auth-int\", algorithm=\"MD5\""
+      "Missing nonce parameter in: Map(realm -> http-auth@example.org, qop -> auth-int, algorithm -> MD5)"
     )
   }
 
@@ -88,7 +88,7 @@ class WWWAuthenticateChallengeTest extends AnyFlatSpec with Matchers {
       "Digest realm=\"http-auth@example.org\", qop=\"incorrect\", algorithm=\"MD5\""
     )
     actual shouldBe Left(
-      "Incorrect params for Digest in: realm=\"http-auth@example.org\", qop=\"incorrect\", algorithm=\"MD5\""
+      "Missing nonce parameter in: Map(realm -> http-auth@example.org, qop -> incorrect, algorithm -> MD5)"
     )
   }
 }

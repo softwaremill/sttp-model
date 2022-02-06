@@ -1,7 +1,6 @@
 package sttp.model.headers
 
-import sttp.model.AuthenticationSchemes
-import sttp.model.AuthenticationSchemes.{Basic, Bearer, Digest}
+import AuthenticationSchemes.{Basic, Bearer, Digest}
 import sttp.model.headers.WWWAuthenticateChallenge.{CharsetParam, RealmParam}
 
 import scala.collection.immutable.ListMap
@@ -27,8 +26,11 @@ object WWWAuthenticateChallenge {
 
   val RealmParam: String = "realm"
   val CharsetParam: String = "charset"
+  @deprecated
   val BasicScheme: String = Basic.name
+  @deprecated
   val BearerScheme: String = Bearer.name
+  @deprecated
   val DigestScheme: String = Digest.name
 
   def parseSingle(str: String): Either[String, WWWAuthenticateChallenge] = {
@@ -60,10 +62,9 @@ object WWWAuthenticateChallenge {
                   )
                 )
             case DigestScheme =>
-              if (!AuthenticationSchemes.Digest.paramsValid(params))
-                Left(s"Incorrect params for Digest in: $possibleParams")
-              else
-                Right(
+              AuthenticationSchemes.Digest
+                .paramsValid(params)
+                .map(_ =>
                   WWWAuthenticateChallenge(
                     AuthenticationSchemes.Digest.name,
                     AuthenticationSchemes.Digest.getParams(params)
