@@ -2,29 +2,33 @@ package sttp.model.headers
 
 import scala.collection.immutable.ListMap
 
-private[headers] object AuthenticationSchemes {
+sealed trait AuthenticationScheme {
+  def name: String
+}
 
-  val supportedSchemes: List[String] = List(Basic.name, Bearer.name, Digest.name)
+object AuthenticationScheme {
+  private[headers] val supported: List[AuthenticationScheme] = List(Basic, Bearer, Digest)
+  private[headers] val supportedNames: List[String] = supported.map(_.name)
 
-  object Basic {
+  object Basic extends AuthenticationScheme {
+    override val name = "Basic"
 
-    val maxParametersCount = 2
-    val name = "Basic"
+    private[headers] val maxParametersCount = 2
 
     private val realm: String = "realm"
     private val charset: String = "charset"
 
-    def getParams(params: Map[String, String]): ListMap[String, String] =
+    private[headers] def getParams(params: Map[String, String]): ListMap[String, String] =
       ListMap(
         realm -> params.getOrElse(realm, ""),
         charset -> params.getOrElse(charset, "")
-      )
-        .filter(_._2.nonEmpty)
+      ).filter(_._2.nonEmpty)
   }
 
-  object Bearer {
-    val maxParametersCount = 5
-    val name = "Bearer"
+  object Bearer extends AuthenticationScheme {
+    override val name = "Bearer"
+
+    private[headers] val maxParametersCount = 5
 
     private val realm: String = "realm"
     private val scope: String = "scope"
@@ -32,21 +36,18 @@ private[headers] object AuthenticationSchemes {
     private val errorDescription: String = "error_description"
     private val errorUri: String = "error_uri"
 
-    def getParams(params: Map[String, String]): ListMap[String, String] =
+    private[headers] def getParams(params: Map[String, String]): ListMap[String, String] =
       ListMap(
         realm -> params.getOrElse(realm, ""),
         scope -> params.getOrElse(scope, ""),
         error -> params.getOrElse(error, ""),
         errorDescription -> params.getOrElse(errorDescription, ""),
         errorUri -> params.getOrElse(errorUri, "")
-      )
-        .filter(_._2.nonEmpty)
+      ).filter(_._2.nonEmpty)
   }
 
-  object Digest {
-
-    val maxParametersCount = 9
-    val name = "Digest"
+  object Digest extends AuthenticationScheme {
+    override val name = "Digest"
 
     private val realm: String = "realm"
     private val domain: String = "domain"
@@ -59,7 +60,7 @@ private[headers] object AuthenticationSchemes {
     private val charset: String = "charset"
     private val userhash: String = "userhash"
 
-    def paramsValid(params: Map[String, String]): Either[String, Unit] = {
+    private[headers] def paramsValid(params: Map[String, String]): Either[String, Unit] = {
       val containsNonce = params.contains(nonce)
       val containsOpaque = params.contains(opaque)
       val qopValue = params.getOrElse(qop, "")
@@ -70,7 +71,7 @@ private[headers] object AuthenticationSchemes {
       else Right(())
     }
 
-    def getParams(params: Map[String, String]): ListMap[String, String] =
+    private[headers] def getParams(params: Map[String, String]): ListMap[String, String] =
       ListMap(
         realm -> params.getOrElse(realm, ""),
         domain -> params.getOrElse(domain, ""),
@@ -81,7 +82,6 @@ private[headers] object AuthenticationSchemes {
         qop -> params.getOrElse(qop, ""),
         charset -> params.getOrElse(charset, ""),
         userhash -> params.getOrElse(userhash, "")
-      )
-        .filter(_._2.nonEmpty)
+      ).filter(_._2.nonEmpty)
   }
 }

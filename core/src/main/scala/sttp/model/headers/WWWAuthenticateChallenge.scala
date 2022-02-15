@@ -1,6 +1,6 @@
 package sttp.model.headers
 
-import AuthenticationSchemes.{Basic, Bearer, Digest}
+import AuthenticationScheme.{Basic, Bearer, Digest}
 import sttp.model.headers.WWWAuthenticateChallenge.{CharsetParam, RealmParam}
 
 import scala.collection.immutable.ListMap
@@ -26,48 +26,50 @@ object WWWAuthenticateChallenge {
 
   val RealmParam: String = "realm"
   val CharsetParam: String = "charset"
-  @deprecated
+
+  @deprecated(message = "Use AuthenticationScheme.Basic.name", since = "1.4.23")
   val BasicScheme: String = Basic.name
-  @deprecated
+  @deprecated(message = "Use AuthenticationScheme.Bearer.name", since = "1.4.23")
   val BearerScheme: String = Bearer.name
-  @deprecated
+  @deprecated(message = "Use AuthenticationScheme.Digest.name", since = "1.4.23")
   val DigestScheme: String = Digest.name
 
   def parseSingle(str: String): Either[String, WWWAuthenticateChallenge] = {
     str.trim.replaceFirst(" ", "_").split("_") match {
       case Array(x, possibleParams) =>
-        if (AuthenticationSchemes.supportedSchemes.exists(possibleParams.contains))
+        if (AuthenticationScheme.supportedNames.exists(possibleParams.contains))
           Left(s"Multiple challenges in single header not supported but found in: $str")
         else {
           val params = creteParamsMap(possibleParams.trim)
           x.trim match {
-            case BasicScheme =>
-              if (params.size > AuthenticationSchemes.Basic.maxParametersCount)
-                Left(s"To much params for Basic in: $possibleParams")
+            case Basic.name =>
+              if (params.size > Basic.maxParametersCount)
+                Left(s"Too many params for Basic in: $possibleParams")
               else
                 Right(
                   WWWAuthenticateChallenge(
-                    AuthenticationSchemes.Basic.name,
-                    AuthenticationSchemes.Basic.getParams(params)
+                    Basic.name,
+                    Basic.getParams(params)
                   )
                 )
-            case BearerScheme =>
-              if (params.size > AuthenticationSchemes.Bearer.maxParametersCount)
-                Left(s"To much params for Bearer in: $possibleParams")
+            case Bearer.name =>
+              if (params.size > Bearer.maxParametersCount)
+                Left(s"Too many params for Bearer in: $possibleParams")
               else
                 Right(
                   WWWAuthenticateChallenge(
-                    AuthenticationSchemes.Bearer.name,
-                    AuthenticationSchemes.Bearer.getParams(params)
+                    Bearer.name,
+                    Bearer.getParams(params)
                   )
                 )
-            case DigestScheme =>
-              AuthenticationSchemes.Digest
-                .paramsValid(params).right
+            case Digest.name =>
+              Digest
+                .paramsValid(params)
+                .right
                 .map(_ =>
                   WWWAuthenticateChallenge(
-                    AuthenticationSchemes.Digest.name,
-                    AuthenticationSchemes.Digest.getParams(params)
+                    Digest.name,
+                    Digest.getParams(params)
                   )
                 )
             case _ => Left(s"$x authentication scheme not supported")
@@ -75,10 +77,10 @@ object WWWAuthenticateChallenge {
         }
       case Array(schema) =>
         schema.trim match {
-          case BasicScheme  => Right(WWWAuthenticateChallenge(schema))
-          case BearerScheme => Right(WWWAuthenticateChallenge(schema))
-          case DigestScheme => Right(WWWAuthenticateChallenge(schema))
-          case _            => Left(s"$schema authentication scheme not supported")
+          case Basic.name  => Right(WWWAuthenticateChallenge(schema))
+          case Bearer.name => Right(WWWAuthenticateChallenge(schema))
+          case Digest.name => Right(WWWAuthenticateChallenge(schema))
+          case _           => Left(s"$schema authentication scheme not supported")
         }
       case _ => Left(s"$str is not valid value of header")
     }
@@ -94,10 +96,8 @@ object WWWAuthenticateChallenge {
       .toMap
 
   def apply(scheme: String): WWWAuthenticateChallenge = WWWAuthenticateChallenge(scheme, ListMap.empty)
-  def basic: WWWAuthenticateChallenge = WWWAuthenticateChallenge(BasicScheme)
-  def basic(realm: String): WWWAuthenticateChallenge =
-    WWWAuthenticateChallenge(BasicScheme).realm(realm)
-  def bearer: WWWAuthenticateChallenge = WWWAuthenticateChallenge(BearerScheme)
-  def bearer(realm: String): WWWAuthenticateChallenge =
-    WWWAuthenticateChallenge(BearerScheme).realm(realm)
+  def basic: WWWAuthenticateChallenge = WWWAuthenticateChallenge(Basic.name)
+  def basic(realm: String): WWWAuthenticateChallenge = WWWAuthenticateChallenge(Basic.name).realm(realm)
+  def bearer: WWWAuthenticateChallenge = WWWAuthenticateChallenge(Bearer.name)
+  def bearer(realm: String): WWWAuthenticateChallenge = WWWAuthenticateChallenge(Bearer.name).realm(realm)
 }
