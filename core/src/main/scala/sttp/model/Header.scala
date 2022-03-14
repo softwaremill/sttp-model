@@ -8,6 +8,7 @@ import sttp.model.headers.{
   Cookie,
   CookieWithMeta,
   ETag,
+  Origin,
   Range,
   WWWAuthenticateChallenge
 }
@@ -117,6 +118,7 @@ object Header {
   def lastModified(i: Instant): Header = Header(HeaderNames.LastModified, toHttpDateString(i))
   def location(uri: String): Header = Header(HeaderNames.Location, uri)
   def location(uri: Uri): Header = Header(HeaderNames.Location, uri.toString)
+  def origin(origin: Origin): Header = Header(HeaderNames.Origin, origin.toString)
   def proxyAuthorization(authType: String, credentials: String): Header =
     Header(HeaderNames.ProxyAuthorization, s"$authType $credentials")
   def range(range: Range): Header = Header(HeaderNames.Range, range.toString)
@@ -129,7 +131,7 @@ object Header {
       otherChallenges: WWWAuthenticateChallenge*
   ): List[Header] =
     (firstChallenge :: otherChallenges.toList).map(c => Header(HeaderNames.WwwAuthenticate, c.toString))
-
+  def vary(headerNames: String*): Header = Header(HeaderNames.Vary, headerNames.mkString(", "))
   def xForwardedFor(firstAddress: String, otherAddresses: String*): Header =
     Header(HeaderNames.XForwardedFor, (firstAddress +: otherAddresses).mkString(", "))
 
