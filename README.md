@@ -4,6 +4,8 @@
 [![CI](https://github.com/softwaremill/sttp-model/workflows/CI/badge.svg)](https://github.com/softwaremill/sttp-model/actions?query=workflow%3A%22CI%22)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.softwaremill.sttp.model/core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.softwaremill.sttp.model/core_2.13)
 
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/softwaremill/sttp-model)
+
 sttp is a family of Scala HTTP-related projects, and currently includes:
 
 * [sttp client](https://github.com/softwaremill/sttp): The Scala HTTP client you always wanted!
