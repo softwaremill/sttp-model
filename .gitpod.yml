@@ -7,5 +7,5 @@ ports:
     onOpen: ignore
 vscode:
   extensions:
-    - scala-lang.scala@0.5.5
-    - scalameta.metals@1.12.0
+    - scala-lang.scala
+    - scalameta.metals
