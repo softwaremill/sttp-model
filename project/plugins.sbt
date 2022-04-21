@@ -1,11 +1,12 @@
-libraryDependencies += "org.scala-js" %% "scalajs-env-selenium" % "1.0.0"
-addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.0.0")
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.0.1")
-addSbtPlugin("org.portable-scala" % "sbt-scala-native-crossproject" % "1.0.0")
-addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.0-M2")
+libraryDependencies += "org.scala-js" %% "scalajs-env-selenium" % "1.1.1"
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.10.0")
+addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.4")
+addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.9.0")
 
-val sbtSoftwareMillVersion = "1.9.4"
+val sbtSoftwareMillVersion = "2.0.9"
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-common" % sbtSoftwareMillVersion)
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-publish" % sbtSoftwareMillVersion)
+addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-browser-test-js" % sbtSoftwareMillVersion)
 
-addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.4.1")
+addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.1.0")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.0")

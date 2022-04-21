@@ -1,8 +1,8 @@
 ![sttp-model](https://github.com/softwaremill/sttp-model/raw/master/banner.png)
 
-[![Join the chat at https://gitter.im/softwaremill/sttp-model](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/softwaremill/sttp-model?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/softwaremill/sttp-model.svg?branch=master)](https://travis-ci.org/softwaremill/sttp-model)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.softwaremill.sttp.model/core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.softwaremill.sttp.model/core_2.12)
+[![Join the chat at https://gitter.im/softwaremill/sttp](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/softwaremill/sttp)
+[![CI](https://github.com/softwaremill/sttp-model/workflows/CI/badge.svg)](https://github.com/softwaremill/sttp-model/actions?query=workflow%3A%22CI%22)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.softwaremill.sttp.model/core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.softwaremill.sttp.model/core_2.13)
 
 sttp is a family of Scala HTTP-related projects, and currently includes:
 
@@ -15,10 +15,10 @@ sttp is a family of Scala HTTP-related projects, and currently includes:
 Add the following dependency:
 
 ```scala
-"com.softwaremill.sttp.model" %% "core" % "1.1.3"
+"com.softwaremill.sttp.model" %% "core" % "1.4.25"
 ```
 
-sttp model is available for Scala 2.11, 2.12, 2.13, Scala.JS, Scala Native and Dotty 0.23.
+sttp model is available for Scala 2.11, 2.12, 2.13, 3.0.0, Scala.JS and Scala Native.
 
 ## Project content
 
@@ -30,21 +30,31 @@ Available model classes include:
 * `MediaType`
 * `Header`
 * `HeaderNames`
-* `Cookie`
 * `QueryParams`
-* `Part`
+* body fragments:  
+   * `Part`
+   * `ServerSentEvent`  
+* header values:
+   * `Accepts`
+   * `Accept-Encoding`
+   * `CacheDirective`
+   * `Cookie`
+   * `ETag`
+   * `Range`
+   * `ContentRange`
+   * `WWWAuthenticateChallenge`
 
 Most classes contain both serialisation & parsing functionality, following these conventions:
 
 * `.toString` returns a representation of the model class in a format as in an HTTP request/response. For example,
   for an uri this will be `http://...`, for a header `[name]: [value]`, etc.
-* `[SthCompanionObject].parse(serialized: String): Either[String, Sth]`: returns an error message or an instance of
+* `[SthCompanionObject].parse(serialized: String): Either[String, Sth]`: returns an error message, or an instance of
   the model class
 * `[SthCompanionObject].unsafeApply(values)`: creates an instance of the model class; validates the input values and in 
-  case of an error, *throws an exception*. An error could be e.g. that the input values contain characters outside of
+  case of an error, *throws an exception*. An error could be e.g. that the input values contain characters outside
   the allowed range
 * `[SthCompanionObject].safeApply(...): Either[String, Sth]`: same as above, but doesn't throw exceptions. Instead,
-  returns an error message or the model class instance
+  returns an error message, or the model class instance
 * `[SthCompanionObject].apply(...): Sth`: creates the model type, without validation, and without throwing
   exceptions 
 
@@ -77,4 +87,4 @@ We offer commercial support for sttp and related technologies, as well as develo
 
 ## Copyright
 
-Copyright (C) 2017-2019 SoftwareMill [https://softwaremill.com](https://softwaremill.com).
+Copyright (C) 2019-2021 SoftwareMill [https://softwaremill.com](https://softwaremill.com).

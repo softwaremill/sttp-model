@@ -29,3 +29,5 @@ lowered.hnir
 .bloop/
 .metals/
 project/metals.sbt
+
+.bsp
