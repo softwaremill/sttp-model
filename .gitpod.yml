@@ -1,10 +1,11 @@
-image: softwaremill/sbt-jenkins:11.0.5-jdk
-vscode:
-  extensions:
-    - scala-lang.scala@0.3.9:kklqw+c/dNRmtTU8B5repw==
-    - scalameta.metals@1.9.0:PtE/gdeE1YPL6It4tEfqpg==
+image:
+  file: .gitpod.Dockerfile
 tasks:
-  - init: source ./gitpod_init.sh
+  - command: sbt
 ports:
   - port: 8212
     onOpen: ignore
+vscode:
+  extensions:
+    - scala-lang.scala@0.5.5
+    - scalameta.metals@1.12.0
