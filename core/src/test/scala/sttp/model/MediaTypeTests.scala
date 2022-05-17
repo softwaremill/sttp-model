@@ -5,6 +5,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 import sttp.model.ContentTypeRange.AnyRange
 
+import scala.collection.immutable.Seq
+
 class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyChecks {
   val parseMediaTypeData = List(
     "text/html" -> Right(MediaType.unsafeApply("text", "html")),
