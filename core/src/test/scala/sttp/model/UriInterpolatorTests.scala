@@ -213,7 +213,7 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
   val validationTestData = List(
     ("uri with two ports", () => uri"http://example.com:80:80", "port specified multiple times"),
     ("uri with embedded host+port and port", () => uri"http://${"example.com:80"}:80", "port specified multiple times"),
-    ("uri with missing subdomain in host name", () => uri"https://.github.com/search", "incorrect hostname"),
+    ("uri with missing subdomain in hostname", () => uri"https://.github.com/search", "incorrect hostname"),
     ("uri with incorrect hostname", () => uri"https://./search", "incorrect hostname")
   )
 
