@@ -437,6 +437,10 @@ object UriInterpolator {
           case t => Vector(t)
         }
 
+        if (hpTokens.head.equals(StringToken("")) && hpTokens.drop(1).headOption.contains(DotInAuthority)) {
+          throw new IllegalArgumentException("incorrect hostname")
+        }
+
         if (hpTokens.count(_ == ColonInAuthority) > 1) {
           throw new IllegalArgumentException("port specified multiple times")
         }
