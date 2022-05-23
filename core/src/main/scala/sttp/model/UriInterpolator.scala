@@ -413,7 +413,11 @@ object UriInterpolator {
       override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
         split(t, Set[Token](AuthorityEnd)) match {
           case Left(tt) if tt.lastOption.contains(AuthorityEnd) => (hostPortFromTokens(u, tt), Vector.empty)
-          case Left(tt)                                         => (u, tt)
+          case Left(tt)                                         =>
+            if (tt.containsSlice(List(SlashInPath, StringToken(" "), SlashInPath))) {
+              throw new IllegalArgumentException("empty string is not valid host and port")
+            }
+            (u, tt)
           case Right((hpTokens, _, otherTokens))                => (hostPortFromTokens(u, hpTokens), otherTokens)
         }
       }

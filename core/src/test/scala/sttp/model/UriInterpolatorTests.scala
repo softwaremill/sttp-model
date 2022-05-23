@@ -217,6 +217,7 @@ class UriInterpolatorTests extends AnyFunSuite with Matchers {
     ("uri with incorrect hostname", () => uri"https://./search", "incorrect hostname"),
     ("empty string as uri", () => uri" ", "empty string is not valid uri"),
     ("empty uri", () => uri"", "empty string is not valid uri"),
+    ("corner case", () => uri"https:/ /uri", "empty string is not valid host and port")
   )
 
   for {
