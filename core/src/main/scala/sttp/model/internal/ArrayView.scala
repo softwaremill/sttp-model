@@ -155,7 +155,7 @@ private[model] class ArrayView[T](arr: Array[T], from: Int, till: Int) {
 
   override def toString: String = {
     val list = new ArrayList[T](size)
-    foreach(list.add(_): Unit)
+    foreach(list.add(_))
     list.toString()
   }
 }
