@@ -6,7 +6,7 @@ val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.16"
 val scala2_13 = "2.13.8"
 val scala2 = List(scala2_11, scala2_12, scala2_13)
-val scala3 = List("3.1.2")
+val scala3 = List("3.1.3")
 
 val scalaTestVersion = "3.2.12"
 
