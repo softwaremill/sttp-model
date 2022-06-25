@@ -144,20 +144,20 @@ object UriInterpolator {
     tokens
   }
 
-  sealed trait Token
-  case class StringToken(s: String) extends Token
-  case class ExpressionToken(e: Any) extends Token
-  case object SchemeEnd extends Token
-  case object ColonInAuthority extends Token
-  case object AtInAuthority extends Token
-  case object DotInAuthority extends Token
-  case object AuthorityEnd extends Token
-  case object PathStart extends Token
-  case object SlashInPath extends Token
-  case object QueryStart extends Token
-  case object AmpInQuery extends Token
-  case object EqInQuery extends Token
-  case object FragmentStart extends Token
+  private[model] sealed trait Token
+  private[model] case class StringToken(s: String) extends Token
+  private[model] case class ExpressionToken(e: Any) extends Token
+  private[model] case object SchemeEnd extends Token
+  private[model] case object ColonInAuthority extends Token
+  private[model] case object AtInAuthority extends Token
+  private[model] case object DotInAuthority extends Token
+  private[model] case object AuthorityEnd extends Token
+  private[model] case object PathStart extends Token
+  private[model] case object SlashInPath extends Token
+  private[model] case object QueryStart extends Token
+  private[model] case object AmpInQuery extends Token
+  private[model] case object EqInQuery extends Token
+  private[model] case object FragmentStart extends Token
 
   private[model] sealed trait Tokenizer {
     // Tokenizes string 's' into tokens. New tokens are added into mutable
