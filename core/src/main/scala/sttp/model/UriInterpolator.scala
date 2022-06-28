@@ -39,6 +39,11 @@ trait UriInterpolator {
 
 object UriInterpolator {
   def interpolate(sc: StringContext, args: Any*): Uri = {
+    val isScEmptyString = sc.parts.map(_.trim).forall(_.equals(""))
+    val areArgsEmptyString = args.forall(_.equals(""))
+    if (isScEmptyString && areArgsEmptyString) {
+      throw new IllegalArgumentException("empty string is not valid uri")
+    }
     val tokens = tokenize(sc, args: _*)
 
     val builders = List(
@@ -435,6 +440,10 @@ object UriInterpolator {
               case _ => Vector(e)
             }
           case t => Vector(t)
+        }
+
+        if (hpTokens.head.equals(StringToken("")) && hpTokens.drop(1).headOption.contains(DotInAuthority)) {
+          throw new IllegalArgumentException("incorrect hostname")
         }
 
         if (hpTokens.count(_ == ColonInAuthority) > 1) {
