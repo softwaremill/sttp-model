@@ -97,3 +97,15 @@ lazy val core = (projectMatrix in file("core"))
     scalaVersions = scala2 ++ scala3,
     settings = commonNativeSettings
   )
+
+lazy val benchmark = (projectMatrix in file("benchmark"))
+  .settings(
+    name := "benchmark",
+    publish / skip := true
+  )
+  .jvmPlatform(
+    scalaVersions = scala2,
+    settings = commonJvmSettings
+  )
+  .dependsOn(core)
+  .enablePlugins(JmhPlugin)

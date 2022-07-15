@@ -1,8 +1,10 @@
 package sttp.model
 
-import sttp.model.internal.{ParseUtils, Rfc3986}
+import sttp.model.internal.{ArrayView, FastCharSet, FastCharMap, ParseUtils, Rfc3986, Singleton}
 
 import scala.annotation.tailrec
+import scala.collection.immutable.VectorBuilder
+import scala.collection.mutable.ArrayBuffer
 
 trait UriInterpolator {
   implicit class UriContext(val sc: StringContext) {
@@ -38,6 +40,20 @@ trait UriInterpolator {
 }
 
 object UriInterpolator {
+
+  private val startingUri = Uri(None, None, Uri.EmptyPath, Nil, None)
+
+  private val builders = List(
+    UriBuilder.Scheme,
+    UriBuilder.UserInfo,
+    UriBuilder.HostPort,
+    UriBuilder.Path,
+    UriBuilder.Query,
+    UriBuilder.Fragment
+  )
+
+  private val emptyStringToken = StringToken("")
+
   def interpolate(sc: StringContext, args: Any*): Uri = {
     val isScEmptyString = sc.parts.map(_.trim).forall(_.equals(""))
     val areArgsEmptyString = args.forall(_.equals(""))
@@ -46,19 +62,8 @@ object UriInterpolator {
     }
     val tokens = tokenize(sc, args: _*)
 
-    val builders = List(
-      UriBuilder.Scheme,
-      UriBuilder.UserInfo,
-      UriBuilder.HostPort,
-      UriBuilder.Path,
-      UriBuilder.Query,
-      UriBuilder.Fragment
-    )
-
-    val startingUri = Uri(None, None, Uri.EmptyPath, Nil, None)
-
     val (uri, leftTokens) =
-      builders.foldLeft((startingUri, tokens)) { case ((u, t), builder) =>
+      builders.foldLeft((startingUri, filterNulls(tokens))) { case ((u, t), builder) =>
         builder.fromTokens(u, t)
       }
 
@@ -69,11 +74,16 @@ object UriInterpolator {
     uri
   }
 
-  private def tokenize(sc: StringContext, args: Any*): Vector[Token] = {
+  private def tokenize(sc: StringContext, args: Any*): ArrayBuffer[Token] = {
     val strings = sc.parts.iterator
     val expressions = args.iterator
 
-    var (tokenizer, tokens) = Tokenizer.Scheme.tokenize(strings.next())
+    // Mutable container is chosen to make less allocations during tokenization.
+    // This buffer may contain nulls. Take into account it when accessing elements in 'tokens'.
+    // Null may appear in buffer when some token is removed from container (for example,
+    // function tokenizeStringRemoveEmptyPrefix)
+    val tokens = new ArrayBuffer[Token](32)
+    var tokenizer = Tokenizer.Scheme.tokenize(tokens, strings.next())
 
     while (strings.hasNext) {
       val nextExpression = expressions.next()
@@ -88,24 +98,23 @@ object UriInterpolator {
       // Parsing the expression as if its string value was embedded in the interpolated string. This way it's possible
       // to extend existing URIs. Without special-casing the embedded URI would be escaped and become part of the host
       // as a whole.
-      if (tokens == Vector(StringToken("")) && (nextExpressionStr.contains("://") || !nextStr.contains("://"))) {
-        def tokenizeExpressionAsString(): Unit = {
-          val (nextTokenizer, nextTokens) =
-            tokenizer.tokenize(nextExpression.toString)
-          tokenizer = nextTokenizer
-          tokens = tokens ++ nextTokens
-        }
+      if (
+        tokens.size == 1 && tokens
+          .startsWith(List(emptyStringToken)) && (nextExpressionStr.contains("://") || !nextStr.contains("://"))
+      ) {
+        def tokenizeExpressionAsString(): Unit =
+          tokenizer = tokenizer.tokenize(tokens, nextExpression.toString)
 
         def tokenizeStringRemoveEmptyPrefix(): Unit = {
-          val (nextTokenizer, nextTokens) = tokenizer.tokenize(nextStr)
-          tokenizer = nextTokenizer
+          val initLength = tokens.size
+          tokenizer = tokenizer.tokenize(tokens, nextStr)
 
           // we need to remove empty tokens around exp as well - however here
           // by hand, as the expression token is unwrapped, so removeEmptyTokensAroundExp
           // won't handle this.
-          val nextTokensWithoutEmptyPrefix = nextTokens match {
-            case StringToken("") +: tail => tail
-            case x                       => x
+          if (initLength < tokens.size && tokens(initLength) == emptyStringToken) {
+            // just assign tombstone to avoid moving the rest of tokens
+            tokens.update(initLength, null)
           }
 
           def isSlash(t: Token) = t == SlashInPath || t == PathStart
@@ -113,68 +122,94 @@ object UriInterpolator {
           // remove trailing slash when path is added to an interpolated uri:
           // val a = uri"http://example.com/" // notice the trailing slash
           // val b = uri"$a/xy" // "http://example.com/xy"
-          (tokens, nextTokensWithoutEmptyPrefix) match {
-            case (ts :+ t :+ StringToken(""), SlashInPath +: nt) if isSlash(t) => tokens = ts ++ (t +: nt)
-            case _ => tokens = tokens ++ nextTokensWithoutEmptyPrefix
+          for {
+            (slashInPathIdx, _) <- nextNonNull(tokens, initLength).filter(_._2 == SlashInPath)
+            (emptyStringTokenIdx, _) <- lastNonNull(tokens, initLength - 1).filter(_._2 == emptyStringToken)
+            _ <- lastNonNull(tokens, emptyStringTokenIdx - 1).filter(tuple => isSlash(tuple._2))
+          } {
+            tokens.update(slashInPathIdx, null)
+            tokens.update(emptyStringTokenIdx, null)
           }
         }
 
         tokenizeExpressionAsString()
         tokenizeStringRemoveEmptyPrefix()
       } else {
-        tokens = tokens :+ ExpressionToken(nextExpression)
+        tokens += ExpressionToken(nextExpression)
 
-        val (nextTokenizer, nextTokens) = tokenizer.tokenize(nextStr)
-        tokenizer = nextTokenizer
-        tokens = tokens ++ nextTokens
+        tokenizer = tokenizer.tokenize(tokens, nextStr)
       }
     }
 
-    val tokensWithEndToken = tokens ++ tokenizer.endToken.toVector
-    addPathStartAfterAuthorityOrSchemeEnd(removeEmptyTokensAroundExp(tokensWithEndToken))
+    tokenizer.endToken.foreach(tokens += _)
+    removeEmptyTokensAroundExp(tokens)
+    addPathStartAfterAuthorityOrSchemeEnd(tokens)
+    tokens
   }
 
-  sealed trait Token
-  case class StringToken(s: String) extends Token
-  case class ExpressionToken(e: Any) extends Token
-  case object SchemeEnd extends Token
-  case object ColonInAuthority extends Token
-  case object AtInAuthority extends Token
-  case object DotInAuthority extends Token
-  case object AuthorityEnd extends Token
-  case object PathStart extends Token
-  case object SlashInPath extends Token
-  case object QueryStart extends Token
-  case object AmpInQuery extends Token
-  case object EqInQuery extends Token
-  case object FragmentStart extends Token
+  private sealed trait Token
+  private case class StringToken(s: String) extends Token
+  private case class ExpressionToken(e: Any) extends Token
+  private case object SchemeEnd extends Token
+  private case object ColonInAuthority extends Token
+  private case object AtInAuthority extends Token
+  private case object DotInAuthority extends Token
+  private case object AuthorityEnd extends Token
+  private case object PathStart extends Token
+  private case object SlashInPath extends Token
+  private case object QueryStart extends Token
+  private case object AmpInQuery extends Token
+  private case object EqInQuery extends Token
+  private case object FragmentStart extends Token
 
-  trait Tokenizer {
-    def tokenize(s: String): (Tokenizer, Vector[Token])
+  private sealed trait Tokenizer {
+    // Tokenizes string 's' into tokens. New tokens are added into mutable
+    // scala.collection.mutable.ArrayBuffer 'buffer'.
+    // Returns tokenizer which can handle continuation of URI.
+    def tokenize(buffer: ArrayBuffer[Token], s: String): Tokenizer
     def endToken: Option[Token] = None // token to add if the input is exhausted
   }
 
-  object Tokenizer {
-    private val AuthorityTerminators = Set('/', '?', '#')
+  private object Tokenizer {
 
     object Scheme extends Tokenizer {
-      private val SchemePattern = "[A-Za-z][A-Za-z0-9+.-]*".r
+      private val alphabet = Set(('a' to 'z'): _*) ++ Set(('A' to 'Z'): _*)
+      private val firstChar = FastCharSet(alphabet)
+      private val nonFirstChars = FastCharSet(alphabet ++ Set(('0' to '9'): _*) ++ Set('+', '.', '-'))
 
-      override def tokenize(s: String): (Tokenizer, Vector[Token]) = {
-        SchemePattern.findPrefixOf(s) match {
+      // This is equivalent to such regular expression "[A-Za-z][A-Za-z0-9+.-]*"
+      private def findPrefix(s: String): Option[String] = {
+        val len = s.length()
+        if (len == 0 || !firstChar.contains(s.charAt(0))) {
+          None
+        } else {
+          var i = 1
+          while (i < len && nonFirstChars.contains(s.charAt(i))) {
+            i += 1
+          }
+          Some(s.substring(0, i))
+        }
+      }
+
+      override def tokenize(buffer: ArrayBuffer[Token], s: String): Tokenizer = {
+        findPrefix(s) match {
           // #59: if the entire string matches the pattern, then there's no scheme terminator (`:`). This means there's
           // no scheme, hence - tokenizing as a relative uri.
-          case Some(scheme) if scheme.length == s.length => AfterScheme.tokenize(scheme)
-          case _ if s.isEmpty => (this, Vector(StringToken(""))) // scheme (or another component) might be continued
+          case Some(scheme) if scheme.length == s.length => AfterScheme.tokenize(buffer, scheme)
+          case _ if s.isEmpty                            =>
+            // scheme (or another component) might be continued
+            buffer += emptyStringToken
+            this
           case Some(scheme) if s(scheme.length) == ':' =>
             val rest = s.substring(scheme.length + 1)
-            val (next, afterSchemeTokens) = AfterScheme.tokenize(rest)
-            (next, Vector(StringToken(scheme), SchemeEnd) ++ afterSchemeTokens)
+            buffer += StringToken(scheme)
+            buffer += SchemeEnd
+            AfterScheme.tokenize(buffer, rest)
           case _ if s.startsWith(":") => // there was an expression token before, end of scheme
-            val (next, tokens) = AfterScheme.tokenize(s.substring(1))
-            (next, SchemeEnd +: tokens)
+            buffer += SchemeEnd
+            AfterScheme.tokenize(buffer, s.substring(1))
           case _ => // no scheme
-            AfterScheme.tokenize(s)
+            AfterScheme.tokenize(buffer, s)
         }
       }
 
@@ -182,74 +217,108 @@ object UriInterpolator {
     }
 
     object AfterScheme extends Tokenizer {
-      override def tokenize(s: String): (Tokenizer, Vector[Token]) = {
-        if (s == "") (this, Vector(StringToken("")))
-        else if (s.startsWith("//")) Authority.tokenize(s.substring(2)) // uri with authority
-        else { // uri without authority
+      private val AuthorityTerminators = FastCharSet(Set('/', '?', '#'))
+
+      override def tokenize(buffer: ArrayBuffer[Token], s: String): Tokenizer = {
+        if (s == "") {
+          buffer += emptyStringToken
+          this
+        } else if (s.startsWith("//")) {
+          Authority.tokenize(buffer, s.substring(2)) // uri with authority
+        } else { // uri without authority
           val first = s(0)
           if (AuthorityTerminators.contains(first)) {
             val (tokenizer, token) = separatorTokenizerAndToken(first)
-            val tokens1 = if (token == PathStart) {
+            if (token == PathStart) {
               // absolute path in a relative uri, adding an empty string token so that the absolute path is preserved
               // (might be a continuation if there was no scheme)
-              Vector(StringToken(""), SlashInPath)
-            } else Vector(token)
-            val (tokenizer2, tokens2) = tokenizer.tokenize(s.substring(1))
-            (tokenizer2, tokens1 ++ tokens2)
+              buffer += emptyStringToken
+              buffer += SlashInPath
+            } else {
+              buffer += token
+            }
+            tokenizer.tokenize(buffer, s.substring(1))
           } else {
             // non-slash-initiated path (might be a continuation if there was no scheme)
-            Path.tokenize(s)
+            Path.tokenize(buffer, s)
           }
         }
       }
     }
 
     object Authority extends Tokenizer {
-      private val IpV6InAuthorityPattern = "\\[[0-9a-fA-F:]+\\]".r // see the pattern in Uri.HostEncoding
+      private val HexChars = FastCharSet(Set(('0' to '9'): _*) ++ Set(('a' to 'f'): _*) ++ Set(('A' to 'F'): _*) + ':')
 
-      override def tokenize(s: String): (Tokenizer, Vector[Token]) = {
-        val (tokenizer, tokens) = tokenizeTerminatedFragment(
+      private def isIpV6Like(str: String): Boolean = {
+        val len = str.length()
+        len > 2 && str.charAt(0) == '[' && str.charAt(len - 1) == ']' && (1 until (len - 1)).forall(i =>
+          HexChars.contains(str.charAt(i))
+        )
+      }
+
+      private val terminators = FastCharSet(Set('/', '?', '#'))
+      private val separators =
+        FastCharMap[Token](Map(':' -> ColonInAuthority, '@' -> AtInAuthority, '.' -> DotInAuthority))
+      private val escapeSeparators = Some(('[', ']'))
+
+      override def tokenize(buffer: ArrayBuffer[Token], s: String): Tokenizer = {
+        val initSize = buffer.size
+        val tokenizer = tokenizeTerminatedFragment(
           s,
           this,
-          Set('/', '?', '#'),
-          Map(':' -> ColonInAuthority, '@' -> AtInAuthority, '.' -> DotInAuthority),
-          Some(('[', ']'))
+          buffer,
+          terminators,
+          separators,
+          escapeSeparators
         )
-        val tokens2 = tokens.map {
-          case StringToken(s @ IpV6InAuthorityPattern()) =>
-            // removing the [] which are used to surround ipv6 addresses in URLs
-            StringToken(s.substring(1, s.length - 1))
-          case t => t
+        (initSize until buffer.size).foreach { idx =>
+          buffer(idx) match {
+            case StringToken(s) if isIpV6Like(s) =>
+              // removing the [] which are used to surround ipv6 addresses in URLs
+              buffer.update(idx, StringToken(s.substring(1, s.length() - 1)))
+            case _ => ()
+          }
         }
-        (tokenizer, tokens2)
+        tokenizer
       }
 
       override def endToken: Option[Token] = Some(AuthorityEnd)
     }
 
     object Path extends Tokenizer {
-      override def tokenize(s: String): (Tokenizer, Vector[Token]) =
+      private val terminators = FastCharSet(Set('?', '#'))
+      private val separators = FastCharMap[Token](Map('/' -> SlashInPath))
+
+      override def tokenize(buffer: ArrayBuffer[Token], s: String): Tokenizer =
         tokenizeTerminatedFragment(
           s,
           this,
-          Set('?', '#'),
-          Map('/' -> SlashInPath)
+          buffer,
+          terminators,
+          separators
         )
     }
 
     object Query extends Tokenizer {
-      override def tokenize(s: String): (Tokenizer, Vector[Token]) =
+      private val terminators = FastCharSet(Set('#'))
+      private val separators = FastCharMap[Token](Map('&' -> AmpInQuery, '=' -> EqInQuery))
+
+      override def tokenize(buffer: ArrayBuffer[Token], s: String): Tokenizer =
         tokenizeTerminatedFragment(
           s,
           this,
-          Set('#'),
-          Map('&' -> AmpInQuery, '=' -> EqInQuery)
+          buffer,
+          terminators,
+          separators,
+          None
         )
     }
 
     object Fragment extends Tokenizer {
-      override def tokenize(s: String): (Tokenizer, Vector[Token]) =
-        (this, Vector(StringToken(s)))
+      override def tokenize(buffer: ArrayBuffer[Token], s: String): Tokenizer = {
+        buffer += StringToken(s)
+        this
+      }
     }
 
     /** Tokenize the given string up to any of the given terminator characters by splitting it using the given
@@ -264,15 +333,19 @@ object UriInterpolator {
     private def tokenizeTerminatedFragment(
         s: String,
         current: Tokenizer,
-        terminators: Set[Char],
-        separatorsToTokens: Map[Char, Token],
+        buffer: ArrayBuffer[Token],
+        terminators: FastCharSet,
+        separatorsToTokens: FastCharMap[Token],
         separatorsEscape: Option[(Char, Char)] = None
-    ): (Tokenizer, Vector[Token]) = {
-      def tokenizeFragment(f: String): Vector[Token] = {
-        splitPreserveSeparators(f, separatorsToTokens.keySet, separatorsEscape).map { t =>
-          t.headOption.flatMap(separatorsToTokens.get) match {
-            case Some(token) => token
-            case None        => StringToken(t)
+    ): Tokenizer = {
+      def tokenizeFragment(f: String): Unit = {
+        val initLength = buffer.size
+        splitPreserveSeparators(buffer, f, separatorsToTokens.keySet, separatorsEscape)
+        (initLength until buffer.size).foreach { idx =>
+          buffer(idx) match {
+            case StringToken(s) =>
+              s.headOption.flatMap(separatorsToTokens.get).foreach(buffer.update(idx, _))
+            case _ => ()
           }
         }
       }
@@ -283,21 +356,24 @@ object UriInterpolator {
       // See: https://tools.ietf.org/html/rfc3986#section-3.2
       split(s, terminators, None) match {
         case Right((fragment, separator, rest)) =>
-          tokenizeAfterSeparator(tokenizeFragment(fragment) ++ current.endToken.toVector, separator, rest)
+          tokenizeFragment(fragment)
+          current.endToken.foreach(buffer += _)
+          tokenizeAfterSeparator(buffer, separator, rest)
 
         case Left(fragment) =>
-          (current, tokenizeFragment(fragment))
+          tokenizeFragment(fragment)
+          current
       }
     }
 
     private def tokenizeAfterSeparator(
-        beforeSeparatorTokens: Vector[Token],
+        acc: ArrayBuffer[Token],
         separator: Char,
         s: String
-    ): (Tokenizer, Vector[Token]) = {
+    ): Tokenizer = {
       val (next, separatorToken) = separatorTokenizerAndToken(separator)
-      val (nextNext, nextTokens) = next.tokenize(s)
-      (nextNext, beforeSeparatorTokens ++ Vector(separatorToken) ++ nextTokens)
+      acc += separatorToken
+      next.tokenize(acc, s)
     }
 
     private def separatorTokenizerAndToken(separator: Char): (Tokenizer, Token) =
@@ -307,22 +383,31 @@ object UriInterpolator {
         case '#' => (Fragment, FragmentStart)
       }
 
-    private def splitPreserveSeparators(s: String, sep: Set[Char], escape: Option[(Char, Char)]): Vector[String] = {
+    private def splitPreserveSeparators(
+        acc: ArrayBuffer[Token],
+        s: String,
+        sep: FastCharSet,
+        escape: Option[(Char, Char)]
+    ): Unit = {
       @tailrec
-      def doSplit(s: String, acc: Vector[String]): Vector[String] = {
+      def doSplit(s: String): Unit = {
         split(s, sep, escape) match {
-          case Left(x) => acc :+ x
+          case Left(x) =>
+            acc += StringToken(x)
+            ()
           case Right((before, separator, after)) =>
-            doSplit(after, acc ++ Vector(before, separator.toString))
+            acc += StringToken(before)
+            acc += StringToken(separator.toString())
+            doSplit(after)
         }
       }
 
-      doSplit(s, Vector.empty)
+      doSplit(s)
     }
 
     private def split(
         s: String,
-        sep: Set[Char],
+        sep: FastCharSet,
         escape: Option[(Char, Char)]
     ): Either[String, (String, Char, String)] = {
       escape match {
@@ -331,7 +416,7 @@ object UriInterpolator {
       }
     }
 
-    private def splitNoEscape(s: String, sep: Set[Char]): Either[String, (String, Char, String)] = {
+    private def splitNoEscape(s: String, sep: FastCharSet): Either[String, (String, Char, String)] = {
       val i = s.indexWhere(sep.contains)
       if (i == -1) Left(s)
       else Right((s.substring(0, i), s.charAt(i), s.substring(i + 1)))
@@ -339,7 +424,7 @@ object UriInterpolator {
 
     private def splitWithEscape(
         s: String,
-        sep: Set[Char],
+        sep: FastCharSet,
         escape: (Char, Char)
     ): Either[String, (String, Char, String)] = {
       val sLength = s.length
@@ -362,14 +447,19 @@ object UriInterpolator {
     }
   }
 
-  sealed trait UriBuilder {
-    def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token])
+  private sealed trait UriBuilder {
+    def fromTokens(u: Uri, t: ArrayView[Token]): (Uri, ArrayView[Token])
+
+    def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
+      val (uri, restTokens) = fromTokens(u, ArrayView(t))
+      (uri, restTokens.toVector)
+    }
   }
 
-  object UriBuilder {
+  private object UriBuilder {
     case object Scheme extends UriBuilder {
-      override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
-        split(t, Set[Token](SchemeEnd)) match {
+      override def fromTokens(u: Uri, t: ArrayView[Token]): (Uri, ArrayView[Token]) = {
+        split(t, SchemeEnd) match {
           case Left(_) => (u, t)
           case Right((schemeTokens, _, otherTokens)) =>
             val scheme = tokensToString(schemeTokens)
@@ -379,27 +469,27 @@ object UriInterpolator {
     }
 
     case object UserInfo extends UriBuilder {
-      override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
-        split(t, Set[Token](AtInAuthority)) match {
+      override def fromTokens(u: Uri, t: ArrayView[Token]): (Uri, ArrayView[Token]) = {
+        split(t, AtInAuthority) match {
           case Left(tt) => (u, tt)
           case Right((uiTokens, _, otherTokens)) =>
             (uiFromTokens(u, uiTokens), otherTokens)
         }
       }
 
-      private def uiFromTokens(u: Uri, uiTokens: Vector[Token]): Uri = {
+      private def uiFromTokens(u: Uri, uiTokens: ArrayView[Token]): Uri = {
         val uiTokensWithDots = uiTokens.map {
           case DotInAuthority => StringToken(".")
           case x              => x
         }
-        split(uiTokensWithDots, Set[Token](ColonInAuthority)) match {
-          case Left(tt) => uiFromTokens(u, tt, Vector.empty)
+        split(uiTokensWithDots, ColonInAuthority) match {
+          case Left(tt) => uiFromTokens(u, tt, ArrayView.empty)
           case Right((usernameTokens, _, passwordTokens)) =>
             uiFromTokens(u, usernameTokens, passwordTokens)
         }
       }
 
-      private def uiFromTokens(u: Uri, usernameTokens: Vector[Token], passwordTokens: Vector[Token]): Uri = {
+      private def uiFromTokens(u: Uri, usernameTokens: ArrayView[Token], passwordTokens: ArrayView[Token]): Uri = {
         (tokensToStringOpt(usernameTokens), tokensToStringOpt(passwordTokens)) match {
           case (Some(un), Some(p)) => u.userInfo(un, p)
           case (Some(un), None)    => u.userInfo(un)
@@ -410,15 +500,15 @@ object UriInterpolator {
     }
 
     case object HostPort extends UriBuilder {
-      override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
-        split(t, Set[Token](AuthorityEnd)) match {
-          case Left(tt) if tt.lastOption.contains(AuthorityEnd) => (hostPortFromTokens(u, tt), Vector.empty)
+      override def fromTokens(u: Uri, t: ArrayView[Token]): (Uri, ArrayView[Token]) = {
+        split(t, AuthorityEnd) match {
+          case Left(tt) if tt.lastOption.contains(AuthorityEnd) => (hostPortFromTokens(u, tt), ArrayView.empty)
           case Left(tt)                                         => (u, tt)
           case Right((hpTokens, _, otherTokens))                => (hostPortFromTokens(u, hpTokens), otherTokens)
         }
       }
 
-      private def hostPortFromTokens(u: Uri, rawHpTokens: Vector[Token]): Uri = {
+      private def hostPortFromTokens(u: Uri, rawHpTokens: ArrayView[Token]): Uri = {
         if (rawHpTokens.isEmpty) {
           u // no authority
         } else {
@@ -426,23 +516,23 @@ object UriInterpolator {
         }
       }
 
-      private def hostPortFromNonemptyTokens(u: Uri, rawHpTokens: Vector[Token]): Uri = {
+      private def hostPortFromNonemptyTokens(u: Uri, rawHpTokens: ArrayView[Token]): Uri = {
         // Special case: if the host/port part contains an expression token,
         // which has a string representation which contains a colon (:), then
         // we assume that the intention was to embed the port and host separately,
         // not to escape the colon in the host name.
-        val hpTokens = rawHpTokens.flatMap {
+        val hpTokens = rawHpTokens.flatMapLike {
           case e: ExpressionToken =>
-            val es = tokensToString(Vector(e))
+            val es = anyToString(e.e)
             es.split(":", 2) match {
-              case Array(h, p) if p.matches("\\d+") =>
-                Vector(StringToken(h), ColonInAuthority, StringToken(p))
-              case _ => Vector(e)
+              case Array(h, p) if p.nonEmpty && p.forall(_.isDigit) =>
+                StringToken(h) :: ColonInAuthority :: StringToken(p) :: Nil
+              case _ => e :: Nil
             }
-          case t => Vector(t)
+          case t => t :: Nil
         }
 
-        if (hpTokens.head.equals(StringToken("")) && hpTokens.drop(1).headOption.contains(DotInAuthority)) {
+        if (hpTokens.startsWith(emptyStringToken) && hpTokens.drop(1).startsWith(DotInAuthority)) {
           throw new IllegalArgumentException("incorrect hostname")
         }
 
@@ -450,25 +540,27 @@ object UriInterpolator {
           throw new IllegalArgumentException("port specified multiple times")
         }
 
-        split(hpTokens, Set[Token](ColonInAuthority)) match {
+        split(hpTokens, ColonInAuthority) match {
           case Left(tt) => hostFromTokens(u, tt)
           case Right((hostTokens, _, portTokens)) =>
             portFromTokens(hostFromTokens(u, hostTokens), portTokens)
         }
       }
 
-      private def hostFromTokens(u: Uri, tokens: Vector[Token]): Uri = {
+      private def hostFromTokens(u: Uri, tokens: ArrayView[Token]): Uri = {
         val hostFragments = tokensToStringSeq(tokens)
         u.host(hostFragments.mkString("."))
       }
 
-      private def portFromTokens(u: Uri, tokens: Vector[Token]): Uri = {
+      private def portFromTokens(u: Uri, tokens: ArrayView[Token]): Uri = {
         u.port(tokensToStringOpt(tokens).flatMap(ParseUtils.toIntOption))
       }
     }
 
     case object Path extends UriBuilder {
-      override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
+      val queryOrFragmentSeparators = Set[Token](QueryStart, FragmentStart)
+
+      override def fromTokens(u: Uri, t: ArrayView[Token]): (Uri, ArrayView[Token]) = {
         val noSchemeAndAuthority = u.scheme.isEmpty && u.authority.isEmpty
 
         val (uu, tt) = withoutAbsolutePathPrefixTokens(t) match {
@@ -481,28 +573,30 @@ object UriInterpolator {
           case _ => (u, t)
         }
 
-        fromStartingToken(uu, tt, PathStart, Set[Token](QueryStart, FragmentStart), pathFromTokens)
+        fromStartingToken(uu, tt, PathStart, queryOrFragmentSeparators, pathFromTokens)
       }
 
-      private def pathFromTokens(u: Uri, tokens: Vector[Token]): Uri = {
+      private def pathFromTokens(u: Uri, tokens: ArrayView[Token]): Uri = {
         u.addPath(tokensToStringSeq(tokens))
       }
 
-      private def withoutAbsolutePathPrefixTokens(t: Vector[Token]): Option[Vector[Token]] =
-        if (t.startsWith(List(PathStart))) {
+      private def withoutAbsolutePathPrefixTokens(t: ArrayView[Token]): Option[ArrayView[Token]] =
+        if (t.startsWith(PathStart)) {
           // there might be multiple empty string tokens, in case of an initial expression token with an absolute path
-          val t2 = t.tail.dropWhile(_ == StringToken(""))
-          if (t2.headOption.contains(SlashInPath)) Some(t2.tail) else None
+          val t2 = t.drop(1).dropWhile(_ == emptyStringToken)
+          if (t2.startsWith(SlashInPath)) Some(t2.drop(1)) else None
         } else None
     }
 
     case object Query extends UriBuilder {
       import Uri.{QuerySegment => QF}
 
-      override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) =
-        fromStartingToken(u, t, QueryStart, Set[Token](FragmentStart), queryFromTokens)
+      val fragmentSeparator = Set[Token](FragmentStart)
 
-      private def queryFromTokens(u: Uri, tokens: Vector[Token]): Uri = {
+      override def fromTokens(u: Uri, t: ArrayView[Token]): (Uri, ArrayView[Token]) =
+        fromStartingToken(u, t, QueryStart, fragmentSeparator, queryFromTokens)
+
+      private def queryFromTokens(u: Uri, tokens: ArrayView[Token]): Uri = {
         val qfs =
           splitToGroups(tokens, AmpInQuery)
             .flatMap(queryMappingsFromTokens)
@@ -510,7 +604,7 @@ object UriInterpolator {
         u.copy(querySegments = qfs)
       }
 
-      private def queryMappingsFromTokens(tokens: Vector[Token]): Vector[QF] = {
+      private def queryMappingsFromTokens(tokens: ArrayView[Token]): Vector[QF] = {
         def expressionPairToQueryFragment(ke: Any, ve: Any): Option[QF.KeyValue] =
           for {
             k <- anyToStringOpt(ke)
@@ -524,12 +618,12 @@ object UriInterpolator {
           }.toVector
         }
 
-        split(tokens, Set[Token](EqInQuery)) match {
-          case Left(Vector(ExpressionToken(e: Map[_, _]))) =>
+        split(tokens, EqInQuery) match {
+          case Left(Singleton(ExpressionToken(e: Map[_, _]))) =>
             seqToQueryFragments(e.toSeq)
-          case Left(Vector(ExpressionToken(e: Seq[_]))) =>
+          case Left(Singleton(ExpressionToken(e: Seq[_]))) =>
             seqToQueryFragments(e)
-          case Left(Vector(ExpressionToken(mqp: QueryParams))) =>
+          case Left(Singleton(ExpressionToken(mqp: QueryParams))) =>
             QF.fromQueryParams(mqp).toVector
           case Left(t) => tokensToStringOpt(t, decodePlusAsSpace = true).map(QF.Value(_)).toVector
           case Right((leftEq, _, rightEq)) =>
@@ -545,14 +639,12 @@ object UriInterpolator {
     }
 
     case object Fragment extends UriBuilder {
-      override def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
-        t match {
-          case FragmentStart +: tt =>
-            (u.fragment(tokensToStringOpt(tt)), Vector.empty)
-
-          case _ => (u, t)
+      override def fromTokens(u: Uri, t: ArrayView[Token]): (Uri, ArrayView[Token]) =
+        if (t.startsWith(FragmentStart)) {
+          (u.fragment(tokensToStringOpt(t.drop(1))), ArrayView.empty)
+        } else {
+          (u, t)
         }
-      }
     }
 
     /** Parse a prefix of tokens `t` into a component of a URI. The component is only present in the tokens if there's a
@@ -562,23 +654,31 @@ object UriInterpolator {
       */
     private def fromStartingToken(
         u: Uri,
-        t: Vector[Token],
+        t: ArrayView[Token],
         startingToken: Token,
         nextComponentTokens: Set[Token],
-        componentFromTokens: (Uri, Vector[Token]) => Uri
-    ): (Uri, Vector[Token]) = {
-      t match {
-        case `startingToken` +: tt =>
-          split(tt, nextComponentTokens) match {
+        componentFromTokens: (Uri, ArrayView[Token]) => Uri
+    ): (Uri, ArrayView[Token]) =
+      if (t.startsWith(startingToken)) {
+        val tt = t.drop(1)
+        if (nextComponentTokens.size == 1) {
+          split(tt, nextComponentTokens.iterator.next()) match {
             case Left(ttt) =>
-              (componentFromTokens(u, ttt), Vector.empty)
-            case Right((componentTokens, sep, otherTokens)) =>
-              (componentFromTokens(u, componentTokens), sep +: otherTokens)
+              (componentFromTokens(u, ttt), ArrayView.empty)
+            case Right((componentTokens, _, otherTokens)) =>
+              (componentFromTokens(u, componentTokens), otherTokens.shiftLeft)
           }
-
-        case _ => (u, t)
+        } else {
+          tt.indexWhere(nextComponentTokens) match {
+            case -1 =>
+              (componentFromTokens(u, tt), ArrayView.empty)
+            case i =>
+              (componentFromTokens(u, tt.take(i)), tt.drop(i))
+          }
+        }
+      } else {
+        (u, t)
       }
-    }
 
     private def anyToString(a: Any): String = anyToStringOpt(a).getOrElse("")
 
@@ -594,7 +694,7 @@ object UriInterpolator {
     #102: the + sign should be decoded into a space only when it's part of the query. Otherwise, it should be
     kept as-is.
      */
-    private def tokensToStringSeq(tokens: Vector[Token], decodePlusAsSpace: Boolean = false): Seq[String] = {
+    private def tokensToStringSeq(tokens: ArrayView[Token], decodePlusAsSpace: Boolean = false): Seq[String] = {
       /*
       #40: when converting tokens to a string sequence, we have to look at
       groups of string/expression (value) tokens separated by others. If there
@@ -611,64 +711,78 @@ object UriInterpolator {
           case _                  => false
         }
 
+      val b = new VectorBuilder[String]()
+
       @tailrec
-      def doToSeq(ts: Vector[Token], acc: Vector[String]): Seq[String] = {
+      def doToSeq(ts: ArrayView[Token]): Unit = {
         val tsWithValuesPrefix = ts.dropWhile(to => !isValueToken(to))
         val (valueTs, tailTs) = tsWithValuesPrefix.span(isValueToken)
 
-        valueTs match {
-          case Vector() => acc // tailTs must be empty then as well
-          case Vector(ExpressionToken(s: Iterable[_])) =>
-            doToSeq(tailTs, acc ++ s.flatMap(anyToStringOpt).toVector)
-          case Vector(ExpressionToken(s: Array[_])) =>
-            doToSeq(tailTs, acc ++ s.flatMap(anyToStringOpt).toVector)
-          case _ =>
-            val values = valueTs
-              .flatMap {
-                case ExpressionToken(e) => anyToStringOpt(e)
+        if (valueTs.nonEmpty) {
+          valueTs match {
+            case Singleton(ExpressionToken(s: Iterable[_])) =>
+              b ++= s.flatMap(anyToStringOpt)
+              doToSeq(tailTs)
+            case Singleton(ExpressionToken(s: Array[_])) =>
+              b ++= s.flatMap(anyToStringOpt)
+              doToSeq(tailTs)
+            case valueTs =>
+              val mbStr = valueTs mkStringOpt {
                 case StringToken(s)     => Some(decode(s, decodePlusAsSpace))
+                case ExpressionToken(e) => anyToStringOpt(e)
                 case EqInQuery          => Some("=")
                 case _                  => None
               }
-
-            val strToAdd =
-              if (values.isEmpty) None else Some(values.mkString(""))
-
-            doToSeq(tailTs, acc ++ strToAdd)
+              mbStr.foreach(b += _)
+              doToSeq(tailTs)
+          }
         }
       }
 
-      doToSeq(tokens, Vector.empty)
+      doToSeq(tokens)
+      b.result()
     }
 
-    private def tokensToStringOpt(t: Vector[Token], decodePlusAsSpace: Boolean = false): Option[String] =
-      t match {
-        case Vector()                   => None
-        case Vector(ExpressionToken(e)) => anyToStringOpt(e)
-        case _                          => Some(tokensToString(t, decodePlusAsSpace))
+    private def tokensToStringOpt(t: ArrayView[Token], decodePlusAsSpace: Boolean = false): Option[String] =
+      if (t.isEmpty) {
+        None
+      } else {
+        t match {
+          case Singleton(ExpressionToken(e)) => anyToStringOpt(e)
+          case t                             => Some(tokensToString(t, decodePlusAsSpace))
+        }
       }
 
-    private def tokensToString(t: Vector[Token], decodePlusAsSpace: Boolean = false): String =
-      t.collect {
+    private def tokensToString(t: ArrayView[Token], decodePlusAsSpace: Boolean = false): String =
+      t.mkString {
         case StringToken(s)     => decode(s, decodePlusAsSpace)
         case ExpressionToken(e) => anyToString(e)
-      }.mkString("")
+        case _                  => ""
+      }
 
-    private def split[T](v: Vector[T], sep: Set[T]): Either[Vector[T], (Vector[T], T, Vector[T])] = {
-      val i = v.indexWhere(sep.contains)
-      if (i == -1) Left(v) else Right((v.take(i), v(i), v.drop(i + 1)))
+    private def split[T](v: ArrayView[T], sep: T): Either[ArrayView[T], (ArrayView[T], T, ArrayView[T])] = {
+      val i = v.indexOf(sep)
+      if (i == -1) Left(v) else Right((v.take(i), v.get(i), v.drop(i + 1)))
     }
 
-    private def splitToGroups[T](v: Vector[T], sep: T): Vector[Vector[T]] = {
+    private def splitToGroups[T](v: ArrayView[T], sep: T): Vector[ArrayView[T]] = {
+      val resultSize = v.count(_ == sep)
+      val b = new VectorBuilder[ArrayView[T]]()
+      b.sizeHint(resultSize + 1)
+
       @tailrec
-      def doSplit(vv: Vector[T], acc: Vector[Vector[T]]): Vector[Vector[T]] = {
+      def doSplit(vv: ArrayView[T]): Unit = {
         vv.indexOf(sep) match {
-          case -1 => acc :+ vv
-          case i  => doSplit(vv.drop(i + 1), acc :+ vv.take(i))
+          case -1 => b += vv
+          case i => {
+            b += vv.take(i)
+            doSplit(vv.drop(i + 1))
+          }
         }
       }
 
-      doSplit(v, Vector.empty)
+      doSplit(v)
+      b.result()
     }
 
     private def decode(s: String, decodePlusAsSpace: Boolean): String = Rfc3986.decode(decodePlusAsSpace)(s)
@@ -681,39 +795,84 @@ object UriInterpolator {
     *
     * These empty string tokens need to be removed so that e.g. extra key-value mappings are not generated.
     */
-  private def removeEmptyTokensAroundExp(tokens: Vector[Token]): Vector[Token] = {
-    @tailrec
-    def doRemove(t: Vector[Token], acc: Vector[Token]): Vector[Token] =
-      t match {
-        case StringToken("") +: (e: ExpressionToken) +: tail => doRemove(e +: tail, acc)
-        case (e: ExpressionToken) +: StringToken("") +: tail => doRemove(tail, acc :+ e)
-        case v +: tail                                       => doRemove(tail, acc :+ v)
-        case _ /* empty */                                   => acc
+  private def removeEmptyTokensAroundExp(tokens: ArrayBuffer[Token]): Unit = {
+    var prevWasEmptyString = false
+    var prevWasExpression = false
+    (0 until tokens.size).foreach { idx =>
+      tokens(idx) match {
+        case `emptyStringToken` =>
+          // if previous token was expression then remove current one (empty string)
+          if (prevWasExpression) {
+            tokens.update(idx, null)
+            prevWasExpression = false
+          } else {
+            prevWasEmptyString = true
+          }
+        case ExpressionToken(_) =>
+          // if previous token was empty string then remove it because current token is expression
+          if (prevWasEmptyString) {
+            tokens.update(idx - 1, null)
+            prevWasEmptyString = false
+          }
+          prevWasExpression = true
+        case null =>
+          ()
+        case _ =>
+          prevWasExpression = false
+          prevWasEmptyString = false
       }
-
-    doRemove(tokens, Vector.empty)
+    }
   }
 
   /** In relative URIs or URIs without authority, there might be no explicit path start (`/`). Adding it so that the
     * second pass of parsing can depend on the `PathStart` token being available.
     */
-  private def addPathStartAfterAuthorityOrSchemeEnd(tokens: Vector[Token]): Vector[Token] = {
+  private def addPathStartAfterAuthorityOrSchemeEnd(tokens: ArrayBuffer[Token]): Unit = {
     val endIndex = tokens.indexOf(AuthorityEnd) match {
       case -1 => tokens.indexOf(SchemeEnd)
       case n  => n
     }
 
-    if (endIndex + 1 == tokens.length) {
-      tokens // no path, query or fragment at all
-    } else {
-      val afterEndIndex = tokens(endIndex + 1)
+    nextNonNull(tokens, endIndex + 1).foreach { case (_, afterEndIndex) =>
       if (afterEndIndex != PathStart && afterEndIndex != QueryStart && afterEndIndex != FragmentStart) {
         // no start token after authority/scheme end - inserting
-        val (init, tail) = if (endIndex == -1) (Vector.empty, tokens) else tokens.splitAt(endIndex + 1)
-        init ++ Vector(PathStart) ++ tail
-      } else {
-        tokens
+        if (endIndex == -1) {
+          tokens.prepend(PathStart)
+        } else {
+          tokens.insert(endIndex + 1, PathStart)
+        }
       }
+    }
+  }
+
+  private def filterNulls(tokens: ArrayBuffer[Token]): ArrayView[Token] = {
+    val array = new Array[Token](tokens.size)
+    var i = 0
+    tokens.foreach { token =>
+      if (token != null) {
+        array.update(i, token)
+        i += 1
+      }
+    }
+
+    new ArrayView(array, 0, i)
+  }
+
+  private def lastNonNull[T](tokens: ArrayBuffer[T], from: Int): Option[(Int, T)] = {
+    val idx = tokens.lastIndexWhere(_ != null, from)
+    if (idx == -1) {
+      None
+    } else {
+      Some((idx, tokens(idx)))
+    }
+  }
+
+  private def nextNonNull[T](tokens: ArrayBuffer[T], from: Int): Option[(Int, T)] = {
+    val idx = tokens.indexWhere(_ != null, from)
+    if (idx == -1) {
+      None
+    } else {
+      Some((idx, tokens(idx)))
     }
   }
 }
