@@ -98,7 +98,10 @@ object UriInterpolator {
       // Parsing the expression as if its string value was embedded in the interpolated string. This way it's possible
       // to extend existing URIs. Without special-casing the embedded URI would be escaped and become part of the host
       // as a whole.
-      if (tokens.size == 1 && tokens.startsWith(List(emptyStringToken)) && (nextExpressionStr.contains("://") || !nextStr.contains("://"))) {
+      if (
+        tokens.size == 1 && tokens
+          .startsWith(List(emptyStringToken)) && (nextExpressionStr.contains("://") || !nextStr.contains("://"))
+      ) {
         def tokenizeExpressionAsString(): Unit =
           tokenizer = tokenizer.tokenize(tokens, nextExpression.toString)
 
@@ -144,38 +147,30 @@ object UriInterpolator {
     tokens
   }
 
-  private[model] sealed trait Token
-  private[model] case class StringToken(s: String) extends Token
-  private[model] case class ExpressionToken(e: Any) extends Token
-  private[model] case object SchemeEnd extends Token
-  private[model] case object ColonInAuthority extends Token
-  private[model] case object AtInAuthority extends Token
-  private[model] case object DotInAuthority extends Token
-  private[model] case object AuthorityEnd extends Token
-  private[model] case object PathStart extends Token
-  private[model] case object SlashInPath extends Token
-  private[model] case object QueryStart extends Token
-  private[model] case object AmpInQuery extends Token
-  private[model] case object EqInQuery extends Token
-  private[model] case object FragmentStart extends Token
+  private sealed trait Token
+  private case class StringToken(s: String) extends Token
+  private case class ExpressionToken(e: Any) extends Token
+  private case object SchemeEnd extends Token
+  private case object ColonInAuthority extends Token
+  private case object AtInAuthority extends Token
+  private case object DotInAuthority extends Token
+  private case object AuthorityEnd extends Token
+  private case object PathStart extends Token
+  private case object SlashInPath extends Token
+  private case object QueryStart extends Token
+  private case object AmpInQuery extends Token
+  private case object EqInQuery extends Token
+  private case object FragmentStart extends Token
 
-  private[model] sealed trait Tokenizer {
+  private sealed trait Tokenizer {
     // Tokenizes string 's' into tokens. New tokens are added into mutable
     // scala.collection.mutable.ArrayBuffer 'buffer'.
     // Returns tokenizer which can handle continuation of URI.
     def tokenize(buffer: ArrayBuffer[Token], s: String): Tokenizer
-    def tokenize(s: String): (Tokenizer, Vector[Token]) = {
-      val buffer = new ArrayBuffer[Token]()
-      val tokenizer = tokenize(buffer, s)
-      val b = new VectorBuilder[Token]()
-      b.sizeHint(buffer.size)
-      buffer.foreach(b += _)
-      (tokenizer, b.result())
-    }
     def endToken: Option[Token] = None // token to add if the input is exhausted
   }
 
-  object Tokenizer {
+  private object Tokenizer {
 
     object Scheme extends Tokenizer {
       private val alphabet = Set(('a' to 'z'): _*) ++ Set(('A' to 'Z'): _*)
@@ -201,7 +196,7 @@ object UriInterpolator {
           // #59: if the entire string matches the pattern, then there's no scheme terminator (`:`). This means there's
           // no scheme, hence - tokenizing as a relative uri.
           case Some(scheme) if scheme.length == s.length => AfterScheme.tokenize(buffer, scheme)
-          case _ if s.isEmpty =>
+          case _ if s.isEmpty                            =>
             // scheme (or another component) might be continued
             buffer += emptyStringToken
             this
@@ -256,11 +251,14 @@ object UriInterpolator {
 
       private def isIpV6Like(str: String): Boolean = {
         val len = str.length()
-        len > 2 && str.charAt(0) == '[' && str.charAt(len - 1) == ']' && (1 until (len - 1)).forall(i => HexChars.contains(str.charAt(i)))
+        len > 2 && str.charAt(0) == '[' && str.charAt(len - 1) == ']' && (1 until (len - 1)).forall(i =>
+          HexChars.contains(str.charAt(i))
+        )
       }
 
       private val terminators = FastCharSet(Set('/', '?', '#'))
-      private val separators = FastCharMap[Token](Map(':' -> ColonInAuthority, '@' -> AtInAuthority, '.' -> DotInAuthority))
+      private val separators =
+        FastCharMap[Token](Map(':' -> ColonInAuthority, '@' -> AtInAuthority, '.' -> DotInAuthority))
       private val escapeSeparators = Some(('[', ']'))
 
       override def tokenize(buffer: ArrayBuffer[Token], s: String): Tokenizer = {
@@ -385,7 +383,12 @@ object UriInterpolator {
         case '#' => (Fragment, FragmentStart)
       }
 
-    private def splitPreserveSeparators(acc: ArrayBuffer[Token], s: String, sep: FastCharSet, escape: Option[(Char, Char)]): Unit = {
+    private def splitPreserveSeparators(
+        acc: ArrayBuffer[Token],
+        s: String,
+        sep: FastCharSet,
+        escape: Option[(Char, Char)]
+    ): Unit = {
       @tailrec
       def doSplit(s: String): Unit = {
         split(s, sep, escape) match {
@@ -444,7 +447,7 @@ object UriInterpolator {
     }
   }
 
-  private[model] sealed trait UriBuilder {
+  private sealed trait UriBuilder {
     def fromTokens(u: Uri, t: ArrayView[Token]): (Uri, ArrayView[Token])
 
     def fromTokens(u: Uri, t: Vector[Token]): (Uri, Vector[Token]) = {
@@ -725,10 +728,10 @@ object UriInterpolator {
               doToSeq(tailTs)
             case valueTs =>
               val mbStr = valueTs mkStringOpt {
-                case StringToken(s) => Some(decode(s, decodePlusAsSpace))
+                case StringToken(s)     => Some(decode(s, decodePlusAsSpace))
                 case ExpressionToken(e) => anyToStringOpt(e)
-                case EqInQuery => Some("=")
-                case _ => None
+                case EqInQuery          => Some("=")
+                case _                  => None
               }
               mbStr.foreach(b += _)
               doToSeq(tailTs)
@@ -746,7 +749,7 @@ object UriInterpolator {
       } else {
         t match {
           case Singleton(ExpressionToken(e)) => anyToStringOpt(e)
-          case t => Some(tokensToString(t, decodePlusAsSpace))
+          case t                             => Some(tokensToString(t, decodePlusAsSpace))
         }
       }
 
@@ -754,7 +757,7 @@ object UriInterpolator {
       t.mkString {
         case StringToken(s)     => decode(s, decodePlusAsSpace)
         case ExpressionToken(e) => anyToString(e)
-        case _ => ""
+        case _                  => ""
       }
 
     private def split[T](v: ArrayView[T], sep: T): Either[ArrayView[T], (ArrayView[T], T, ArrayView[T])] = {
