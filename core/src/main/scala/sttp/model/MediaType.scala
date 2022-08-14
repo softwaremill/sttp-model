@@ -136,6 +136,7 @@ trait MediaTypes {
   val ApplicationGzip: MediaType = MediaType("application", "gzip")
   val ApplicationZip: MediaType = MediaType("application", "zip")
   val ApplicationJson: MediaType = MediaType("application", "json")
+  val ApplicationGrpc: MediaType = MediaType("application", "grpc")
   val ApplicationOctetStream: MediaType = MediaType("application", "octet-stream")
   val ApplicationPdf: MediaType = MediaType("application", "pdf")
   val ApplicationRtf: MediaType = MediaType("application", "rtf")

@@ -62,10 +62,13 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
   private val matchCases = Table(
     ("media type", "content type range", "matches"),
     (MediaType.ApplicationJson, AnyRange, true),
+    (MediaType.ApplicationGrpc, AnyRange, true),
     (MediaType("*", "html"), ContentTypeRange("*", "json", "*"), true),
     (MediaType("text", "*"), ContentTypeRange("text", "*", "*"), true),
     (MediaType.ApplicationJson, ContentTypeRange("application", "*", "*"), true),
+    (MediaType.ApplicationGrpc, ContentTypeRange("application", "*", "*"), true),
     (MediaType.ApplicationJson, ContentTypeRange("application", "json", "*"), true),
+    (MediaType.ApplicationGrpc, ContentTypeRange("application", "grpc", "*"), true),
     //
     (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("*", "*", "utf-16"), false),
     (MediaType("*", "html").charset("utf-8"), ContentTypeRange("*", "json", "utf-16"), false),
