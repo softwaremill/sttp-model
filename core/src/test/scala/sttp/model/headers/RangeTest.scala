@@ -6,6 +6,11 @@ import sttp.model.ContentRangeUnits
 
 class RangeTest extends AnyFlatSpec with Matchers {
 
+  it should "properly parse the Range header of length one" in {
+    val actual = Range.parse("bytes=10-10")
+    actual shouldBe Right(List(Range(Some(10), Some(10), ContentRangeUnits.Bytes)))
+  }
+
   it should "properly parse simplest Range header" in {
     val actual = Range.parse("bytes=200-1000")
     actual shouldBe Right(List(Range(Some(200), Some(1000), ContentRangeUnits.Bytes)))
@@ -109,7 +114,7 @@ class RangeTest extends AnyFlatSpec with Matchers {
   }
 
   it should "calculate content length" in {
-    Range(Some(100), Some(200), ContentRangeUnits.Bytes).contentLength shouldBe 100
+    Range(Some(100), Some(200), ContentRangeUnits.Bytes).contentLength shouldBe 101
   }
 
   it should "map RangeValue to content type" in {
