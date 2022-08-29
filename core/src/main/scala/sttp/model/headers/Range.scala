@@ -13,11 +13,11 @@ case class Range(start: Option[Long], end: Option[Long], unit: String) {
   def toContentRange(fileSize: Long, unit: String = ContentRangeUnits.Bytes): ContentRange =
     ContentRange(unit, start.zip(end).headOption, Some(fileSize))
 
-  val contentLength: Long = end.zip(start).map(r => r._1 - r._2).headOption.getOrElse(0)
+  val contentLength: Long = end.zip(start).map(r => r._1 - r._2 + 1).headOption.getOrElse(0)
 
   def isValid(contentSize: Long): Boolean =
     (start, end) match {
-      case (Some(_start), Some(_end)) => _start < _end && _end < contentSize
+      case (Some(_start), Some(_end)) => _start <= _end && _end < contentSize
       case (Some(_start), None)       => _start < contentSize
       case (None, Some(_end))         => _end < contentSize
       case _                          => false
@@ -56,7 +56,7 @@ object Range {
 
   private def validateRange(range: Range): Boolean =
     (range.start, range.end) match {
-      case (Some(start), Some(end)) => start < end
+      case (Some(start), Some(end)) => start <= end
       case (Some(_), None)          => true
       case (None, Some(_))          => true
       case _                        => false
