@@ -2,7 +2,6 @@ package sttp.model
 
 import internal.Validate._
 
-// TODO: When moving to v2 add status text as field
 class StatusCode(val code: Int) extends AnyVal {
   def isInformational: Boolean = code / 100 == 1
   def isSuccess: Boolean = code / 100 == 2

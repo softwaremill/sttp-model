@@ -2,7 +2,9 @@ package sttp.model
 
 import sttp.model.StatusCode._
 
-object StatusTexts {
+case class StatusText(text: String)
+
+object StatusText {
 
   private val statusTexts: Map[StatusCode, String] = Map(
     Continue -> "Continue",
@@ -67,6 +69,6 @@ object StatusTexts {
     NetworkAuthenticationRequired -> "Network Authentication Required"
   )
 
-  def get(statusCode: StatusCode): String =
-    statusTexts.getOrElse(statusCode, "")
+  def default(statusCode: StatusCode): Option[String] =
+    statusTexts.get(statusCode)
 }
