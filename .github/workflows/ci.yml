@@ -28,10 +28,10 @@ jobs:
           ~/.ivy2/cache
           ~/.coursier
         key: sbt-cache-${{ runner.os }}-${{ hashFiles('project/build.properties') }}
-    - name: Install libidn11-dev
+    - name: Install libidn2-dev
       run: |
         sudo apt-get update
-        sudo apt-get install libidn11-dev
+        sudo apt-get install libidn2-dev
     - name: Compile
       run: sbt -v compile
     - name: Test
