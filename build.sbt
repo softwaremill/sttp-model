@@ -18,7 +18,12 @@ def dependenciesFor(version: String)(deps: (Option[(Long, Long)] => ModuleID)*):
 val commonSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "com.softwaremill.sttp.model",
   mimaPreviousArtifacts := Set.empty,
-  versionScheme := Some("semver-spec")
+  versionScheme := Some("semver-spec"),
+  Compile / scalacOptions ++= {
+    val isScalaJS = libraryDependencies.value.exists(_.organization == "org.scala-js")
+    val isScala3 = ScalaArtifacts.isScala3(scalaVersion.value)
+    if (isScalaJS && isScala3) Seq("-scalajs") else Seq()
+  }
 )
 
 val commonJvmSettings = commonSettings ++ Seq(
@@ -46,9 +51,6 @@ val commonJsSettings = commonSettings ++ Seq(
         val url = "https://raw.githubusercontent.com/softwaremill/sttp-model"
         s"$mapSourcePrefix:$dir->$url/v${version.value}/"
       }
-  },
-  Compile / scalacOptions ++= {
-    if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq("-scalajs") else Seq()
   },
   libraryDependencies ++= Seq(
     "org.scala-js" %%% "scalajs-dom" % "2.3.0",
