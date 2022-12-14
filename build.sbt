@@ -47,7 +47,9 @@ val commonJsSettings = commonSettings ++ Seq(
         s"$mapSourcePrefix:$dir->$url/v${version.value}/"
       }
   },
-  Compile / scalacOptions ++= Seq("-scalajs"),
+  Compile / scalacOptions ++= {
+    if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq("-scalajs") else Seq()
+  },
   libraryDependencies ++= Seq(
     "org.scala-js" %%% "scalajs-dom" % "2.3.0",
     "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
