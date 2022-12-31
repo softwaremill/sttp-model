@@ -144,6 +144,9 @@ object Header {
   private lazy val Rfc850DatetimeFormat = DateTimeFormatter.ofPattern(Rfc850DatetimePattern, Locale.US)
 
   val Rfc850WeekDays = Set("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+  val Rfc1123WeekDays: Array[String] = Array("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+  val Rfc1123Months: Array[String] = Array("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+    "Aug", "Sep", "Oct", "Nov", "Dec")
 
   private def parseRfc850DateTime(v: String): Instant = {
     val expiresParts = v.split(", ")
@@ -165,5 +168,16 @@ object Header {
     }
   def unsafeParseHttpDate(s: String): Instant = parseHttpDate(s).getOrThrow
 
-  def toHttpDateString(i: Instant): String = DateTimeFormatter.RFC_1123_DATE_TIME.format(i.atZone(GMT))
+  def toHttpDateString(instantTime: Instant): String = {
+    val dateTime = instantTime.atZone(GMT)
+    val dayOfWeek = Rfc1123WeekDays(dateTime.getDayOfWeek.getValue - 1)
+    val month = Rfc1123Months(dateTime.getMonth.getValue - 1)
+    val dayOfMonth = dateTime.getDayOfMonth
+    val year = dateTime.getYear
+    val hour = dateTime.getHour
+    val minute = dateTime.getMinute
+    val second = dateTime.getSecond
+
+    f"$dayOfWeek, $dayOfMonth%02d $month $year%04d $hour%02d:$minute%02d:$second%02d GMT"
+  }
 }
