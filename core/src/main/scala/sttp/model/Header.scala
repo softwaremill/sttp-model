@@ -143,9 +143,9 @@ object Header {
   private lazy val Rfc850DatetimePattern = "dd-MMM-yyyy HH:mm:ss zzz"
   private lazy val Rfc850DatetimeFormat = DateTimeFormatter.ofPattern(Rfc850DatetimePattern, Locale.US)
 
-  val Rfc850WeekDays = Set("mon", "tue", "wed", "thu", "fri", "sat", "sun")
-  val Rfc1123WeekDays: Array[String] = Array("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-  val Rfc1123Months: Array[String] = Array("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+  val Rfc850WeekDays = Set("mon", "tue", "wed", "thu", "fri", "sat", "sun") // not private b/c of bin-compat
+  private val Rfc1123WeekDays: Array[String] = Array("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+  private val Rfc1123Months: Array[String] = Array("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
     "Aug", "Sep", "Oct", "Nov", "Dec")
 
   private def parseRfc850DateTime(v: String): Instant = {
