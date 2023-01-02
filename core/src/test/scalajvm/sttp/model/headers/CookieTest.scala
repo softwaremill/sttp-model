@@ -7,7 +7,7 @@ import java.time.{ZoneId, ZonedDateTime}
 
 class CookieTest extends AnyFlatSpec with Matchers {
   val parseCookieData = List(
-    "user_id=5; Expires=Fri, 5 Oct 2018 14:28:00 GMT; Secure; HttpOnly" -> Right(
+    "user_id=5; Expires=Fri, 05 Oct 2018 14:28:00 GMT; Secure; HttpOnly" -> Right(
       CookieWithMeta.unsafeApply(
         "user_id",
         "5",
@@ -81,7 +81,7 @@ class CookieTest extends AnyFlatSpec with Matchers {
       secure = true,
       httpOnly = true,
       sameSite = Some(Cookie.SameSite.Strict)
-    ) -> "user_id=5; Expires=Fri, 5 Oct 2018 14:28:00 GMT; Secure; HttpOnly; SameSite=Strict",
+    ) -> "user_id=5; Expires=Fri, 05 Oct 2018 14:28:00 GMT; Secure; HttpOnly; SameSite=Strict",
     CookieWithMeta.unsafeApply(
       "x",
       "y",
