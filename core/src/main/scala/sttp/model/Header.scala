@@ -145,8 +145,8 @@ object Header {
 
   val Rfc850WeekDays = Set("mon", "tue", "wed", "thu", "fri", "sat", "sun") // not private b/c of bin-compat
   private val Rfc1123WeekDays: Array[String] = Array("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-  private val Rfc1123Months: Array[String] = Array("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
-    "Aug", "Sep", "Oct", "Nov", "Dec")
+  private val Rfc1123Months: Array[String] =
+    Array("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
   private def parseRfc850DateTime(v: String): Instant = {
     val expiresParts = v.split(", ")
