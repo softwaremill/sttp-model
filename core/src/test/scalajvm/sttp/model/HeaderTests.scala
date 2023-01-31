@@ -4,7 +4,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import sttp.model.headers.CacheDirective
 
-import java.time.{ Instant, LocalDateTime, ZoneId, ZonedDateTime }
+import java.time.{Instant, LocalDateTime, ZoneId, ZonedDateTime}
 import scala.concurrent.duration.DurationInt
 
 class HeaderTests extends AnyFlatSpec with Matchers {
