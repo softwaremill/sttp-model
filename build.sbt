@@ -61,16 +61,16 @@ val commonNativeSettings = commonSettings ++ Seq(
   )
 )
 
-lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STTP_NATIVE")) {
-  println("[info] STTP_NATIVE defined, including sttp-native in the aggregate projects")
-  core.projectRefs
-} else {
-  println("[info] STTP_NATIVE *not* defined, *not* including sttp-native in the aggregate projects")
+lazy val rawAllAggregates: Seq[ProjectReference] = core.projectRefs
 
-  scala3.map(core.jvm(_): ProjectReference) ++
-    scala3.map(core.js(_): ProjectReference) ++
-    scala2.map(core.jvm(_): ProjectReference) ++
-    scala2alive.map(core.js(_): ProjectReference)
+lazy val allAggregates: Seq[ProjectReference] = {
+  if (sys.env.isDefinedAt("STTP_NATIVE")) {
+    println("[info] STTP_NATIVE defined, including native in the aggregate projects")
+    rawAllAggregates
+  } else {
+    println("[info] STTP_NATIVE *not* defined, *not* including native in the aggregate projects")
+    rawAllAggregates.filterNot(_.toString.contains("Native"))
+  }
 }
 
 val compileAndTest = "compile->compile;test->test"
@@ -78,7 +78,7 @@ val compileAndTest = "compile->compile;test->test"
 lazy val rootProject = (project in file("."))
   .settings(commonSettings: _*)
   .settings(publish / skip := true, name := "sttp-model", scalaVersion := scala2_13)
-  .aggregate(projectAggregates: _*)
+  .aggregate(allAggregates: _*)
 
 lazy val core = (projectMatrix in file("core"))
   .settings(
