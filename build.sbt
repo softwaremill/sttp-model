@@ -95,7 +95,7 @@ lazy val core = (projectMatrix in file("core"))
     )
   )
   .nativePlatform(
-    scalaVersions = scala2 ++ scala3,
+    scalaVersions = scala2alive ++ scala3,
     settings = commonNativeSettings
   )
 
