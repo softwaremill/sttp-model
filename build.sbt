@@ -70,7 +70,7 @@ lazy val projectAggregates: Seq[ProjectReference] = if (sys.env.isDefinedAt("STT
   scala3.map(core.jvm(_): ProjectReference) ++
     scala3.map(core.js(_): ProjectReference) ++
     scala2.map(core.jvm(_): ProjectReference) ++
-    scala2.map(core.js(_): ProjectReference)
+    scala2alive.map(core.js(_): ProjectReference)
 }
 
 val compileAndTest = "compile->compile;test->test"
