@@ -6,6 +6,7 @@ val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.17"
 val scala2_13 = "2.13.10"
 val scala2 = List(scala2_11, scala2_12, scala2_13)
+val scala2alive = List(scala2_12, scala2_13)
 val scala3 = List("3.2.1")
 
 val scalaTestVersion = "3.2.15"
@@ -88,7 +89,7 @@ lazy val core = (projectMatrix in file("core"))
     settings = commonJvmSettings
   )
   .jsPlatform(
-    scalaVersions = scala2 ++ scala3,
+    scalaVersions = scala2alive ++ scala3,
     settings = commonJsSettings ++ browserChromeTestSettings ++ Seq(
       libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.4.0"
     )
