@@ -76,6 +76,7 @@ trait StatusCodes {
   val UnprocessableEntity: StatusCode = StatusCode(422)
   val Locked: StatusCode = StatusCode(423)
   val FailedDependency: StatusCode = StatusCode(424)
+  def TooEarly: StatusCode = StatusCode(425) // def because val would break binary compatibility
   val UpgradeRequired: StatusCode = StatusCode(426)
   val PreconditionRequired: StatusCode = StatusCode(428)
   val TooManyRequests: StatusCode = StatusCode(429)
