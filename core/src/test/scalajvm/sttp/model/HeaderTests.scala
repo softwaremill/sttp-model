@@ -20,11 +20,18 @@ class HeaderTests extends AnyFlatSpec with Matchers {
 
   it should "validate status codes" in {
     Header.safeApply("Aut ho", "a bc") should matchPattern { case Left(_) => }
+    Header.safeApply(HeaderNames.Authorization, "Я ЛЮБЛЮ БОРЩ") should matchPattern { case Left(_) => }
+    Header.safeApply(HeaderNames.Authorization, " Я ЛЮБЛЮ БОРЩ") should matchPattern { case Left(_) => }
+    Header.safeApply(HeaderNames.Authorization, " xy z") should matchPattern { case Left(_) => }
+    Header.safeApply(HeaderNames.Authorization, "xy z\t") should matchPattern { case Left(_) => }
+    Header.safeApply(HeaderNames.Authorization, "xy \n z") should matchPattern { case Left(_) => }
     Header.safeApply(HeaderNames.Authorization, "xy z") should matchPattern { case Right(_) => }
+    Header.safeApply(HeaderNames.Authorization, "x \t y  z") should matchPattern { case Right(_) => }
   }
 
   it should "throw exceptions on invalid headers" in {
     an[IllegalArgumentException] shouldBe thrownBy(Header.unsafeApply("Aut ho", "a bc"))
+    an[IllegalArgumentException] shouldBe thrownBy(Header.unsafeApply(HeaderNames.Authorization, " xy z"))
   }
 
   it should "create unvalidated instances" in {

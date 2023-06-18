@@ -67,7 +67,21 @@ object Header {
   def unsafeApply(name: String, value: String): Header = safeApply(name, value).getOrThrow
 
   def safeApply(name: String, value: String): Either[String, Header] = {
-    Validate.all(validateToken("Header name", name))(apply(name, value))
+    Validate.all(validateToken("Header name", name), validateValue(value))(apply(name, value))
+  }
+
+  def validateValue(value: String): Option[String] = {
+    val availableWhitespaces = "\\x09\\x20"
+    val VCHAR = "\\x21-\\x7E"
+    val regex = s"^[$VCHAR]+([$availableWhitespaces]+[$VCHAR]+)*$$"
+
+    if (value.matches(regex)) None
+    else
+      Some(
+        """Invalid header value. The header value cannot have leading or trailing whitespace
+          |and must consist of visible US-ASCII characters, including space and horizontal tab.""".stripMargin
+          .replaceAll("\n", " ")
+      )
   }
 
   def apply(name: String, value: String): Header = new Header(name, value)
