@@ -14,6 +14,7 @@ import sttp.model.headers.{
 }
 import sttp.model.internal.Validate
 import sttp.model.internal.Rfc2616.validateToken
+import sttp.model.internal.Rfc9110.validateValue
 import sttp.model.internal.Validate._
 
 import java.time.{Instant, ZoneId}
@@ -68,20 +69,6 @@ object Header {
 
   def safeApply(name: String, value: String): Either[String, Header] = {
     Validate.all(validateToken("Header name", name), validateValue(value))(apply(name, value))
-  }
-
-  def validateValue(value: String): Option[String] = {
-    val availableWhitespaces = "\\x09\\x20"
-    val VCHAR = "\\x21-\\x7E"
-    val regex = s"^[$VCHAR]+([$availableWhitespaces]+[$VCHAR]+)*$$"
-
-    if (value.matches(regex)) None
-    else
-      Some(
-        """Invalid header value. The header value cannot have leading or trailing whitespace
-          |and must consist of visible US-ASCII characters, including space and horizontal tab.""".stripMargin
-          .replaceAll("\n", " ")
-      )
   }
 
   def apply(name: String, value: String): Header = new Header(name, value)
