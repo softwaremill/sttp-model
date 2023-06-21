@@ -4,7 +4,7 @@ package sttp.model.internal
 private[model] object Rfc9110 {
   private val availableWhitespaces = "\\x09\\x20"
   private val VCHAR = "\\x21-\\x7E"
-  private val regex = s"^[$VCHAR]+([$availableWhitespaces]+[$VCHAR]+)*$$"
+  private val regex = s"^(?:^[$VCHAR]+([$availableWhitespaces]+[$VCHAR]+)*)?$$"
 
   def validateFieldValue(v: String): Option[String] = {
     if (v.matches(regex)) None

@@ -25,8 +25,8 @@ class HeaderTests extends AnyFlatSpec with Matchers {
     Header.safeApply(HeaderNames.Authorization, " xy z") should matchPattern { case Left(_) => }
     Header.safeApply(HeaderNames.Authorization, "xy z\t") should matchPattern { case Left(_) => }
     Header.safeApply(HeaderNames.Authorization, "xy \n z") should matchPattern { case Left(_) => }
-    Header.safeApply(HeaderNames.Authorization, "") should matchPattern { case Left(_) => }
     Header.safeApply(HeaderNames.Authorization, " ") should matchPattern { case Left(_) => }
+    Header.safeApply(HeaderNames.Authorization, "") should matchPattern { case Right(_) => }
     Header.safeApply(HeaderNames.Authorization, "xy z") should matchPattern { case Right(_) => }
     Header.safeApply(HeaderNames.Authorization, "x \t y  z") should matchPattern { case Right(_) => }
   }
