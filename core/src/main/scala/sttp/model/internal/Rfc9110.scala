@@ -1,11 +1,12 @@
 package sttp.model.internal
 
+//https://www.rfc-editor.org/rfc/rfc9110.html#name-field-values
 object Rfc9110 {
   private val availableWhitespaces = "\\x09\\x20"
   private val VCHAR = "\\x21-\\x7E"
   private val regex = s"^[$VCHAR]+([$availableWhitespaces]+[$VCHAR]+)*$$"
 
-  def validateValue(v: String): Option[String] = {
+  def validateFieldValue(v: String): Option[String] = {
     if (v.matches(regex)) None
     else
       Some(
