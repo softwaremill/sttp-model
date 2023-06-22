@@ -14,6 +14,7 @@ import sttp.model.headers.{
 }
 import sttp.model.internal.Validate
 import sttp.model.internal.Rfc2616.validateToken
+import sttp.model.internal.Rfc9110.validateFieldValue
 import sttp.model.internal.Validate._
 
 import java.time.{Instant, ZoneId}
@@ -67,7 +68,7 @@ object Header {
   def unsafeApply(name: String, value: String): Header = safeApply(name, value).getOrThrow
 
   def safeApply(name: String, value: String): Either[String, Header] = {
-    Validate.all(validateToken("Header name", name))(apply(name, value))
+    Validate.all(validateToken("Header name", name), validateFieldValue(value))(apply(name, value))
   }
 
   def apply(name: String, value: String): Header = new Header(name, value)
