@@ -9,35 +9,23 @@ import scala.collection.immutable.{Map, Seq}
 
 object Accepts {
   def parse(headers: Seq[Header]): Either[String, Seq[ContentTypeRange]] =
-    (parseAcceptHeader(headers), parseAcceptCharsetHeader(headers)) match {
-      case (Right(mts), Right(chs))         => Right(toContentTypeRanges(mts, chs))
-      case (Left(errorMts), Left(errorChs)) => Left(s"$errorMts\n$errorChs")
-      case (Left(error), _)                 => Left(error)
-      case (_, Left(error))                 => Left(error)
+    parseAcceptHeader(headers) match {
+      case Right(mts)  => Right(toContentTypeRanges(mts))
+      case Left(error) => Left(error)
     }
 
   def unsafeParse(headers: Seq[Header]): Seq[ContentTypeRange] =
     toContentTypeRanges(
-      parseAcceptHeader(headers).getOrThrow,
-      parseAcceptCharsetHeader(headers).getOrThrow
+      parseAcceptHeader(headers).getOrThrow
     )
 
   private def toContentTypeRanges(
-      mediaTypes: Seq[(MediaType, Float)],
-      charsets: Seq[(String, Float)]
+      mediaTypes: Seq[(MediaType, Float)]
   ): Seq[ContentTypeRange] = {
-    (mediaTypes, charsets) match {
-      case (Nil, Nil) => Seq(AnyRange)
-      case (Nil, chs) =>
-        chs.sortBy({ case (_, q) => -q }).map { case (ch, _) => ContentTypeRange(Wildcard, Wildcard, ch) }
-      case (mts, Nil) =>
+    mediaTypes match {
+      case Nil => Seq(AnyRange)
+      case mts =>
         mts.sortBy({ case (_, q) => -q }).map { case (mt, _) => ContentTypeRange(mt.mainType, mt.subType, Wildcard) }
-      case (mts, chs) =>
-        val merged = mts.flatMap { case (mt, mtQ) =>
-          // if Accept-Charset is defined then any other charset specified in Accept header in not acceptable
-          chs.map { case (ch, chQ) => (mt, ch) -> math.min(mtQ, chQ) }
-        }
-        merged.sortBy({ case (_, q) => -q }).map { case ((mt, ch), _) => ContentTypeRange(mt.mainType, mt.subType, ch) }
     }
   }
 
