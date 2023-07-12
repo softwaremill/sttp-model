@@ -2,11 +2,9 @@ import com.softwaremill.SbtSoftwareMillBrowserTestJS._
 import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
 import com.softwaremill.Publish.ossPublishSettings
 
-val scala2_11 = "2.11.12"
 val scala2_12 = "2.12.18"
 val scala2_13 = "2.13.11"
-val scala2 = List(scala2_11, scala2_12, scala2_13)
-val scala2alive = List(scala2_12, scala2_13)
+val scala2 = List(scala2_12, scala2_13)
 val scala3 = List("3.3.0")
 
 val scalaTestVersion = "3.2.16"
@@ -89,13 +87,13 @@ lazy val core = (projectMatrix in file("core"))
     settings = commonJvmSettings
   )
   .jsPlatform(
-    scalaVersions = scala2alive ++ scala3,
+    scalaVersions = scala2 ++ scala3,
     settings = commonJsSettings ++ browserChromeTestSettings ++ Seq(
       libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
     )
   )
   .nativePlatform(
-    scalaVersions = scala2alive ++ scala3,
+    scalaVersions = scala2 ++ scala3,
     settings = commonNativeSettings
   )
 
