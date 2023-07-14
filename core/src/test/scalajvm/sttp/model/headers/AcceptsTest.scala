@@ -16,53 +16,53 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
     ("application/json;q=.8", "*", Seq(ContentTypeRange("application", "json", "*"))),
     ("application/json;q=.88", "*", Seq(ContentTypeRange("application", "json", "*"))),
     ("application/json;q=.888", "*", Seq(ContentTypeRange("application", "json", "*"))),
-    ("application/json", "utf-8", Seq(ContentTypeRange("application", "json", "utf-8"))),
-    ("application/json", "utf-8;a=1;b=2;c=3", Seq(ContentTypeRange("application", "json", "utf-8"))),
+    ("application/json", "utf-8", Seq(ContentTypeRange("application", "json", "*"))),
+    ("application/json", "utf-8;a=1;b=2;c=3", Seq(ContentTypeRange("application", "json", "*"))),
     (
       "text/plain",
       "utf-8, iso-8559-1",
-      Seq(ContentTypeRange("text", "plain", "utf-8"), ContentTypeRange("text", "plain", "iso-8559-1"))
+      Seq(ContentTypeRange("text", "plain", "*"), ContentTypeRange("text", "plain", "*"))
     ),
     (
       "text/plain",
       "utf-8;q=0.99, iso-8559-1",
-      Seq(ContentTypeRange("text", "plain", "iso-8559-1"), ContentTypeRange("text", "plain", "utf-8"))
+      Seq(ContentTypeRange("text", "plain", "*"), ContentTypeRange("text", "plain", "*"))
     ),
     (
       "text/plain",
       "utf-8;q=0.55, iso-8559-1;q=0.66, utf-16;q=0.77",
       Seq(
-        ContentTypeRange("text", "plain", "utf-16"),
-        ContentTypeRange("text", "plain", "iso-8559-1"),
-        ContentTypeRange("text", "plain", "utf-8")
+        ContentTypeRange("text", "plain", "*"),
+        ContentTypeRange("text", "plain", "*"),
+        ContentTypeRange("text", "plain", "*")
       )
     ),
     (
       "text/csv, text/plain",
       "utf-8, utf-16;q=0.5",
       Seq(
-        ContentTypeRange("text", "csv", "utf-8"),
-        ContentTypeRange("text", "plain", "utf-8"),
-        ContentTypeRange("text", "csv", "utf-16"),
-        ContentTypeRange("text", "plain", "utf-16")
+        ContentTypeRange("text", "csv", "*"),
+        ContentTypeRange("text", "plain", "*"),
+        ContentTypeRange("text", "csv", "*"),
+        ContentTypeRange("text", "plain", "*")
       )
     ),
     (
       "text/csv, text/plain;q=0.1",
       "utf-8, utf-16;q=0.5",
       Seq(
-        ContentTypeRange("text", "csv", "utf-8"),
-        ContentTypeRange("text", "csv", "utf-16"),
-        ContentTypeRange("text", "plain", "utf-8"),
-        ContentTypeRange("text", "plain", "utf-16")
+        ContentTypeRange("text", "csv", "*"),
+        ContentTypeRange("text", "csv", "*"),
+        ContentTypeRange("text", "plain", "*"),
+        ContentTypeRange("text", "plain", "*")
       )
     ),
     (
       "text/*, application/json;q=0.9",
       "utf-8",
       Seq(
-        ContentTypeRange("text", "*", "utf-8"),
-        ContentTypeRange("application", "json", "utf-8")
+        ContentTypeRange("text", "*", "*"),
+        ContentTypeRange("application", "json", "*")
       )
     ),
     (
@@ -95,7 +95,7 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
   )
 
   forAll(acceptsCases) { (accept, acceptCharset, result) =>
-    it should s"parse Accept: $accept Accept-Charset: $acceptCharset" in {
+    it should s"parse Accept: $accept and ignore Accept-Charset: $acceptCharset" in {
       val headers =
         otherHeaders ++ Seq(Header(HeaderNames.Accept, accept), Header(HeaderNames.AcceptCharset, acceptCharset))
       Accepts.unsafeParse(headers) shouldBe result
@@ -107,10 +107,10 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
     Accepts.unsafeParse(otherHeaders) shouldBe Seq(AnyRange)
   }
 
-  it should "parse when only Accept-Charset specified" in {
+  it should "ignore Accept-Charset specified" in {
     Accepts.unsafeParse(otherHeaders ++ Seq(Header(HeaderNames.AcceptCharset, "utf-16;q=0.5, utf-8"))) shouldBe Seq(
-      ContentTypeRange("*", "*", "utf-8"),
-      ContentTypeRange("*", "*", "utf-16")
+      ContentTypeRange("*", "*", "*"),
+      ContentTypeRange("*", "*", "*")
     )
   }
 
@@ -121,7 +121,7 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
     )
   }
 
-  it should "return errors when invalid accept headers" in {
+  it should "return errors when invalid Accept and ignore invalid AcceptCharset" in {
     val invalidAccept = Header(HeaderNames.Accept, "text/html;=q=1")
     Accepts.parse(Seq(invalidAccept)) shouldBe Left(
       """Parameter is not formatted correctly: "=q=1" for: "text/html;=q=1""""
