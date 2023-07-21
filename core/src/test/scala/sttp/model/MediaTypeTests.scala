@@ -73,7 +73,8 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
     (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "*", "utf-16"), false),
     (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "json", "utf-16"), false),
     //
-    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "json", "*"), true)
+    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "json", "*"), true),
+    (MediaType.ApplicationOctetStream, ContentTypeRange("*", "*", "utf-8"), true)
   )
 
   forAll(matchCases) { (mt, range, matches) =>

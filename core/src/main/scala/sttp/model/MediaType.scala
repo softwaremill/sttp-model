@@ -20,7 +20,8 @@ case class MediaType(
   def matches(range: ContentTypeRange): Boolean = {
     def charsetMatches: Boolean =
       if (range.charset == Wildcard) true
-      else this.charset.map(_.toLowerCase).contains(range.charset.toLowerCase)
+      // #2994 from tapir: when the media type doesn't define a charset, it shouldn't be taken into account in the matching logic
+      else charset.isEmpty || charset.map(_.toLowerCase).contains(range.charset.toLowerCase)
 
     (range match {
       case ContentTypeRange(Wildcard, _, _)        => true
