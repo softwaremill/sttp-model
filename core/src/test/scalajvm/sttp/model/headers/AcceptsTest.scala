@@ -136,6 +136,16 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
       """Parameter is not formatted correctly: "=q=1" for: "text/html;=q=1"
         |Parameter is not formatted correctly: "=a=1" for: "utf-8;=a=1"""".stripMargin
     )
+
+    val invalidAcceptCharset2 = Header(HeaderNames.AcceptCharset, "@@@")
+    Accepts.parse(Seq(invalidAcceptCharset2)) shouldBe Left(
+      """No charset found for: "@@@""""
+    )
+
+    val invalidAcceptCharset3 = Header(HeaderNames.AcceptCharset, "utf-8;q=XXX")
+    Accepts.parse(Seq(invalidAcceptCharset3)) shouldBe Left(
+      """q must be numeric value between <0, 1> with up to 3 decimal points, provided "XXX""""
+    )
   }
 
   it should "return error for invalid q" in {

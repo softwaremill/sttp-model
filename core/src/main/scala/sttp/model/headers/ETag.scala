@@ -46,7 +46,7 @@ object ETag {
               case Left(e)  => Left(e)
               case Right(e) => run(i + 1, i + 1, inQuotes = false, e :: acc)
             }
-          case c => run(i + 1, start, inQuotes = false, acc)
+          case _ => run(i + 1, start, inQuotes = false, acc)
         }
     }
     run(0, 0, inQuotes = false, Nil)

@@ -13,11 +13,11 @@ case class AcceptEncoding(encodings: List[WeightedEncoding]) {
 object AcceptEncoding {
 
   case class WeightedEncoding(encoding: String, weight: Option[BigDecimal]) {
-    override def toString: String = s"$encoding${weight.map(w => s";q=$w").getOrElse("")}"
+    override def toString: String = weight.fold(encoding)(w => s"$encoding;q=$w")
   }
 
   def parse(str: String): Either[String, AcceptEncoding] = {
-    val encodings = processString(str, List.empty)
+    val encodings = processString(str)
     if (encodings.isEmpty) Left(s"No encodings found in: $str")
     else {
       @tailrec
@@ -34,40 +34,28 @@ object AcceptEncoding {
     }
   }
 
-  @tailrec
-  private def processString(str: String, acc: List[WeightedEncoding]): List[WeightedEncoding] = {
-    str.trim.split(",").toList match {
-      case x :: tail if x.nonEmpty =>
-        val range = parsSingleEncoding(x)
-        processString(tail.mkString(","), range :: acc)
-      case Nil => List(parsSingleEncoding(str))
-      case _   => acc
-    }
-  }
+  private def processString(str: String): List[WeightedEncoding] =
+    str.trim.split(",").map(x => parsSingleEncoding(x.trim)).reverse.toList // TODO: do we really need `.reverse` here?
 
-  private def parsSingleEncoding(s: String): WeightedEncoding = {
+  private def parsSingleEncoding(s: String): WeightedEncoding =
     s.split(";") match {
+      case Array(algorithm) => WeightedEncoding(algorithm, None)
       case Array(algorithm, weight) =>
         weight.split("=") match {
           case Array(_, value) => WeightedEncoding(algorithm, Some(BigDecimal(value)))
           case _               => WeightedEncoding("", None)
         }
-      case Array(algorithm) => WeightedEncoding(algorithm, None)
-      case _                => WeightedEncoding("", None)
+      case _ => WeightedEncoding("", None)
     }
-  }
 
-  private def validate(acceptEncoding: WeightedEncoding, original: => String): Either[String, WeightedEncoding] = {
-    if (acceptEncoding.encoding.isEmpty) {
-      Left(s"Invalid empty encoding in: $original")
-    } else {
+  private def validate(acceptEncoding: WeightedEncoding, original: => String): Either[String, WeightedEncoding] =
+    if (acceptEncoding.encoding.isEmpty) Left(s"Invalid empty encoding in: $original")
+    else
       acceptEncoding.weight match {
         case Some(value) if value < 0 || value > 1 =>
           Left(s"Invalid weight, expected a number between 0 and 1, but got: $value in $original.")
         case _ => Right(acceptEncoding)
       }
-    }
-  }
 
   def unsafeParse(s: String): AcceptEncoding = parse(s).getOrThrow
 
@@ -76,6 +64,6 @@ object AcceptEncoding {
 
   def safeApply(encoding: String, weight: Option[BigDecimal]): Either[String, AcceptEncoding] = {
     val encodingObject = WeightedEncoding(encoding, weight)
-    validate(encodingObject, encodingObject.toString).right.map(e => AcceptEncoding(List(e)))
+    validate(encodingObject, encodingObject.toString).map(e => AcceptEncoding(List(e)))
   }
 }

@@ -1,7 +1,6 @@
 package sttp.model.internal
 
 import java.util.regex.Pattern
-import scala.util.matching.Regex
 
 private[model] object Patterns {
 
@@ -13,9 +12,7 @@ private[model] object Patterns {
   val Type: Pattern = Pattern.compile(s"$Token")
   val TypeSubtype: Pattern = Pattern.compile(s"$Token/$Token|([*])")
   val Parameter: Pattern = Pattern.compile(s";\\s*(?:$Token=(?:$Token|$Quoted))?")
-
-  val QValue: Regex = "(0\\.?\\d{0,3}?|\\.\\d{1,3}?|1\\.0{1,3}?)".r
-  val WhiteSpaces: String = "\\s+"
+  val QValue: Pattern = Pattern.compile("(0\\.?\\d{0,3}?|\\.\\d{1,3}?|1\\.0{1,3}?)")
 
   def parseMediaTypeParameters(t: String, offset: Int): Either[String, Map[String, String]] = {
     var parameters: Map[String, String] = Map.empty

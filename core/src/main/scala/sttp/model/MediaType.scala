@@ -3,7 +3,7 @@ package sttp.model
 import sttp.model.ContentTypeRange.Wildcard
 import sttp.model.internal.Rfc2616._
 import sttp.model.internal.Validate._
-import sttp.model.internal.{Patterns, Validate}
+import sttp.model.internal.Patterns
 
 import java.nio.charset.Charset
 
@@ -17,20 +17,13 @@ case class MediaType(
   def charset(c: String): MediaType = copy(charset = Some(c))
   def noCharset: MediaType = copy(charset = None)
 
-  def matches(range: ContentTypeRange): Boolean = {
-    def charsetMatches: Boolean =
-      if (range.charset == Wildcard) true
-      // #2994 from tapir: when the media type doesn't define a charset, it shouldn't be taken into account in the matching logic
-      else charset.isEmpty || charset.map(_.toLowerCase).contains(range.charset.toLowerCase)
-
-    (range match {
-      case ContentTypeRange(Wildcard, _, _)        => true
-      case ContentTypeRange(mainType, Wildcard, _) => this.mainType.equalsIgnoreCase(mainType)
-      case ContentTypeRange(mainType, subType, _) =>
-        this.mainType.equalsIgnoreCase(mainType) && this.subType.equalsIgnoreCase(subType)
-      case null => false
-    }) && charsetMatches
-  }
+  // #2994 from tapir: when the media type doesn't define a charset, it shouldn't be taken into account in the matching logic
+  def matches(range: ContentTypeRange): Boolean =
+    range != null &&
+      (range.mainType == Wildcard ||
+        mainType.equalsIgnoreCase(range.mainType) &&
+        (range.subType == Wildcard || subType.equalsIgnoreCase(range.subType))) &&
+      (range.charset == Wildcard || charset.forall(_.equalsIgnoreCase(range.charset)))
 
   def isApplication: Boolean = mainType.equalsIgnoreCase("application")
   def isAudio: Boolean = mainType.equalsIgnoreCase("audio")
@@ -43,10 +36,22 @@ case class MediaType(
   def isExample: Boolean = mainType.equalsIgnoreCase("example")
   def isModel: Boolean = mainType.equalsIgnoreCase("model")
 
-  override def toString: String = s"$mainType/$subType" + charset.fold("")(c => s"; charset=$c") +
-    otherParameters.foldLeft("") { case (s, (p, v)) => if (p == "charset") s else s"$s; $p=$v" }
+  override def toString: String = {
+    val sb = new java.lang.StringBuilder(32) // "application/json; charset=utf-8".length == 31 ;)
+    sb.append(mainType).append('/').append(subType)
+    charset match {
+      case x: Some[String] => sb.append("; charset=").append(x.value)
+      case _               => ()
+    }
+    otherParameters.foreach { case (p, v) =>
+      if (p != "charset") sb.append("; ").append(p).append('=').append(v)
+      else ()
+    }
+    sb.toString
+  }
 
-  override def hashCode(): Int = toString.toLowerCase.hashCode
+  override lazy val hashCode: Int = toString.toLowerCase.hashCode
+
   override def equals(that: Any): Boolean =
     that match {
       case t: AnyRef if this.eq(t) => true
@@ -77,39 +82,31 @@ object MediaType extends MediaTypes {
       subType: String,
       charset: Option[String] = None,
       parameters: Map[String, String] = Map.empty
-  ): Either[String, MediaType] = {
-    Validate.all(
-      Seq(
-        validateToken("Main type", mainType),
-        validateToken("Sub type", subType),
-        charset.flatMap(validateToken("Charset", _))
-      ) ++ parameters.map { case (p, v) => validateToken(p, v) }: _*
-    )(
-      apply(mainType, subType, charset, parameters)
-    )
-  }
+  ): Either[String, MediaType] =
+    validateToken("Main type", mainType)
+      .orElse(validateToken("Sub type", subType))
+      .orElse(charset.flatMap(validateToken("Charset", _)))
+      .orElse(parameters.collectFirst {
+        case (p, v) if validateToken(p, v).isDefined => validateToken(p, v).get
+      }) match {
+      case None        => Right(apply(mainType, subType, charset, parameters))
+      case Some(error) => Left(error)
+    }
 
   // based on https://github.com/square/okhttp/blob/20cd3a0/okhttp/src/main/java/okhttp3/MediaType.kt#L94
   def parse(t: String): Either[String, MediaType] = {
     val typeSubtype = Patterns.TypeSubtype.matcher(t)
-    if (!typeSubtype.lookingAt()) {
-      return Left(s"""No subtype found for: "$t"""")
-    }
-
-    val (mainType, subType) = (typeSubtype.group(1), typeSubtype.group(2), typeSubtype.group(3)) match {
-      // if there are nulls indicating no main and subtype then we expect a single * (group 3)
-      // it's invalid according to rfc but is used by `HttpUrlConnection` https://bugs.openjdk.java.net/browse/JDK-8163921
-      case (null, null, Wildcard) => (Wildcard, Wildcard)
-      case (mainType, subType, _) => (mainType.toLowerCase, subType.toLowerCase)
-    }
-
-    val parameters = Patterns.parseMediaTypeParameters(t, offset = typeSubtype.end())
-
-    parameters match {
-      case Right(params) =>
-        Right(MediaType(mainType, subType, params.get("charset"), params.filter { case (p, _) => p != "charset" }))
-      case Left(error) => Left(error)
-    }
+    if (typeSubtype.lookingAt()) {
+      val (mainType, subType) = (typeSubtype.group(1), typeSubtype.group(2), typeSubtype.group(3)) match {
+        // if there are nulls indicating no main and subtype then we expect a single * (group 3)
+        // it's invalid according to rfc but is used by `HttpUrlConnection` https://bugs.openjdk.java.net/browse/JDK-8163921
+        case (null, null, Wildcard) => (Wildcard, Wildcard)
+        case (mainType, subType, _) => (mainType.toLowerCase, subType.toLowerCase)
+      }
+      Patterns
+        .parseMediaTypeParameters(t, offset = typeSubtype.end())
+        .map(params => MediaType(mainType, subType, params.get("charset"), params - "charset"))
+    } else Left(s"""No subtype found for: "$t"""")
   }
 
   def unsafeParse(s: String): MediaType = parse(s).getOrThrow
@@ -120,16 +117,17 @@ object MediaType extends MediaTypes {
     *   Content type ranges, sorted in order of preference.
     */
   def bestMatch(mediaTypes: Seq[MediaType], ranges: Seq[ContentTypeRange]): Option[MediaType] = {
-    mediaTypes
-      .map(mt => mt -> ranges.indexWhere(mt.matches))
-      .filter({ case (_, i) => i != NotFoundIndex }) // not acceptable
-    match {
-      case Nil => None
-      case mts => Some(mts.minBy({ case (_, i) => i })).map { case (mt, _) => mt }
+    var minMt: MediaType = null
+    var minIndex = Int.MaxValue
+    mediaTypes.foreach { mt =>
+      val index = ranges.indexWhere(mt.matches)
+      if (index >= 0 && minIndex > index) {
+        minIndex = index
+        minMt = mt
+      }
     }
+    Option(minMt)
   }
-
-  private val NotFoundIndex = -1
 }
 
 // https://www.iana.org/assignments/media-types/media-types.xhtml

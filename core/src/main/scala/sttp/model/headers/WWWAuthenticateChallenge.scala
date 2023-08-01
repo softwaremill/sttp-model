@@ -6,11 +6,19 @@ import sttp.model.headers.WWWAuthenticateChallenge.{CharsetParam, RealmParam}
 import scala.collection.immutable.ListMap
 
 case class WWWAuthenticateChallenge(scheme: String, params: ListMap[String, String]) {
-  override def toString: String = {
-    val paramsAsString = params.map { case (k, v) => s"""$k="$v"""" }.mkString(", ")
-    val sep = if (paramsAsString.nonEmpty) " " else ""
-    s"$scheme$sep$paramsAsString"
-  }
+  override def toString: String =
+    if (params.nonEmpty) {
+      val sb = new java.lang.StringBuilder()
+      sb.append(scheme).append(' ')
+      var nonFirst = false
+      params.foreach { case (k, v) =>
+        if (nonFirst) sb.append(", ")
+        else ()
+        sb.append(k).append("=\"").append(v).append('"')
+        nonFirst = true
+      }
+      sb.toString
+    } else scheme
 
   def realm: Option[String] = param(RealmParam)
   def realm(r: String): WWWAuthenticateChallenge = addParam(RealmParam, r)
@@ -65,7 +73,6 @@ object WWWAuthenticateChallenge {
             case Digest.name =>
               Digest
                 .paramsValid(params)
-                .right
                 .map(_ =>
                   WWWAuthenticateChallenge(
                     Digest.name,
