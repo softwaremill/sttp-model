@@ -4,8 +4,20 @@ import sttp.model.internal.ParseUtils
 import sttp.model.internal.Validate.RichEither
 
 case class ContentRange(unit: String, range: Option[(Long, Long)], size: Option[Long]) {
-  override def toString: String =
-    s"$unit ${range.map(r => s"${r._1}-${r._2}").getOrElse("*")}/${size.getOrElse("*")}"
+  override def toString: String = {
+    val sb = new java.lang.StringBuilder()
+    sb.append(unit).append(' ')
+    range match {
+      case x: Some[(Long, Long)] => sb.append(x.value._1).append('-').append(x.value._2)
+      case _                     => sb.append('*')
+    }
+    sb.append('/')
+    size match {
+      case x: Some[Long] => sb.append(x.value)
+      case _             => sb.append('*')
+    }
+    sb.toString
+  }
 }
 
 object ContentRange {
@@ -22,9 +34,13 @@ object ContentRange {
 
   private def processString(unit: String, possibleRange: String, possibleSize: String): Either[String, ContentRange] = {
     val range = possibleRange.split("-") match {
-      case Array("*")        => None
-      case Array(start, end) => ParseUtils.toLongOption(start).zip(ParseUtils.toLongOption(end)).headOption
-      case _                 => None
+      case Array("*") => None
+      case Array(s, e) =>
+        val start = ParseUtils.toLongOption(s)
+        val end = ParseUtils.toLongOption(e)
+        if (start.isDefined && end.isDefined) Some((start.get, end.get))
+        else None
+      case _ => None
     }
     val size = if (possibleSize.equals("*")) None else ParseUtils.toLongOption(possibleSize)
     val contentRange = ContentRange(unit, range, size)

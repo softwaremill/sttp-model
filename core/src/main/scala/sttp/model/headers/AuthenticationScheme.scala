@@ -66,8 +66,8 @@ object AuthenticationScheme {
       val qopValue = params.getOrElse(qop, "")
       val qopValueMatch = qopValues.exists(_.equals(qopValue))
       if (!containsNonce) Left(s"Missing nonce parameter in: $params")
-      else if (!containsOpaque) Left("Missing opaque parameter in: $params")
-      else if (!qopValueMatch) Left("qop value incorrect in: $params")
+      else if (!containsOpaque) Left(s"Missing opaque parameter in: $params")
+      else if (!qopValueMatch) Left(s"qop value incorrect in: $params")
       else Right(())
     }
 

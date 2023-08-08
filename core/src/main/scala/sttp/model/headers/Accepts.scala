@@ -27,68 +27,94 @@ object Accepts {
       charsets: Seq[(String, Float)]
   ): Seq[ContentTypeRange] = {
     (mediaTypes, charsets) match {
-      case (Nil, Nil) => Seq(AnyRange)
+      case (Nil, Nil)            => AnyRange :: Nil
+      case (Nil, (ch, _) :: Nil) => ContentTypeRange(Wildcard, Wildcard, ch) :: Nil
+      case ((mt, _) :: Nil, Nil) => ContentTypeRange(mt.mainType, mt.subType, Wildcard) :: Nil
       case (Nil, chs) =>
         chs.sortBy({ case (_, q) => -q }).map { case (ch, _) => ContentTypeRange(Wildcard, Wildcard, ch) }
       case (mts, Nil) =>
         mts.sortBy({ case (_, q) => -q }).map { case (mt, _) => ContentTypeRange(mt.mainType, mt.subType, Wildcard) }
       case (mts, chs) =>
-        val merged = mts.flatMap { case (mt, mtQ) =>
+        mts.flatMap { case (mt, mtQ) =>
           // if Accept-Charset is defined then any other charset specified in Accept header in not acceptable
           chs.map { case (ch, chQ) => (mt, ch) -> math.min(mtQ, chQ) }
+        } match {
+          case ((mt, ch), _) :: Nil => ContentTypeRange(mt.mainType, mt.subType, ch) :: Nil
+          case merged =>
+            merged.sortBy({ case (_, q) => -q }).map { case ((mt, ch), _) =>
+              ContentTypeRange(mt.mainType, mt.subType, ch)
+            }
         }
-        merged.sortBy({ case (_, q) => -q }).map { case ((mt, ch), _) => ContentTypeRange(mt.mainType, mt.subType, ch) }
     }
   }
 
   private def parseAcceptHeader(headers: Seq[Header]): Either[String, Seq[(MediaType, Float)]] = {
-    extractEntries(headers, HeaderNames.Accept)
-      .map(entry => MediaType.parse(entry).right.flatMap(mt => qValue(mt).right.map(mt -> _)))
-      .partition(_.isLeft) match {
-      case (Nil, mts)  => Right(mts collect { case Right(mtWithQ) => mtWithQ })
-      case (errors, _) => Left(errors collect { case Left(msg) => msg } mkString "\n")
+    val errors = new java.lang.StringBuilder()
+    val mts = List.newBuilder[(MediaType, Float)]
+    extractEntries(headers, HeaderNames.Accept).foreach { entry =>
+      MediaType.parse(entry).flatMap(mt => qValue(mt).map(mt -> _)) match {
+        case Right(mt) =>
+          mts += mt
+        case Left(error) =>
+          if (errors.length != 0) errors.append('\n')
+          else ()
+          errors.append(error)
+      }
     }
+    if (errors.length == 0) Right(mts.result())
+    else Left(errors.toString)
   }
 
-  private def parseAcceptCharsetHeader(headers: Seq[Header]): Either[String, Seq[(String, Float)]] =
-    extractEntries(headers, HeaderNames.AcceptCharset)
-      .map(parseAcceptCharsetEntry)
-      .partition(_.isLeft) match {
-      case (Nil, chs)  => Right(chs collect { case Right(ch) => ch })
-      case (errors, _) => Left(errors collect { case Left(msg) => msg } mkString "\n")
+  private def parseAcceptCharsetHeader(headers: Seq[Header]): Either[String, Seq[(String, Float)]] = {
+    val errors = new java.lang.StringBuilder()
+    val chs = List.newBuilder[(String, Float)]
+    extractEntries(headers, HeaderNames.AcceptCharset).foreach { entry =>
+      parseAcceptCharsetEntry(entry) match {
+        case Right(ch) => chs += ch
+        case Left(error) =>
+          if (errors.length != 0) errors.append('\n')
+          else ()
+          errors.append(error)
+      }
     }
+    if (errors.length == 0) Right(chs.result())
+    else Left(errors.toString)
+  }
 
   private def parseAcceptCharsetEntry(entry: String): Either[String, (String, Float)] = {
     val name = Patterns.Type.matcher(entry)
-    if (!name.lookingAt()) {
-      Left(s"""No charset found for: "$entry"""")
-    } else {
-      Patterns.parseMediaTypeParameters(entry, offset = name.end()) match {
-        case Right(params) =>
-          qValueFrom(params) match {
-            case Right(q)    => Right(name.group(1).toLowerCase -> q)
-            case Left(error) => Left(error)
-          }
-        case Left(error) => Left(error)
-      }
-    }
+    if (name.lookingAt()) {
+      Patterns
+        .parseMediaTypeParameters(entry, offset = name.end())
+        .flatMap(qValueFrom(_).map(name.group(1).toLowerCase -> _))
+    } else Left(s"""No charset found for: "$entry"""")
   }
 
-  private def extractEntries(headers: Seq[Header], name: String): Seq[String] =
-    headers
-      .filter(_.is(name))
-      .flatMap(_.value.split(","))
-      .map(_.replaceAll(Patterns.WhiteSpaces, ""))
+  private def extractEntries(headers: Seq[Header], name: String): Seq[String] = {
+    val entries = List.newBuilder[String]
+    headers.foreach { h =>
+      if (h.is(name)) entries ++= trimInPlace(h.value.split(","))
+    }
+    entries.result()
+  }
+
+  private def trimInPlace(ss: Array[String]): Array[String] = {
+    var i = 0
+    while (i < ss.length) {
+      ss(i) = ss(i).trim
+      i += 1
+    }
+    ss
+  }
 
   private def qValue(mt: MediaType): Either[String, Float] = qValueFrom(mt.otherParameters)
 
   private def qValueFrom(parameters: Map[String, String]): Either[String, Float] =
-    parameters.get("q") collect { case Patterns.QValue(q) => q.toFloat } match {
-      case Some(value) => Right(value)
-      case None =>
-        parameters
-          .get("q")
-          .map(q => Left(s"""q must be numeric value between <0, 1> with up to 3 decimal points, provided "$q""""))
-          .getOrElse(Right(1f))
+    parameters.get("q") match {
+      case None => Right(1f)
+      case Some(q) =>
+        val qValue = Patterns.QValue.matcher(q)
+        if (qValue.matches() && qValue.groupCount() == 1) Right(qValue.group(1).toFloat)
+        else Left(s"""q must be numeric value between <0, 1> with up to 3 decimal points, provided "$q"""")
     }
 }

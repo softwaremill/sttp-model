@@ -47,14 +47,19 @@ object Cookie {
   /** Parse the cookie, represented as a header value (in the format: `[name]=[value]`).
     */
   def parse(s: String): Either[String, List[Cookie]] = {
-    val cs = s.split(";").toList.map { ss =>
-      (ss.split("=", 2).map(_.trim): @unchecked) match {
-        case Array(v1)     => Cookie.safeApply(v1, "")
-        case Array(v1, v2) => Cookie.safeApply(v1, v2)
+    val ss = s.split(";")
+    val cs = List.newBuilder[Cookie]
+    var i = 0
+    while (i < ss.length) {
+      val vs = ss(i).split("=", 2)
+      (if (vs.length == 1) Cookie.safeApply(vs(0).trim, "")
+       else Cookie.safeApply(vs(0).trim, vs(1).trim)) match {
+        case Right(c)    => cs += c
+        case Left(error) => return Left(error)
       }
+      i += 1
     }
-
-    Validate.sequence(cs)
+    Right(cs.result())
   }
 
   def unsafeParse(s: String): List[Cookie] = parse(s).getOrThrow
@@ -87,11 +92,10 @@ case class CookieValueWithMeta(
 object CookieValueWithMeta {
   private val AllowedDirectiveValueCharacters = s"""[^;${Rfc2616.CTL}]*""".r
 
-  private[model] def validateDirectiveValue(directiveName: String, value: String): Option[String] = {
+  private[model] def validateDirectiveValue(directiveName: String, value: String): Option[String] =
     if (AllowedDirectiveValueCharacters.unapplySeq(value).isEmpty) {
       Some(s"Value of directive $directiveName name can contain any characters except ; and control characters")
     } else None
-  }
 
   def unsafeApply(
       value: String,
@@ -116,13 +120,14 @@ object CookieValueWithMeta {
       httpOnly: Boolean = false,
       sameSite: Option[SameSite] = None,
       otherDirectives: Map[String, Option[String]] = Map.empty
-  ): Either[String, CookieValueWithMeta] = {
-    Validate.all(
-      Cookie.validateValue(value),
-      path.flatMap(validateDirectiveValue("path", _)),
-      domain.flatMap(validateDirectiveValue("domain", _))
-    )(apply(value, expires, maxAge, domain, path, secure, httpOnly, sameSite, otherDirectives))
-  }
+  ): Either[String, CookieValueWithMeta] =
+    Cookie
+      .validateValue(value)
+      .orElse(path.flatMap(validateDirectiveValue("path", _)))
+      .orElse(domain.flatMap(validateDirectiveValue("domain", _))) match {
+      case None => Right(apply(value, expires, maxAge, domain, path, secure, httpOnly, sameSite, otherDirectives))
+      case Some(error) => Left(error)
+    }
 }
 
 /** A cookie name-value pair with directives.
@@ -159,21 +164,40 @@ case class CookieWithMeta(
     *   Representation of the cookie as in a header value, in the format: `[name]=[value]; [directive]=[value]; ...`.
     */
   override def toString: String = {
-    val components = List(
-      Some(s"$name=$value"),
-      expires.map(e => s"Expires=${Header.toHttpDateString(e)}"),
-      maxAge.map(a => s"Max-Age=$a"),
-      domain.map(d => s"Domain=$d"),
-      path.map(p => s"Path=$p"),
-      if (secure) Some("Secure") else None,
-      if (httpOnly) Some("HttpOnly") else None,
-      sameSite.map(s => s"SameSite=$s")
-    ) ++ otherDirectives.map {
-      case (k, Some(v)) => Some(s"$k=$v")
-      case (k, None)    => Some(k)
+    val sb = new java.lang.StringBuilder(64)
+    sb.append(name).append('=').append(value)
+    expires match {
+      case x: Some[Instant] => sb.append("; Expires=").append(Header.toHttpDateString(x.value))
+      case _                => ()
     }
-
-    components.flatten.mkString("; ")
+    maxAge match {
+      case x: Some[Long] => sb.append("; Max-Age=").append(x.value)
+      case _             => ()
+    }
+    domain match {
+      case x: Some[String] => sb.append("; Domain=").append(x.value)
+      case _               => ()
+    }
+    path match {
+      case x: Some[String] => sb.append("; Path=").append(x.value)
+      case _               => ()
+    }
+    if (secure) sb.append("; Secure")
+    else ()
+    if (httpOnly) sb.append("; HttpOnly")
+    else ()
+    sameSite match {
+      case x: Some[SameSite] => sb.append("; SameSite=").append(x.value)
+      case _                 => ()
+    }
+    otherDirectives.foreach { case (k, optV) =>
+      sb.append("; ").append(k)
+      optV match {
+        case x: Some[String] => sb.append('=').append(x.value)
+        case _               => ()
+      }
+    }
+    sb.toString
   }
 }
 
@@ -203,18 +227,14 @@ object CookieWithMeta {
       httpOnly: Boolean = false,
       sameSite: Option[SameSite] = None,
       otherDirectives: Map[String, Option[String]] = Map.empty
-  ): Either[String, CookieWithMeta] = {
+  ): Either[String, CookieWithMeta] =
     Cookie.validateName(name) match {
-      case Some(e) => Left(e)
       case None =>
         CookieValueWithMeta
           .safeApply(value, expires, maxAge, domain, path, secure, httpOnly, sameSite, otherDirectives)
-          .right
-          .map { v =>
-            apply(name, v)
-          }
+          .map(v => apply(name, v))
+      case Some(e) => Left(e)
     }
-  }
 
   def apply(
       name: String,
@@ -238,40 +258,39 @@ object CookieWithMeta {
     */
   def parse(s: String): Either[String, CookieWithMeta] = {
     def splitkv(kv: String): (String, Option[String]) =
-      (kv.split("=", 2).map(_.trim): @unchecked) match {
-        case Array(v1)     => (v1, None)
-        case Array(v1, v2) => (v1, Some(v2))
+      (kv.split("=", 2): @unchecked) match {
+        case Array(v1)     => (v1.trim, None)
+        case Array(v1, v2) => (v1.trim, Some(v2.trim))
       }
 
-    val components = s.split(";").map(_.trim)
-    val (first, other) = (components.head, components.tail)
+    val components = s.split(";")
+    val (first, other) = (components.head.trim, components.tail)
     val (name, value) = splitkv(first)
     var result: Either[String, CookieWithMeta] = Right(CookieWithMeta.apply(name, value.getOrElse("")))
-    other.map(splitkv).map(t => (t._1, t._2)).foreach {
+    other.map(splitkv).foreach {
       case (ci"expires", Some(v)) =>
         Header.parseHttpDate(v) match {
-          case Right(expires) => result = result.right.map(_.expires(Some(expires)))
+          case Right(expires) => result = result.map(_.expires(Some(expires)))
           case Left(_) => result = Left(s"Expires cookie directive is not a valid RFC1123 or RFC850 datetime: $v")
         }
       case (ci"max-age", Some(v)) =>
         Try(v.toLong) match {
-          case Success(maxAge) => result = result.right.map(_.maxAge(Some(maxAge)))
+          case Success(maxAge) => result = result.map(_.maxAge(Some(maxAge)))
           case Failure(_)      => result = Left(s"Max-Age cookie directive is not a number: $v")
         }
-      case (ci"domain", v)   => result = result.right.map(_.domain(Some(v.getOrElse(""))))
-      case (ci"path", v)     => result = result.right.map(_.path(Some(v.getOrElse(""))))
-      case (ci"secure", _)   => result = result.right.map(_.secure(true))
-      case (ci"httponly", _) => result = result.right.map(_.httpOnly(true))
+      case (ci"domain", v)   => result = result.map(_.domain(Some(v.getOrElse(""))))
+      case (ci"path", v)     => result = result.map(_.path(Some(v.getOrElse(""))))
+      case (ci"secure", _)   => result = result.map(_.secure(true))
+      case (ci"httponly", _) => result = result.map(_.httpOnly(true))
       case (ci"samesite", Some(v)) =>
         v.trim match {
-          case ci"lax"    => result = result.right.map(_.sameSite(Some(SameSite.Lax)))
-          case ci"strict" => result = result.right.map(_.sameSite(Some(SameSite.Strict)))
-          case ci"none"   => result = result.right.map(_.sameSite(Some(SameSite.None)))
+          case ci"lax"    => result = result.map(_.sameSite(Some(SameSite.Lax)))
+          case ci"strict" => result = result.map(_.sameSite(Some(SameSite.Strict)))
+          case ci"none"   => result = result.map(_.sameSite(Some(SameSite.None)))
           case _          => result = Left(s"Same-Site cookie directive is not an allowed value: $v")
         }
-      case (k, v) => result = result.right.map(_.otherDirective((k, v)))
+      case (k, v) => result = result.map(_.otherDirective((k, v)))
     }
-
     result
   }
 
