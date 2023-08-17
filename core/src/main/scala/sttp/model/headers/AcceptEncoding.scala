@@ -6,7 +6,6 @@ import sttp.model.internal.Validate.RichEither
 import scala.annotation.tailrec
 
 case class AcceptEncoding(encodings: List[WeightedEncoding]) {
-
   override def toString: String = encodings.map(_.toString).mkString(",")
 }
 
@@ -22,7 +21,7 @@ object AcceptEncoding {
     else {
       @tailrec
       def go(es: List[WeightedEncoding], validated: List[WeightedEncoding]): Either[String, AcceptEncoding] = es match {
-        case Nil => Right(AcceptEncoding(validated))
+        case Nil => Right(AcceptEncoding(validated.reverse))
         case head :: tail =>
           validate(head, str) match {
             case Left(s)  => Left(s)
@@ -35,7 +34,7 @@ object AcceptEncoding {
   }
 
   private def processString(str: String): List[WeightedEncoding] =
-    str.trim.split(",").map(x => parsSingleEncoding(x.trim)).reverse.toList // TODO: do we really need `.reverse` here?
+    str.trim.split(",").map(x => parsSingleEncoding(x.trim)).toList
 
   private def parsSingleEncoding(s: String): WeightedEncoding =
     s.split(";") match {
