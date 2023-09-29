@@ -47,7 +47,7 @@ val commonJsSettings = commonSettings ++ Seq(
       }
   },
   libraryDependencies ++= Seq(
-    "org.scala-js" %%% "scalajs-dom" % "2.7.0",
+    "org.scala-js" %%% "scalajs-dom" % "2.8.0",
     "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
   )
 )
