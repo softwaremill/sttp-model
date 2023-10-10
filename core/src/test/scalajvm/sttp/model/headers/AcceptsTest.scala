@@ -3,7 +3,7 @@ package sttp.model.headers
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
-import sttp.model.ContentTypeRange.AnyRange
+import sttp.model.ContentTypeRange.{AnyRange, emptyParameters}
 import sttp.model.{ContentTypeRange, Header, HeaderNames}
 
 import scala.collection.immutable.Seq
@@ -12,57 +12,57 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
 
   private val acceptsCases = Table(
     ("Accept", "Accept-Charset", "result"),
-    ("application/json", "*", Seq(ContentTypeRange("application", "json", "*"))),
-    ("application/json;q=.8", "*", Seq(ContentTypeRange("application", "json", "*"))),
-    ("application/json;q=.88", "*", Seq(ContentTypeRange("application", "json", "*"))),
-    ("application/json;q=.888", "*", Seq(ContentTypeRange("application", "json", "*"))),
-    ("application/json", "utf-8", Seq(ContentTypeRange("application", "json", "utf-8"))),
-    ("application/json", "utf-8;a=1;b=2;c=3", Seq(ContentTypeRange("application", "json", "utf-8"))),
+    ("application/json", "*", Seq(ContentTypeRange("application", "json", "*", emptyParameters))),
+    ("application/json;q=.8", "*", Seq(ContentTypeRange("application", "json", "*", Map("q" -> ".8")))),
+    ("application/json;q=.88", "*", Seq(ContentTypeRange("application", "json", "*", Map("q" -> ".88")))),
+    ("application/json;q=.888", "*", Seq(ContentTypeRange("application", "json", "*", Map("q" -> ".888")))),
+    ("application/json", "utf-8", Seq(ContentTypeRange("application", "json", "utf-8", emptyParameters))),
+    ("application/json", "utf-8;a=1;b=2;c=3", Seq(ContentTypeRange("application", "json", "utf-8", emptyParameters))),
     (
       "text/plain",
       "utf-8, iso-8559-1",
-      Seq(ContentTypeRange("text", "plain", "utf-8"), ContentTypeRange("text", "plain", "iso-8559-1"))
+      Seq(ContentTypeRange("text", "plain", "utf-8", emptyParameters), ContentTypeRange("text", "plain", "iso-8559-1", emptyParameters))
     ),
     (
       "text/plain",
       "utf-8;q=0.99, iso-8559-1",
-      Seq(ContentTypeRange("text", "plain", "iso-8559-1"), ContentTypeRange("text", "plain", "utf-8"))
+      Seq(ContentTypeRange("text", "plain", "iso-8559-1", emptyParameters), ContentTypeRange("text", "plain", "utf-8", emptyParameters))
     ),
     (
       "text/plain",
       "utf-8;q=0.55, iso-8559-1;q=0.66, utf-16;q=0.77",
       Seq(
-        ContentTypeRange("text", "plain", "utf-16"),
-        ContentTypeRange("text", "plain", "iso-8559-1"),
-        ContentTypeRange("text", "plain", "utf-8")
+        ContentTypeRange("text", "plain", "utf-16", emptyParameters),
+        ContentTypeRange("text", "plain", "iso-8559-1", emptyParameters),
+        ContentTypeRange("text", "plain", "utf-8", emptyParameters)
       )
     ),
     (
       "text/csv, text/plain",
       "utf-8, utf-16;q=0.5",
       Seq(
-        ContentTypeRange("text", "csv", "utf-8"),
-        ContentTypeRange("text", "plain", "utf-8"),
-        ContentTypeRange("text", "csv", "utf-16"),
-        ContentTypeRange("text", "plain", "utf-16")
+        ContentTypeRange("text", "csv", "utf-8", emptyParameters),
+        ContentTypeRange("text", "plain", "utf-8", emptyParameters),
+        ContentTypeRange("text", "csv", "utf-16", emptyParameters),
+        ContentTypeRange("text", "plain", "utf-16", emptyParameters)
       )
     ),
     (
       "text/csv, text/plain;q=0.1",
       "utf-8, utf-16;q=0.5",
       Seq(
-        ContentTypeRange("text", "csv", "utf-8"),
-        ContentTypeRange("text", "csv", "utf-16"),
-        ContentTypeRange("text", "plain", "utf-8"),
-        ContentTypeRange("text", "plain", "utf-16")
+        ContentTypeRange("text", "csv", "utf-8", emptyParameters),
+        ContentTypeRange("text", "csv", "utf-16", emptyParameters),
+        ContentTypeRange("text", "plain", "utf-8", Map("q" -> "0.1")),
+        ContentTypeRange("text", "plain", "utf-16", Map("q" -> "0.1"))
       )
     ),
     (
       "text/*, application/json;q=0.9",
       "utf-8",
       Seq(
-        ContentTypeRange("text", "*", "utf-8"),
-        ContentTypeRange("application", "json", "utf-8")
+        ContentTypeRange("text", "*", "utf-8", emptyParameters),
+        ContentTypeRange("application", "json", "utf-8", Map("q" -> "0.9"))
       )
     ),
     (
@@ -73,17 +73,17 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
     (
       "text/plain;q=1.000",
       "*",
-      Seq(ContentTypeRange("text", "plain", "*"))
+      Seq(ContentTypeRange("text", "plain", "*", Map("q" -> "1.000")))
     ),
     (
       "text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2",
       "*",
       Seq(
-        ContentTypeRange("text", "html", "*"),
-        ContentTypeRange("image", "gif", "*"),
-        ContentTypeRange("image", "jpeg", "*"),
-        ContentTypeRange("*", "*", "*"),
-        ContentTypeRange("*", "*", "*")
+        ContentTypeRange("text", "html", "*", emptyParameters),
+        ContentTypeRange("image", "gif", "*", emptyParameters),
+        ContentTypeRange("image", "jpeg", "*", emptyParameters),
+        ContentTypeRange("*", "*", "*", Map("q" -> ".2")),
+        ContentTypeRange("*", "*", "*", Map("q" -> ".2"))
       )
     )
   )
@@ -109,15 +109,15 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
 
   it should "parse when only Accept-Charset specified" in {
     Accepts.unsafeParse(otherHeaders ++ Seq(Header(HeaderNames.AcceptCharset, "utf-16;q=0.5, utf-8"))) shouldBe Seq(
-      ContentTypeRange("*", "*", "utf-8"),
-      ContentTypeRange("*", "*", "utf-16")
+      ContentTypeRange("*", "*", "utf-8", emptyParameters),
+      ContentTypeRange("*", "*", "utf-16", emptyParameters)
     )
   }
 
   it should "parse when only Accept specified" in {
     Accepts.unsafeParse(otherHeaders ++ Seq(Header(HeaderNames.Accept, "text/csv;q=0.1, text/plain"))) shouldBe Seq(
-      ContentTypeRange("text", "plain", "*"),
-      ContentTypeRange("text", "csv", "*")
+      ContentTypeRange("text", "plain", "*", emptyParameters),
+      ContentTypeRange("text", "csv", "*", Map("q" -> "0.1"))
     )
   }
 

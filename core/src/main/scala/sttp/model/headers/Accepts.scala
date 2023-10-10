@@ -28,21 +28,25 @@ object Accepts {
   ): Seq[ContentTypeRange] = {
     (mediaTypes, charsets) match {
       case (Nil, Nil)            => AnyRange :: Nil
-      case (Nil, (ch, _) :: Nil) => ContentTypeRange(Wildcard, Wildcard, ch) :: Nil
-      case ((mt, _) :: Nil, Nil) => ContentTypeRange(mt.mainType, mt.subType, Wildcard) :: Nil
+      case (Nil, (ch, _) :: Nil) => ContentTypeRange(Wildcard, Wildcard, ch, emptyParameters) :: Nil
+      case ((mt, _) :: Nil, Nil) => ContentTypeRange(mt.mainType, mt.subType, Wildcard, mt.otherParameters) :: Nil
       case (Nil, chs) =>
-        chs.sortBy({ case (_, q) => -q }).map { case (ch, _) => ContentTypeRange(Wildcard, Wildcard, ch) }
+        chs.sortBy({ case (_, q) => -q }).map { case (ch, _) =>
+          ContentTypeRange(Wildcard, Wildcard, ch, emptyParameters)
+        }
       case (mts, Nil) =>
-        mts.sortBy({ case (_, q) => -q }).map { case (mt, _) => ContentTypeRange(mt.mainType, mt.subType, Wildcard) }
+        mts.sortBy({ case (_, q) => -q }).map { case (mt, _) =>
+          ContentTypeRange(mt.mainType, mt.subType, Wildcard, mt.otherParameters)
+        }
       case (mts, chs) =>
         mts.flatMap { case (mt, mtQ) =>
           // if Accept-Charset is defined then any other charset specified in Accept header in not acceptable
           chs.map { case (ch, chQ) => (mt, ch) -> math.min(mtQ, chQ) }
         } match {
-          case ((mt, ch), _) :: Nil => ContentTypeRange(mt.mainType, mt.subType, ch) :: Nil
+          case ((mt, ch), _) :: Nil => ContentTypeRange(mt.mainType, mt.subType, ch, mt.otherParameters) :: Nil
           case merged =>
             merged.sortBy({ case (_, q) => -q }).map { case ((mt, ch), _) =>
-              ContentTypeRange(mt.mainType, mt.subType, ch)
+              ContentTypeRange(mt.mainType, mt.subType, ch, mt.otherParameters)
             }
         }
     }
