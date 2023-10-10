@@ -1,8 +1,23 @@
 package sttp.model
 
-import sttp.model.ContentTypeRange.Wildcard
+import sttp.model.ContentTypeRange.{Wildcard, emptyParameters}
 
 case class ContentTypeRange(mainType: String, subType: String, charset: String, otherParameters: Map[String, String]) {
+  // required for binary compatibility
+  def this(mainType: String, subType: String, charset: String) = this(mainType, subType, charset, emptyParameters)
+
+  def copy(
+      mainType: String = this.mainType,
+      subType: String = this.subType,
+      charset: String = this.charset,
+      otherParameters: Map[String, String] = emptyParameters
+  ): ContentTypeRange =
+    ContentTypeRange(mainType, subType, charset, otherParameters)
+
+  // required for binary compatibility
+  def copy(mainType: String, subType: String, charset: String): ContentTypeRange =
+    ContentTypeRange(mainType, subType, charset, this.otherParameters)
+
   def anyCharset: ContentTypeRange = copy(charset = Wildcard)
 
   def anySubType: ContentTypeRange = copy(subType = Wildcard)
@@ -29,6 +44,10 @@ case class ContentTypeRange(mainType: String, subType: String, charset: String, 
 }
 
 object ContentTypeRange {
+  // required for binary compatibility
+  def apply(mainType: String, subType: String, charset: String): ContentTypeRange =
+    new ContentTypeRange(mainType, subType, charset, emptyParameters)
+
   val Wildcard = "*"
   val emptyParameters: Map[String, String] = Map.empty
 
