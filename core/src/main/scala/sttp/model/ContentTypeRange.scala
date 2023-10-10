@@ -10,7 +10,7 @@ case class ContentTypeRange(mainType: String, subType: String, charset: String, 
       mainType: String = this.mainType,
       subType: String = this.subType,
       charset: String = this.charset,
-      otherParameters: Map[String, String] = emptyParameters
+      otherParameters: Map[String, String] = this.otherParameters
   ): ContentTypeRange =
     ContentTypeRange(mainType, subType, charset, otherParameters)
 
