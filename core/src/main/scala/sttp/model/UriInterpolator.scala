@@ -5,6 +5,7 @@ import sttp.model.internal.{ArrayView, FastCharSet, FastCharMap, ParseUtils, Rfc
 import scala.annotation.tailrec
 import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 trait UriInterpolator {
   implicit class UriContext(val sc: StringContext) {
@@ -42,6 +43,10 @@ trait UriInterpolator {
 object UriInterpolator {
 
   private val startingUri = Uri(None, None, Uri.EmptyPath, Nil, None)
+
+  // Dynamic class tag resultion uses `synchronized` and can block threads.
+  // Cache the class tag locally to avoid it.
+  private implicit val tokenClassTag: ClassTag[Token] = ClassTag(classOf[Token])
 
   private val builders = List(
     UriBuilder.Scheme,
