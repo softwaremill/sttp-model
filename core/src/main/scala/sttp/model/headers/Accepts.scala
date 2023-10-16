@@ -28,11 +28,11 @@ object Accepts {
   ): Seq[ContentTypeRange] = {
     (mediaTypes, charsets) match {
       case (Nil, Nil)            => AnyRange :: Nil
-      case (Nil, (ch, _) :: Nil) => ContentTypeRange(Wildcard, Wildcard, ch, emptyParameters) :: Nil
+      case (Nil, (ch, _) :: Nil) => ContentTypeRange(Wildcard, Wildcard, ch, EmptyParameters) :: Nil
       case ((mt, _) :: Nil, Nil) => ContentTypeRange(mt.mainType, mt.subType, Wildcard, mt.otherParameters) :: Nil
       case (Nil, chs) =>
         chs.sortBy({ case (_, q) => -q }).map { case (ch, _) =>
-          ContentTypeRange(Wildcard, Wildcard, ch, emptyParameters)
+          ContentTypeRange(Wildcard, Wildcard, ch, EmptyParameters)
         }
       case (mts, Nil) =>
         mts.sortBy({ case (_, q) => -q }).map { case (mt, _) =>

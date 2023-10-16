@@ -1,10 +1,10 @@
 package sttp.model
 
-import sttp.model.ContentTypeRange.{Wildcard, emptyParameters}
+import sttp.model.ContentTypeRange.{Wildcard, EmptyParameters}
 
 case class ContentTypeRange(mainType: String, subType: String, charset: String, otherParameters: Map[String, String]) {
   // required for binary compatibility
-  def this(mainType: String, subType: String, charset: String) = this(mainType, subType, charset, emptyParameters)
+  def this(mainType: String, subType: String, charset: String) = this(mainType, subType, charset, EmptyParameters)
 
   def copy(
       mainType: String = this.mainType,
@@ -46,22 +46,22 @@ case class ContentTypeRange(mainType: String, subType: String, charset: String, 
 object ContentTypeRange {
   // required for binary compatibility
   def apply(mainType: String, subType: String, charset: String): ContentTypeRange =
-    new ContentTypeRange(mainType, subType, charset, emptyParameters)
+    new ContentTypeRange(mainType, subType, charset, EmptyParameters)
 
   val Wildcard = "*"
-  val emptyParameters: Map[String, String] = Map.empty
+  val EmptyParameters: Map[String, String] = Map.empty
 
-  val AnyRange: ContentTypeRange = ContentTypeRange(Wildcard, Wildcard, Wildcard, emptyParameters)
-  val AnyApplication: ContentTypeRange = ContentTypeRange("application", Wildcard, Wildcard, emptyParameters)
-  val AnyAudio: ContentTypeRange = ContentTypeRange("audio", Wildcard, Wildcard, emptyParameters)
-  val AnyImage: ContentTypeRange = ContentTypeRange("image", Wildcard, Wildcard, emptyParameters)
-  val AnyMessage: ContentTypeRange = ContentTypeRange("message", Wildcard, Wildcard, emptyParameters)
-  val AnyMultipart: ContentTypeRange = ContentTypeRange("multipart", Wildcard, Wildcard, emptyParameters)
-  val AnyText: ContentTypeRange = ContentTypeRange("text", Wildcard, Wildcard, emptyParameters)
-  val AnyVideo: ContentTypeRange = ContentTypeRange("video", Wildcard, Wildcard, emptyParameters)
-  val AnyFont: ContentTypeRange = ContentTypeRange("font", Wildcard, Wildcard, emptyParameters)
-  val AnyExample: ContentTypeRange = ContentTypeRange("example", Wildcard, Wildcard, emptyParameters)
-  val AnyModel: ContentTypeRange = ContentTypeRange("model", Wildcard, Wildcard, emptyParameters)
+  val AnyRange: ContentTypeRange = ContentTypeRange(Wildcard, Wildcard, Wildcard, EmptyParameters)
+  val AnyApplication: ContentTypeRange = ContentTypeRange("application", Wildcard, Wildcard, EmptyParameters)
+  val AnyAudio: ContentTypeRange = ContentTypeRange("audio", Wildcard, Wildcard, EmptyParameters)
+  val AnyImage: ContentTypeRange = ContentTypeRange("image", Wildcard, Wildcard, EmptyParameters)
+  val AnyMessage: ContentTypeRange = ContentTypeRange("message", Wildcard, Wildcard, EmptyParameters)
+  val AnyMultipart: ContentTypeRange = ContentTypeRange("multipart", Wildcard, Wildcard, EmptyParameters)
+  val AnyText: ContentTypeRange = ContentTypeRange("text", Wildcard, Wildcard, EmptyParameters)
+  val AnyVideo: ContentTypeRange = ContentTypeRange("video", Wildcard, Wildcard, EmptyParameters)
+  val AnyFont: ContentTypeRange = ContentTypeRange("font", Wildcard, Wildcard, EmptyParameters)
+  val AnyExample: ContentTypeRange = ContentTypeRange("example", Wildcard, Wildcard, EmptyParameters)
+  val AnyModel: ContentTypeRange = ContentTypeRange("model", Wildcard, Wildcard, EmptyParameters)
 
   def exact(mt: MediaType): ContentTypeRange =
     ContentTypeRange(mt.mainType, mt.subType, mt.charset.getOrElse(Wildcard), mt.otherParameters)
