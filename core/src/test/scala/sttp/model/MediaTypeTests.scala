@@ -3,7 +3,7 @@ package sttp.model
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
-import sttp.model.ContentTypeRange.AnyRange
+import sttp.model.ContentTypeRange.{AnyRange, EmptyParameters}
 
 import scala.collection.immutable.Seq
 
@@ -62,19 +62,24 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
   private val matchCases = Table(
     ("media type", "content type range", "matches"),
     (MediaType.ApplicationJson, AnyRange, true),
-    (MediaType("*", "html"), ContentTypeRange("*", "json", "*"), true),
-    (MediaType("text", "*"), ContentTypeRange("text", "*", "*"), true),
-    (MediaType.ApplicationJson, ContentTypeRange("application", "*", "*"), true),
-    (MediaType.ApplicationJson, ContentTypeRange("application", "json", "*"), true),
+    (MediaType("*", "html"), ContentTypeRange("*", "json", "*", EmptyParameters), true),
+    (MediaType("text", "*"), ContentTypeRange("text", "*", "*", EmptyParameters), true),
+    (MediaType.ApplicationJson, ContentTypeRange("application", "*", "*", EmptyParameters), true),
+    (MediaType.ApplicationJson, ContentTypeRange("application", "json", "*", EmptyParameters), true),
+    (MediaType.ApplicationJson, ContentTypeRange("application", "json", "*", Map("a" -> "1")), true),
+    (MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "truE")), ContentTypeRange("application", "json", "*", Map("A" -> "TrUe")), true),
+    (MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "1")), ContentTypeRange("application", "json", "*", Map("A" -> "1", "b" -> "2")), true),
+    (MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "1", "b" -> "2")), ContentTypeRange("application", "json", "*", Map("A" -> "1")), false),
+    (MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "1")), ContentTypeRange("application", "json", "*", Map("b" -> "2")), false),
     //
-    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("*", "*", "utf-16"), false),
-    (MediaType("*", "html").charset("utf-8"), ContentTypeRange("*", "json", "utf-16"), false),
-    (MediaType("text", "*").charset("utf-8"), ContentTypeRange("text", "*", "utf-16"), false),
-    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "*", "utf-16"), false),
-    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "json", "utf-16"), false),
+    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("*", "*", "utf-16", EmptyParameters), false),
+    (MediaType("*", "html").charset("utf-8"), ContentTypeRange("*", "json", "utf-16", EmptyParameters), false),
+    (MediaType("text", "*").charset("utf-8"), ContentTypeRange("text", "*", "utf-16", EmptyParameters), false),
+    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "*", "utf-16", EmptyParameters), false),
+    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "json", "utf-16", EmptyParameters), false),
     //
-    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "json", "*"), true),
-    (MediaType.ApplicationOctetStream, ContentTypeRange("*", "*", "utf-8"), true)
+    (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "json", "*", EmptyParameters), true),
+    (MediaType.ApplicationOctetStream, ContentTypeRange("*", "*", "utf-8", EmptyParameters), true)
   )
 
   forAll(matchCases) { (mt, range, matches) =>
@@ -86,48 +91,48 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
   private val bestMatchCases = Table(
     ("ranges", "best match"),
     (Seq(AnyRange), Some(MediaType.ApplicationJson.charset("utf-8"))),
-    (Seq(ContentTypeRange("application", "json", "*")), Some(MediaType.ApplicationJson.charset("utf-8"))),
-    (Seq(ContentTypeRange("application", "xml", "*")), Some(MediaType.ApplicationXml.charset("utf-8"))),
+    (Seq(ContentTypeRange("application", "json", "*", EmptyParameters)), Some(MediaType.ApplicationJson.charset("utf-8"))),
+    (Seq(ContentTypeRange("application", "xml", "*", EmptyParameters)), Some(MediaType.ApplicationXml.charset("utf-8"))),
     (
       Seq(
-        ContentTypeRange("application", "xml", "*"),
-        ContentTypeRange("application", "json", "*")
+        ContentTypeRange("application", "xml", "*", EmptyParameters),
+        ContentTypeRange("application", "json", "*", EmptyParameters)
       ),
       Some(MediaType.ApplicationXml.charset("utf-8"))
     ),
     (
       Seq(
-        ContentTypeRange("application", "json", "*"),
-        ContentTypeRange("application", "xml", "*")
+        ContentTypeRange("application", "json", "*", EmptyParameters),
+        ContentTypeRange("application", "xml", "*", EmptyParameters)
       ),
       Some(MediaType.ApplicationJson.charset("utf-8"))
     ),
     (
       Seq(
-        ContentTypeRange("application", "xml", "*"),
-        ContentTypeRange("application", "json", "*"),
-        ContentTypeRange("text", "html", "*")
+        ContentTypeRange("application", "xml", "*", EmptyParameters),
+        ContentTypeRange("application", "json", "*", EmptyParameters),
+        ContentTypeRange("text", "html", "*", EmptyParameters)
       ),
       Some(MediaType.ApplicationXml.charset("utf-8"))
     ),
     (
-      Seq(ContentTypeRange("text", "*", "*"), ContentTypeRange("application", "*", "*")),
+      Seq(ContentTypeRange("text", "*", "*", EmptyParameters), ContentTypeRange("application", "*", "*", EmptyParameters)),
       Some(MediaType.TextHtml.charset("utf-8"))
     ),
     (
-      Seq(ContentTypeRange("*", "*", "iso-8859-1")),
+      Seq(ContentTypeRange("*", "*", "iso-8859-1", EmptyParameters)),
       Some(MediaType.TextHtml.charset("iso-8859-1"))
     ),
     (
-      Seq(ContentTypeRange("text", "html", "iso-8859-1"), ContentTypeRange("text", "html", "utf-8")),
+      Seq(ContentTypeRange("text", "html", "iso-8859-1", EmptyParameters), ContentTypeRange("text", "html", "utf-8", EmptyParameters)),
       Some(MediaType.TextHtml.charset("iso-8859-1"))
     ),
     (
-      Seq(ContentTypeRange("text", "csv", "*")),
+      Seq(ContentTypeRange("text", "csv", "*", EmptyParameters)),
       None
     ),
     (
-      Seq(ContentTypeRange("text", "html", "utf-16")),
+      Seq(ContentTypeRange("text", "html", "utf-16", EmptyParameters)),
       None
     )
   )

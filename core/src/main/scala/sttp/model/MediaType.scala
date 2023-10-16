@@ -1,9 +1,9 @@
 package sttp.model
 
 import sttp.model.ContentTypeRange.Wildcard
+import sttp.model.internal.Patterns
 import sttp.model.internal.Rfc2616._
 import sttp.model.internal.Validate._
-import sttp.model.internal.Patterns
 
 import java.nio.charset.Charset
 
@@ -14,26 +14,43 @@ case class MediaType(
     otherParameters: Map[String, String] = Map.empty
 ) {
   def charset(c: Charset): MediaType = charset(c.name())
+
   def charset(c: String): MediaType = copy(charset = Some(c))
+
   def noCharset: MediaType = copy(charset = None)
 
   // #2994 from tapir: when the media type doesn't define a charset, it shouldn't be taken into account in the matching logic
   def matches(range: ContentTypeRange): Boolean =
     range != null &&
-      (range.mainType == Wildcard ||
-        mainType.equalsIgnoreCase(range.mainType) &&
+      (range.mainType == Wildcard || mainType.equalsIgnoreCase(range.mainType) &&
         (range.subType == Wildcard || subType.equalsIgnoreCase(range.subType))) &&
-      (range.charset == Wildcard || charset.forall(_.equalsIgnoreCase(range.charset)))
+      (range.charset == Wildcard || charset.forall(_.equalsIgnoreCase(range.charset))) &&
+      (otherParameters.isEmpty || {
+        // `otherParameters` needs to be fully contained within `range.otherParameters` (ignoring case)
+        val rangeOtherParametersLowerCased = range.otherParameters.map(x => (x._1.toLowerCase, x._2.toLowerCase))
+        otherParametersLowerCased.forall { case (k, v) =>
+          rangeOtherParametersLowerCased.get(k).contains(v)
+        }
+      })
 
   def isApplication: Boolean = mainType.equalsIgnoreCase("application")
+
   def isAudio: Boolean = mainType.equalsIgnoreCase("audio")
+
   def isImage: Boolean = mainType.equalsIgnoreCase("image")
+
   def isMessage: Boolean = mainType.equalsIgnoreCase("message")
+
   def isMultipart: Boolean = mainType.equalsIgnoreCase("multipart")
+
   def isText: Boolean = mainType.equalsIgnoreCase("text")
+
   def isVideo: Boolean = mainType.equalsIgnoreCase("video")
+
   def isFont: Boolean = mainType.equalsIgnoreCase("font")
+
   def isExample: Boolean = mainType.equalsIgnoreCase("example")
+
   def isModel: Boolean = mainType.equalsIgnoreCase("model")
 
   override def toString: String = {
@@ -61,6 +78,9 @@ case class MediaType(
 
   def equalsIgnoreParameters(that: MediaType): Boolean =
     mainType.equalsIgnoreCase(that.mainType) && subType.equalsIgnoreCase(that.subType)
+
+  private val otherParametersLowerCased: Map[String, String] =
+    otherParameters.map(x => (x._1.toLowerCase, x._2.toLowerCase))
 }
 
 /** For a description of the behavior of `apply`, `parse`, `safeApply` and `unsafeApply` methods, see [[sttp.model]]. */
