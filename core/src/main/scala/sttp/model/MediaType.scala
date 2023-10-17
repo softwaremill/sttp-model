@@ -25,8 +25,8 @@ case class MediaType(
       (range.mainType == Wildcard || mainType.equalsIgnoreCase(range.mainType) &&
         (range.subType == Wildcard || subType.equalsIgnoreCase(range.subType))) &&
       (range.charset == Wildcard || charset.forall(_.equalsIgnoreCase(range.charset))) &&
-      (otherParameters.isEmpty || {
-        // `otherParameters` needs to be fully contained within `range.otherParameters` (ignoring case)
+      (range.mainType == Wildcard || range.subType == Wildcard || otherParameters.isEmpty || {
+        // `otherParameters` needs to be fully contained within `range.otherParameters` (ignoring case), but only if the main/sub type aren't wildcards
         val rangeOtherParametersLowerCased = range.otherParameters.map(x => (x._1.toLowerCase, x._2.toLowerCase))
         otherParametersLowerCased.forall { case (k, v) =>
           rangeOtherParametersLowerCased.get(k).contains(v)
