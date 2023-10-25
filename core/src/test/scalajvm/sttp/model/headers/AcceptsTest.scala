@@ -21,12 +21,18 @@ class AcceptsTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChec
     (
       "text/plain",
       "utf-8, iso-8559-1",
-      Seq(ContentTypeRange("text", "plain", "utf-8", EmptyParameters), ContentTypeRange("text", "plain", "iso-8559-1", EmptyParameters))
+      Seq(
+        ContentTypeRange("text", "plain", "utf-8", EmptyParameters),
+        ContentTypeRange("text", "plain", "iso-8559-1", EmptyParameters)
+      )
     ),
     (
       "text/plain",
       "utf-8;q=0.99, iso-8559-1",
-      Seq(ContentTypeRange("text", "plain", "iso-8559-1", EmptyParameters), ContentTypeRange("text", "plain", "utf-8", EmptyParameters))
+      Seq(
+        ContentTypeRange("text", "plain", "iso-8559-1", EmptyParameters),
+        ContentTypeRange("text", "plain", "utf-8", EmptyParameters)
+      )
     ),
     (
       "text/plain",
