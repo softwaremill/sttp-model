@@ -34,7 +34,7 @@ case class MediaType(
       (range.charset == Wildcard || charset.forall(_.equalsIgnoreCase(range.charset))) &&
       // #309: when the main or sub types are wildcard, not taking into account the parameters
       // #3253 from tapir: checking the parameters only if they are present in the range
-      (range.mainType == Wildcard || range.subType == Wildcard || range.otherParameters.isEmpty || {
+      (range.mainType == Wildcard || range.subType == Wildcard || range.otherParameters.isEmpty || (range.otherParameters.size == 1 && range.otherParameters.contains("q")) || {
         // the q value needs to be ignored - it has a different purpose
         val rangeParametersWithoutQ = range.otherParameters - "q"
         // `otherParameters` needs to be fully equal to `range.otherParameters` (ignoring case)
