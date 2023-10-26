@@ -19,18 +19,27 @@ case class MediaType(
 
   def noCharset: MediaType = copy(charset = None)
 
-  // #2994 from tapir: when the media type doesn't define a charset, it shouldn't be taken into account in the matching logic
+  /** Checks if this media type matches the given content type range:
+    *
+    *   - the main and sub types must match, unless they are wildcards in the range
+    *   - if it is defined in the media type, the charset must match, unless it's a wildcard
+    *   - if the range defines any other parameters, other than the `q` value, they must be present in the media type
+    *     (ignoring case)
+    */
   def matches(range: ContentTypeRange): Boolean =
     range != null &&
       (range.mainType == Wildcard || mainType.equalsIgnoreCase(range.mainType) &&
         (range.subType == Wildcard || subType.equalsIgnoreCase(range.subType))) &&
+      // #2994 from tapir: when the media type doesn't define a charset, it shouldn't be taken into account in the matching logic
       (range.charset == Wildcard || charset.forall(_.equalsIgnoreCase(range.charset))) &&
-      (range.mainType == Wildcard || range.subType == Wildcard || otherParameters.isEmpty || {
-        // `otherParameters` needs to be fully contained within `range.otherParameters` (ignoring case), but only if the main/sub type aren't wildcards
-        val rangeOtherParametersLowerCased = range.otherParameters.map(x => (x._1.toLowerCase, x._2.toLowerCase))
-        otherParametersLowerCased.forall { case (k, v) =>
-          rangeOtherParametersLowerCased.get(k).contains(v)
-        }
+      // #309: when the main or sub types are wildcard, not taking into account the parameters
+      // #3253 from tapir: checking the parameters only if they are present in the range
+      (range.mainType == Wildcard || range.subType == Wildcard || range.otherParameters.isEmpty || {
+        // the q value needs to be ignored - it has a different purpose
+        val rangeParametersWithoutQ = range.otherParameters - "q"
+        // `otherParameters` needs to be fully equal to `range.otherParameters` (ignoring case)
+        val rangeOtherParametersLowerCased = rangeParametersWithoutQ.map(x => (x._1.toLowerCase, x._2.toLowerCase))
+        rangeOtherParametersLowerCased == otherParametersLowerCased
       })
 
   def isApplication: Boolean = mainType.equalsIgnoreCase("application")

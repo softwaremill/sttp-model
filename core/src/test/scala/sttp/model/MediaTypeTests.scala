@@ -61,32 +61,49 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
 
   private val matchCases = Table(
     ("media type", "content type range", "matches"),
+    // simple matching
     (MediaType.ApplicationJson, AnyRange, true),
     (MediaType("*", "html"), ContentTypeRange("*", "json", "*", EmptyParameters), true),
     (MediaType("text", "*"), ContentTypeRange("text", "*", "*", EmptyParameters), true),
     (MediaType.ApplicationJson, ContentTypeRange("application", "*", "*", EmptyParameters), true),
     (MediaType.ApplicationJson, ContentTypeRange("application", "json", "*", EmptyParameters), true),
-    (MediaType.ApplicationJson, ContentTypeRange("application", "json", "*", Map("a" -> "1")), true),
-    (
-      MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "truE")),
-      ContentTypeRange("application", "json", "*", Map("A" -> "TrUe")),
-      true
-    ),
+    // the q parameter in the range should be ignored
+    (MediaType.ApplicationJson, ContentTypeRange("application", "json", "*", Map("q" -> "0.5")), true),
+    // range defines parameters, but they are not equal (ignoring case)
+    (MediaType.ApplicationJson, ContentTypeRange("application", "json", "*", Map("a" -> "1")), false),
     (
       MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "1")),
       ContentTypeRange("application", "json", "*", Map("A" -> "1", "b" -> "2")),
-      true
+      false
     ),
     (
       MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "1", "b" -> "2")),
       ContentTypeRange("application", "json", "*", Map("A" -> "1")),
       false
     ),
+    // range defines parameters, and they match (ignoring case and q)
+    (
+      MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "truE")),
+      ContentTypeRange("application", "json", "*", Map("A" -> "TrUe")),
+      true
+    ),
+    (
+      MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "1", "b" -> "2")),
+      ContentTypeRange("application", "json", "*", Map("B" -> "2", "A" -> "1")),
+      true
+    ),
+    (
+      MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "1")),
+      ContentTypeRange("application", "json", "*", Map("A" -> "1", "q" -> "0.5")),
+      true
+    ),
+    // range defined parameters, names match, but different values
     (
       MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "1")),
       ContentTypeRange("application", "json", "*", Map("b" -> "2")),
       false
     ),
+    // wildcard ranges don't check parameters
     (
       MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "1")),
       AnyRange,
@@ -97,7 +114,7 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
       ContentTypeRange("application", "*", "*", EmptyParameters),
       true
     ),
-    //
+    // charset tests
     (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("*", "*", "utf-16", EmptyParameters), false),
     (MediaType("*", "html").charset("utf-8"), ContentTypeRange("*", "json", "utf-16", EmptyParameters), false),
     (MediaType("text", "*").charset("utf-8"), ContentTypeRange("text", "*", "utf-16", EmptyParameters), false),
@@ -111,7 +128,6 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
       ContentTypeRange("application", "json", "utf-16", EmptyParameters),
       false
     ),
-    //
     (MediaType.ApplicationJson.charset("utf-8"), ContentTypeRange("application", "json", "*", EmptyParameters), true),
     (MediaType.ApplicationOctetStream, ContentTypeRange("*", "*", "utf-8", EmptyParameters), true)
   )
