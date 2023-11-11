@@ -69,7 +69,11 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
     (MediaType.ApplicationJson, ContentTypeRange("application", "json", "*", EmptyParameters), true),
     // the q parameter in the range should be ignored
     (MediaType.ApplicationJson, ContentTypeRange("application", "json", "*", Map("q" -> "0.5")), true),
-    (MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "1")), ContentTypeRange("application", "json", "*", Map("q" -> "0.5")), true),
+    (
+      MediaType.ApplicationJson.copy(otherParameters = Map("a" -> "1")),
+      ContentTypeRange("application", "json", "*", Map("q" -> "0.5")),
+      true
+    ),
     // range defines parameters, but they are not equal (ignoring case)
     (MediaType.ApplicationJson, ContentTypeRange("application", "json", "*", Map("a" -> "1")), false),
     (
