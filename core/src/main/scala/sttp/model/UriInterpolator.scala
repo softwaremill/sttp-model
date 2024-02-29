@@ -398,8 +398,7 @@ object UriInterpolator {
       def doSplit(s: String): Unit = {
         split(s, sep, escape) match {
           case Left(x) =>
-            acc += StringToken(x)
-            ()
+            acc += StringToken(x)()
           case Right((before, separator, after)) =>
             acc += StringToken(before)
             acc += StringToken(separator.toString())
@@ -467,8 +466,7 @@ object UriInterpolator {
         split(t, SchemeEnd) match {
           case Left(_) => (u, t)
           case Right((schemeTokens, _, otherTokens)) =>
-            val scheme = tokensToString(schemeTokens)
-            (u.scheme(scheme), otherTokens)
+            val scheme = tokensToString(schemeTokens)(u.scheme(scheme), otherTokens)
         }
       }
     }
