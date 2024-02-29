@@ -63,7 +63,7 @@ case class MediaType(
 
   def isModel: Boolean = mainType.equalsIgnoreCase("model")
 
-  override def toString: String = {
+  override lazy val toString: String = {
     val sb = new java.lang.StringBuilder(32) // "application/json; charset=utf-8".length == 31 ;)
     sb.append(mainType).append('/').append(subType)
     charset match {
