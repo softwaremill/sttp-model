@@ -59,6 +59,12 @@ class MediaTypeTests extends AnyFlatSpec with Matchers with TableDrivenPropertyC
     an[IllegalArgumentException] shouldBe thrownBy(MediaType.unsafeApply("te=xt", "plain"))
   }
 
+  it should "have a regular toString" in {
+    val mt = MediaType.ApplicationGzip
+    mt.toString shouldBe "application/gzip"
+    mt.toString() shouldBe "application/gzip"
+  }
+
   private val matchCases = Table(
     ("media type", "content type range", "matches"),
     // simple matching

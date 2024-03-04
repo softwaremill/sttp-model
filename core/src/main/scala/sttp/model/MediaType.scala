@@ -63,7 +63,9 @@ case class MediaType(
 
   def isModel: Boolean = mainType.equalsIgnoreCase("model")
 
-  override lazy val toString: String = {
+  // Cache 'toString' given that it's called in the hot path 
+  // of request processing to generate headers.
+  private lazy val toStringCache: String = {
     val sb = new java.lang.StringBuilder(32) // "application/json; charset=utf-8".length == 31 ;)
     sb.append(mainType).append('/').append(subType)
     charset match {
@@ -77,6 +79,7 @@ case class MediaType(
     sb.toString
   }
 
+  override def toString() = toStringCache
   override lazy val hashCode: Int = toString.toLowerCase.hashCode
 
   override def equals(that: Any): Boolean =
