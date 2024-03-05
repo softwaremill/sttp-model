@@ -731,6 +731,16 @@ object UriInterpolator {
             case Singleton(ExpressionToken(s: Array[_])) =>
               b ++= s.flatMap(anyToStringOpt)
               doToSeq(tailTs)
+            case valueTs if(valueTs.size == 1) =>
+              // This case is equivalent to the next one but optimizes for the 
+              // frequent scenario where the sequence contains a single element.
+              valueTs.get(0) match {
+                case StringToken(s)     => b += decode(s, decodePlusAsSpace)
+                case ExpressionToken(e) => anyToStringOpt(e).foreach(b += _)
+                case EqInQuery          => b += "="
+                case _                  => 
+              }
+              doToSeq(tailTs)
             case valueTs =>
               val mbStr = valueTs mkStringOpt {
                 case StringToken(s)     => Some(decode(s, decodePlusAsSpace))
