@@ -19,6 +19,8 @@ import sttp.model.internal.Validate._
 
 import java.time.{Instant, ZoneId}
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import java.time.temporal.ChronoField
 import java.util.Locale
 import scala.util.{Failure, Success, Try}
 import scala.util.hashing.MurmurHash3
@@ -141,8 +143,12 @@ object Header {
 
   //
 
-  private lazy val Rfc850DatetimePattern = "dd-MMM-yyyy HH:mm:ss zzz"
-  private lazy val Rfc850DatetimeFormat = DateTimeFormatter.ofPattern(Rfc850DatetimePattern, Locale.US)
+  private lazy val Rfc850DatetimeFormat =
+    DateTimeFormatterBuilder()
+      .appendPattern("dd-MMM-")
+      .appendValueReduced(ChronoField.YEAR, 2, 4, 1970)
+      .appendPattern(" HH:mm:ss zzz")
+      .toFormatter(Locale.US);
 
   val Rfc850WeekDays = Set("mon", "tue", "wed", "thu", "fri", "sat", "sun") // not private b/c of bin-compat
   private val Rfc1123WeekDays: Array[String] = Array("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
