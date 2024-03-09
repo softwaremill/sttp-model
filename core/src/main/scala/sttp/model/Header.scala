@@ -144,7 +144,7 @@ object Header {
   //
 
   private lazy val Rfc850DatetimeFormat =
-    DateTimeFormatterBuilder()
+    new DateTimeFormatterBuilder()
       .appendPattern("dd-MMM-")
       .appendValueReduced(ChronoField.YEAR, 2, 4, 1970)
       .appendPattern(" HH:mm:ss zzz")
