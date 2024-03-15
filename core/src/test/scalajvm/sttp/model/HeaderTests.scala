@@ -59,4 +59,28 @@ class HeaderTests extends AnyFlatSpec with Matchers {
   "rfc1123-date1" should "be parsed correctly" in {
     Header.parseHttpDate(rfc1123DatetimeFormatted) shouldBe Right(rfc1123DatetimeToBeChecked)
   }
+
+  "rfc850-2-digit-year-after-70" should "be parsed as 19xx" in {
+    Header.parseHttpDate("Sun, 08-Feb-70 02:03:04 GMT") shouldBe Right(
+      Instant.from {
+        ZonedDateTime.of(LocalDateTime.of(1970, 2, 8, 2, 3, 4), ZoneId.of("Z"))
+      }
+    )
+  }
+
+  "rfc850-2-digit-year-before-69" should "be parsed as 20xx" in {
+    Header.parseHttpDate("Fri, 08-Feb-69 02:03:04 GMT") shouldBe Right(
+      Instant.from {
+        ZonedDateTime.of(LocalDateTime.of(2069, 2, 8, 2, 3, 4), ZoneId.of("Z"))
+      }
+    )
+  }
+
+  "rfc850-4-digit-year" should "be parsed correctly" in {
+    Header.parseHttpDate("Wed, 08-Feb-2023 02:03:04 GMT") shouldBe Right(
+      Instant.from {
+        ZonedDateTime.of(LocalDateTime.of(2023, 2, 8, 2, 3, 4), ZoneId.of("Z"))
+      }
+    )
+  }
 }
