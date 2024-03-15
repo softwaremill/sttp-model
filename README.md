@@ -73,6 +73,11 @@ If you have a question, or hit a problem, feel free to ask on our [gitter channe
 
 Or, if you encounter a bug, something is unclear in the code or documentation, don’t hesitate and open an issue on GitHub.
 
+### Testing Scala.js
+
+Scala.js tests require [chromedriver](https://chromedriver.chromium.org/). It is downloaded automatically
+by the `test` task. Make sure to run it before running tests in any other way, e.g. using `testOnly`.
+
 ### Building & testing the scala-native version
 
 By default, sttp-native will **not** be included in the aggregate build of the root project. To include it, define the `STTP_NATIVE` environmental variable before running sbt, e.g.:
