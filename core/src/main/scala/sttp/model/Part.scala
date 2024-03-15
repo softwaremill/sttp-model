@@ -41,10 +41,8 @@ case class Part[+T](
   // enumerate all variants so that overload resolution works correctly
   override def header(h: String): Option[String] = super.header(h)
 
-  def contentDispositionHeaderValue: String = {
-    def encode(s: String): String = new String(s.getBytes("utf-8"), "iso-8859-1")
-    "form-data; " + dispositionParamsSeq.map { case (k, v) => s"""$k="${encode(v)}"""" }.mkString("; ")
-  }
+  def contentDispositionHeaderValue: String =
+    "form-data; " + dispositionParamsSeq.map { case (k, v) => s"""$k="$v"""" }.mkString("; ")
 
   def dispositionParams: Map[String, String] = dispositionParamsSeq.toMap
 
