@@ -13,4 +13,9 @@ class PartTest extends AnyFlatSpec with Matchers {
     val part = Part("name", 42).fileName("fó1.txt")
     part.contentDispositionHeaderValue shouldBe """form-data; name="name"; filename="fó1.txt""""
   }
+
+  it should "escape double quote and backslash in filename" in {
+    val part = Part("name", 42).fileName("f\"\\1.txt")
+    part.contentDispositionHeaderValue shouldBe """form-data; name="name"; filename="f\"\\1.txt""""
+  }
 }
