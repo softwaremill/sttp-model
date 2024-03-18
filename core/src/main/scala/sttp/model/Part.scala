@@ -41,9 +41,30 @@ case class Part[+T](
   // enumerate all variants so that overload resolution works correctly
   override def header(h: String): Option[String] = super.header(h)
 
+  /**
+   * Returns the value of the `Content-Disposition` header, which should be used when sending this part in a
+   * multipart request.
+   *
+   * The syntax is specified by [[https://datatracker.ietf.org/doc/html/rfc6266#section-4.1 RFC6266 section 4.1]].
+   * For safety and simplicity, disposition parameter values are represented as `quoted-string`, defined in
+   * [[https://datatracker.ietf.org/doc/html/rfc9110#section-5.6.4 RFC9110 section 5.6.4]].
+   *
+   * `quoted-string` allows usage of visible ASCII characters (`%x21-7E`), except for `"` and `\`, which must be escaped
+   * with a backslash. Additionally, space and horizontal tab is allowed, as well as octets `0x80-FF` (`obs-data`).
+   * In practice this means that - while not explicitly allowed - non-ASCII UTF-8 characters are valid
+   * according to this grammar. Additionally, [[https://datatracker.ietf.org/doc/html/rfc6532#section-3.2 RFC6532]]
+   * makes it more explicit that non-ASCII UTF-8 is allowed. Control characters are not allowed.
+   *
+   * This method makes sure that `"` and `\` are escaped, while leaving possible rejection of forbidden characters to
+   * lower layers (`sttp` backends).
+   */
   def contentDispositionHeaderValue: String = {
-    def encode(s: String): String = new String(s.getBytes("utf-8"), "iso-8859-1")
-    "form-data; " + dispositionParamsSeq.map { case (k, v) => s"""$k="${encode(v)}"""" }.mkString("; ")
+    def escape(str: String): String = str.flatMap {
+      case '"' => "\\\""
+      case '\\' => "\\\\"
+      case c => c.toString
+    }
+    "form-data; " + dispositionParamsSeq.map { case (k, v) => s"""$k="${escape(v)}"""" }.mkString("; ")
   }
 
   def dispositionParams: Map[String, String] = dispositionParamsSeq.toMap
