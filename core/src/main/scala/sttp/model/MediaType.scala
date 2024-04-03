@@ -63,7 +63,7 @@ case class MediaType(
 
   def isModel: Boolean = mainType.equalsIgnoreCase("model")
 
-  // Cache 'toString' given that it's called in the hot path 
+  // Cache 'toString' given that it's called in the hot path
   // of request processing to generate headers.
   private lazy val toStringCache: String = {
     val sb = new java.lang.StringBuilder(32) // "application/json; charset=utf-8".length == 31 ;)
