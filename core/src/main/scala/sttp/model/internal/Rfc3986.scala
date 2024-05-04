@@ -3,7 +3,7 @@ package sttp.model.internal
 object Rfc3986 {
   val AlphaNum: Set[Char] = (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9')).toSet
   val Unreserved: Set[Char] = AlphaNum ++ Set('-', '.', '_', '~')
-  val SubDelims: Set[Char] = Set('!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=')
+  val SubDelims: Set[Char] = Set('!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=', '|')
   val PChar: Set[Char] = Unreserved ++ SubDelims ++ Set(':', '@')
 
   val Scheme: Set[Char] = AlphaNum ++ Set('+', '-', '.')
