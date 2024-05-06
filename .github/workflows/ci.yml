@@ -132,3 +132,17 @@ jobs:
           find $HOME/.ivy2/cache                       -name "*-LM-SNAPSHOT*"       -delete || true
           find $HOME/.cache/coursier/v1                -name "ivydata-*.properties" -delete || true
           find $HOME/.sbt                              -name "*.lock"               -delete || true
+
+  auto-merge:
+    name: Auto merge
+    # only for PRs by softwaremill-ci
+    if: github.event.pull_request.user.login == 'softwaremill-ci'
+    needs: [ ci, mima, label ]
+    runs-on: ubuntu-22.04
+    steps:
+      - id: automerge
+        name: automerge
+        uses: "pascalgn/automerge-action@v0.15.6"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          MERGE_METHOD: "squash"
