@@ -20,7 +20,7 @@ Add the following dependency:
 "com.softwaremill.sttp.model" %% "core" % "1.7.10"
 ```
 
-sttp model is available for Scala 2.11, 2.12, 2.13, 3.0.0, Scala.JS and Scala Native.
+sttp model is available for 2.12, 2.13, 3.0.0, Scala.JS and Scala Native.
 
 ## Project content
 
