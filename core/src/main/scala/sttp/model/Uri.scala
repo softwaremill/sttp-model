@@ -709,7 +709,7 @@ object Uri extends UriInterpolator {
 
   object QuerySegmentEncoding {
 
-    /** Encodes all reserved characters using [[java.net.URLEncoder.encode()]]. */
+    /** Encodes all reserved characters using [[sttp.model.internal.Rfc3986]] with characters from [[sttp.model.internal.Rfc3986.Unreserved]].  */
     val All: Encoding = UriCompatibility.encodeQuery(_, "UTF-8")
 
     /** Encodes only the `&` and `=` reserved characters, which are usually used to separate query parameter names and
