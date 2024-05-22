@@ -20,5 +20,7 @@ private[sttp] object UriCompatibility {
     Rfc3986.encode(Rfc3986.Host)(noSpecialChars)
   }
 
-  def encodeQuery(s: String, enc: String): String = URLEncoder.encode(s, enc)
+  def encodeQuery(s: String, enc: String): String = Rfc3986.encode(s, enc, Rfc3986.Unreserved)
+
+  def encodeBodyPart(s: String, enc: String): String = Rfc3986.encode(s, enc, Rfc3986.Unreserved)
 }

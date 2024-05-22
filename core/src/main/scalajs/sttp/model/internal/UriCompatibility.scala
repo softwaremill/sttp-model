@@ -11,4 +11,6 @@ private[sttp] object UriCompatibility {
   }
 
   def encodeQuery(s: String, enc: String): String = URIUtils.encodeURIComponent(s)
+
+  def encodeBodyPart(s: String, enc: String): String = URIUtils.encodeURIComponent(s)
 }
