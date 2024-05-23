@@ -24,9 +24,17 @@ object Rfc3986 {
   def encode(allowedCharacters: Set[Char], spaceAsPlus: Boolean = false, encodePlus: Boolean = false)(
       s: String
   ): String =
-    encode(s, "utf-8", allowedCharacters, spaceAsPlus, encodePlus)
+    encode(s, "UTF-8", allowedCharacters, spaceAsPlus, encodePlus)
 
 
+  /** Encode string using encoding, leave allowedCharacters as they are
+   * @param s
+   *   String to be encoded
+   * @param enc
+   *   Encoding to be used
+   * @param allowedCharacters
+   *   Characters to be not to be encoded
+   */
   def encode(s: String, enc: String, allowedCharacters: Set[Char]): String =
     encode(s, enc, allowedCharacters, spaceAsPlus = false, encodePlus = false)
 
