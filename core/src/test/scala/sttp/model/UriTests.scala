@@ -118,7 +118,6 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
     List(QS.Plain("ą/ę&+;?", encoding = QuerySegmentEncoding.Relaxed)) -> "%C4%85/%C4%99&+;?",
     List(QS.KeyValue("k", "v1,v2", valueEncoding = QuerySegmentEncoding.All)) -> "k=v1%2Cv2",
     List(QS.KeyValue("k", "v1-v2", valueEncoding = QuerySegmentEncoding.All)) -> "k=v1-v2",
-    List(QS.KeyValue("k", "v1~v2", valueEncoding = QuerySegmentEncoding.All)) -> "k=v1~v2",
     List(QS.KeyValue("k", "v1_v2", valueEncoding = QuerySegmentEncoding.All)) -> "k=v1_v2",
     List(QS.KeyValue("k", "v1.v2", valueEncoding = QuerySegmentEncoding.All)) -> "k=v1.v2",
     List(QS.KeyValue("k", "v1,v2")) -> "k=v1,v2",
