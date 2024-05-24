@@ -52,7 +52,10 @@ object Rfc3986 {
   ): String = {
     val sb = new StringBuilder()
     // based on https://gist.github.com/teigen/5865923
-    for (b <- s.getBytes(enc)) {
+    val bytes: Array[Byte] = s.getBytes(enc)
+    var i = 0
+    while (i < bytes.length) {
+      val b: Byte = bytes(i)
       val c = (b & 0xff).toChar
       if (c == '+' && encodePlus) sb.append("%2B") // #48
       else if (allowedCharacters(c)) sb.append(c)
@@ -61,6 +64,7 @@ object Rfc3986 {
         sb.append("%")
         sb.append(Rfc3986Compatibility.formatByte(b))
       }
+      i += 1
     }
     sb.toString
   }
