@@ -19,4 +19,6 @@ private[sttp] object UriCompatibility {
   }
 
   def encodeQuery(s: String, enc: String): String = URLEncoder.encode(s, enc)
+
+  def encodeBodyPart(s: String, enc: String): String = Rfc3986.encode(s, enc, Rfc3986.Unreserved)
 }

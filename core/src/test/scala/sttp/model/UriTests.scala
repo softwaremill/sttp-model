@@ -1,13 +1,14 @@
 package sttp.model
 
-import java.net.URI
-
-import Uri._
 import org.scalatest.TryValues
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import sttp.model.Uri._
+import sttp.model.internal.UriCompatibility
 
-class UriTests extends AnyFunSuite with Matchers with TryValues {
+import java.net.URI
+
+class UriTests extends AnyFunSuite with Matchers with TryValues with UriTestsExtension {
 
   val HS = HostSegment
   val PS = PathSegment
@@ -116,6 +117,9 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
     List(QS.KeyValue("k1&", "v1&", valueEncoding = QuerySegmentEncoding.Relaxed)) -> "k1%26=v1&",
     List(QS.Plain("ą/ę&+;?", encoding = QuerySegmentEncoding.Relaxed)) -> "%C4%85/%C4%99&+;?",
     List(QS.KeyValue("k", "v1,v2", valueEncoding = QuerySegmentEncoding.All)) -> "k=v1%2Cv2",
+    List(QS.KeyValue("k", "v1-v2", valueEncoding = QuerySegmentEncoding.All)) -> "k=v1-v2",
+    List(QS.KeyValue("k", "v1_v2", valueEncoding = QuerySegmentEncoding.All)) -> "k=v1_v2",
+    List(QS.KeyValue("k", "v1.v2", valueEncoding = QuerySegmentEncoding.All)) -> "k=v1.v2",
     List(QS.KeyValue("k", "v1,v2")) -> "k=v1,v2",
     List(QS.KeyValue("k", "+1234")) -> "k=%2B1234",
     List(QS.KeyValue("k", "[]")) -> "k=%5B%5D",
@@ -127,6 +131,22 @@ class UriTests extends AnyFunSuite with Matchers with TryValues {
   } {
     test(s"$segments should serialize to$expected") {
       testUri.copy(querySegments = segments).toString should endWith(expected)
+    }
+  }
+
+  private val bodyPartEncodingTestData = List(
+    "v1,v2" -> "v1%2Cv2",
+    "v1-v2" -> "v1-v2",
+    "v1~v2" -> "v1~v2",
+    "v1_v2" -> "v1_v2",
+    "v1.v2" -> "v1.v2",
+  )
+
+  for {
+    (segments, expected) <- bodyPartEncodingTestData
+  } {
+    test(s"$segments should serialize to$expected") {
+      UriCompatibility.encodeBodyPart(segments, "utf-8") should endWith(expected)
     }
   }
 

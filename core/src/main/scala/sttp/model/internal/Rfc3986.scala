@@ -15,17 +15,47 @@ object Rfc3986 {
 
   val QueryWithBrackets: Set[Char] = Query ++ Set('[', ']')
 
-  /** @param spaceAsPlus
+  /** Encode string using UTF-8
+    * @param spaceAsPlus
     *   In the query, space is encoded as a `+`. In other contexts, it should be %-encoded as `%20`.
     * @param encodePlus
     *   Should `+` (which is the encoded form of space in the query) be %-encoded.
     */
   def encode(allowedCharacters: Set[Char], spaceAsPlus: Boolean = false, encodePlus: Boolean = false)(
       s: String
+  ): String =
+    encode(s, "UTF-8", allowedCharacters, spaceAsPlus, encodePlus)
+
+
+  /** Encode string using encoding, leave allowedCharacters as they are
+   * @param s
+   *   String to be encoded
+   * @param enc
+   *   Encoding to be used
+   * @param allowedCharacters
+   *   Characters to be not to be encoded
+   */
+  def encode(s: String, enc: String, allowedCharacters: Set[Char]): String =
+    encode(s, enc, allowedCharacters, spaceAsPlus = false, encodePlus = false)
+
+  /** @param spaceAsPlus
+    *   In the query, space is encoded as a `+`. In other contexts, it should be %-encoded as `%20`.
+    * @param encodePlus
+    *   Should `+` (which is the encoded form of space in the query) be %-encoded.
+    */
+  private def encode(
+      s: String,
+      enc: String,
+      allowedCharacters: Set[Char],
+      spaceAsPlus: Boolean,
+      encodePlus: Boolean
   ): String = {
     val sb = new StringBuilder()
     // based on https://gist.github.com/teigen/5865923
-    for (b <- s.getBytes("UTF-8")) {
+    val bytes: Array[Byte] = s.getBytes(enc)
+    var i = 0
+    while (i < bytes.length) {
+      val b: Byte = bytes(i)
       val c = (b & 0xff).toChar
       if (c == '+' && encodePlus) sb.append("%2B") // #48
       else if (allowedCharacters(c)) sb.append(c)
@@ -34,6 +64,7 @@ object Rfc3986 {
         sb.append("%")
         sb.append(Rfc3986Compatibility.formatByte(b))
       }
+      i += 1
     }
     sb.toString
   }
