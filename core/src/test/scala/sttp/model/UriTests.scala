@@ -8,7 +8,7 @@ import sttp.model.internal.UriCompatibility
 
 import java.net.URI
 
-class UriTests extends AnyFunSuite with Matchers with TryValues {
+class UriTests extends AnyFunSuite with Matchers with TryValues with UriTestsExtension {
 
   val HS = HostSegment
   val PS = PathSegment

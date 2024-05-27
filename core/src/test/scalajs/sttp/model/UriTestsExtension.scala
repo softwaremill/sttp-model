@@ -5,18 +5,14 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import sttp.model.Uri._
 
-class UriTestsHelper extends AnyFunSuite with Matchers with TryValues {
+trait UriTestsExtension extends AnyFunSuite with Matchers with TryValues { this: UriTests =>
 
-  val QS = QuerySegment
-
-  val testUri = Uri.unsafeApply("http", None, "example.com", None, Nil, Nil, None)
-
-  val querySegmentsTestData = List(
+  private val tildeEncodingTest = List(
     List(QS.KeyValue("k", "v1~v2", valueEncoding = QuerySegmentEncoding.All)) -> "k=v1~v2"
   )
 
   for {
-    (segments, expected) <- querySegmentsTestData
+    (segments, expected) <- tildeEncodingTest
   } {
     test(s"$segments should serialize to$expected") {
       testUri.copy(querySegments = segments).toString should endWith(expected)
