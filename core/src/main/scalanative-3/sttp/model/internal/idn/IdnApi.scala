@@ -5,7 +5,7 @@ import scala.scalanative.unsafe.{CString, Ptr, Zone, fromCString, sizeof, toCStr
 
 private[model] object IdnApi {
   def toAscii(input: String): String =
-    Zone { 
+    Zone {
       val output: Ptr[CString] = malloc(sizeof[CString]).asInstanceOf[Ptr[CString]]
       val rc = CIdn.toAscii(toCString(input), output, 0)
       if (rc != 0) {

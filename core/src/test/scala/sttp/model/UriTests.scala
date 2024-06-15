@@ -139,7 +139,7 @@ class UriTests extends AnyFunSuite with Matchers with TryValues with UriTestsExt
     "v1-v2" -> "v1-v2",
     "v1~v2" -> "v1~v2",
     "v1_v2" -> "v1_v2",
-    "v1.v2" -> "v1.v2",
+    "v1.v2" -> "v1.v2"
   )
 
   for {
