@@ -48,7 +48,7 @@ object WWWAuthenticateChallenge {
         if (AuthenticationScheme.supportedNames.exists(possibleParams.contains))
           Left(s"Multiple challenges in single header not supported but found in: $str")
         else {
-          val params = creteParamsMap(possibleParams.trim)
+          val params = createParamsMap(possibleParams.trim)
           x.trim match {
             case Basic.name =>
               if (params.size > Basic.maxParametersCount)
@@ -93,7 +93,7 @@ object WWWAuthenticateChallenge {
     }
   }
 
-  private def creteParamsMap(possibleParams: String): Map[String, String] =
+  private def createParamsMap(possibleParams: String): Map[String, String] =
     possibleParams
       .split("\",")
       .map(s => {
