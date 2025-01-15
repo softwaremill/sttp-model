@@ -17,6 +17,8 @@ project/plugins/project/
 .worksheet
 
 .idea*
+.vscode
+.scala-build
 
 .keys*
 
