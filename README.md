@@ -1,16 +1,17 @@
 ![sttp-model](https://github.com/softwaremill/sttp-model/raw/master/banner.png)
 
-[![Join the chat at https://gitter.im/softwaremill/sttp](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/softwaremill/sttp)
+[![Ideas, suggestions, problems, questions](https://img.shields.io/badge/Discourse-ask%20question-blue)](https://softwaremill.community/c/sttp-client)
 [![CI](https://github.com/softwaremill/sttp-model/workflows/CI/badge.svg)](https://github.com/softwaremill/sttp-model/actions?query=workflow%3ACI+branch%3Amaster)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.softwaremill.sttp.model/core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.softwaremill.sttp.model/core_2.13)
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/softwaremill/sttp-model)
 
 sttp is a family of Scala HTTP-related projects, and currently includes:
 
 * [sttp client](https://github.com/softwaremill/sttp): The Scala HTTP client you always wanted!
-* [sttp tapir](https://github.com/softwaremill/tapir): Typed API descRiptions
-* sttp model: this project. Simple Scala HTTP model. Used by sttp client & sttp tapir
+* [sttp tapir](https://github.com/softwaremill/tapir): rapid development of self-documenting APIs
+* sttp model: this project; simple HTTP model classes (used by client & tapir)
+* [sttp shared](https://github.com/softwaremill/sttp-shared): shared web socket, FP abstractions, capabilities and streaming code.
+* [sttp apispec](https://github.com/softwaremill/sttp-apispec): OpenAPI, AsyncAPI and JSON Schema models.
+* [sttp openai](https://github.com/softwaremill/sttp-openai): Scala client wrapper for OpenAI and OpenAI-compatible APIs. Use the power of ChatGPT inside your code!
 
 ## Quickstart with sbt
 
@@ -20,7 +21,7 @@ Add the following dependency:
 "com.softwaremill.sttp.model" %% "core" % "1.7.11"
 ```
 
-sttp model is available for 2.12, 2.13, 3.0.0, Scala.JS and Scala Native.
+sttp model is available for 2.12, 2.13, 3, Scala.JS and Scala Native.
 
 ## Project content
 
@@ -69,7 +70,7 @@ The docs for sttp client contain documentation for the model classes: [overview]
 
 ## Contributing
 
-If you have a question, or hit a problem, feel free to ask on our [gitter channel](https://gitter.im/softwaremill/sttp-model)!
+If you have a question, or hit a problem, feel free to ask on our [discourse forum](https://softwaremill.community/c/sttp-client)!
 
 Or, if you encounter a bug, something is unclear in the code or documentation, don’t hesitate and open an issue on GitHub.
 
@@ -98,4 +99,4 @@ We offer commercial support for sttp and related technologies, as well as develo
 
 ## Copyright
 
-Copyright (C) 2019-2021 SoftwareMill [https://softwaremill.com](https://softwaremill.com).
+Copyright (C) 2019-2025 SoftwareMill [https://softwaremill.com](https://softwaremill.com).
