@@ -32,7 +32,7 @@ import scala.collection.mutable
   * Instances can be created using the uri interpolator: `uri"..."` (see [[UriInterpolator]]), or the factory methods on
   * the [[Uri]] companion object.
   *
-  * The `apply`/`safeApply`/`unsafeApply` methods create absolute URIs and require a host. The `relative` methods
+  * The `apply` /`safeApply`/`unsafeApply` methods create absolute URIs and require a host. The `relative` methods
   * creates a relative URI, given path/query/fragment components.
   *
   * @param querySegments
