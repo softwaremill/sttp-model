@@ -7,9 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  call-workflow-scala-steward:
+  scala-steward:
     uses: softwaremill/github-actions-workflows/.github/workflows/scala-steward.yml@main
-    with:
-      java-version: '11'
     secrets:
       repo-github-token: ${{secrets.REPO_GITHUB_TOKEN}}
