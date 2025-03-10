@@ -46,6 +46,7 @@ Available model classes include:
    * `Range`
    * `ContentRange`
    * `WWWAuthenticateChallenge`
+   * `Forwarded`
 
 Most classes contain both serialisation & parsing functionality, following these conventions:
 
