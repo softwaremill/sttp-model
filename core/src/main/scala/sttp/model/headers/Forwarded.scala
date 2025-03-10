@@ -2,7 +2,7 @@ package sttp.model.headers
 
 import sttp.model.internal.Validate
 
-// Forwarded: by=<identifier>;for=<identifier>;host=<host>;proto=<http|https>
+/** @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Forwarded */
 case class Forwarded(by: Option[String], `for`: Option[String], host: Option[String], proto: Option[String]) {
 
   /** Serialize a single [[Forwarded]] header to a string
@@ -22,20 +22,12 @@ case class Forwarded(by: Option[String], `for`: Option[String], host: Option[Str
 
 object Forwarded {
 
-  /** Parses a list of Forwarded headers. Each header can contain multiple Forwarded values.
-    *
-    * @see
-    *   https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Forwarded
-    */
+  /** Parses a list of Forwarded headers. Each header can contain multiple Forwarded values. */
   def parse(headerValues: List[String]): Either[String, List[Forwarded]] = {
     Validate.sequence(headerValues.map(parse)).map(_.flatten)
   }
 
-  /** Parses a single Forwarded header, which can contain multiple Forwarded values.
-    *
-    * @see
-    *   https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Forwarded
-    */
+  /** Parses a single Forwarded header, which can contain multiple Forwarded values. */
   def parse(headerValue: String): Either[String, List[Forwarded]] = {
     def parseSingle(headerValue: String): Either[String, Forwarded] = {
       val parts = headerValue.split(";").map(_.trim).toList
