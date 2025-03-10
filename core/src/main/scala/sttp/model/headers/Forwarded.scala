@@ -8,7 +8,7 @@ case class Forwarded(by: Option[String], `for`: Option[String], host: Option[Str
   /** Serialize a single [[Forwarded]] header to a string
     *
     * @see
-    *   [[Forwarded#toString]] for a multi-header variant
+    *   [[Forwarded.toString]] for a multi-header variant
     */
   override def toString: String = {
     val sb = new java.lang.StringBuilder()
