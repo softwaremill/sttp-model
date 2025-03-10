@@ -12,10 +12,11 @@ case class Forwarded(by: Option[String], `for`: Option[String], host: Option[Str
     */
   override def toString: String = {
     val sb = new java.lang.StringBuilder()
-    by.foreach(v => sb.append("by=").append(v).append(";"))
-    `for`.foreach(v => sb.append("for=").append(v).append(";"))
-    host.foreach(v => sb.append("host=").append(v).append(";"))
-    proto.foreach(v => sb.append("proto=").append(v).append(";"))
+    var separator = ""
+    by.foreach { v => sb.append("by=").append(v); separator = ";" }
+    `for`.foreach { v => sb.append(separator).append("for=").append(v); separator = ";" }
+    host.foreach { v => sb.append(separator).append("host=").append(v); separator = ";" }
+    proto.foreach { v => sb.append(separator).append("proto=").append(v) }
     sb.toString
   }
 }
@@ -33,7 +34,7 @@ object Forwarded {
       val parts = headerValue.split(";").map(_.trim).toList
       val kvPairs = parts.map { part =>
         part.split("=").map(_.trim).toList match {
-          case key :: value :: Nil => Right(key -> value)
+          case key :: value :: Nil => Right(key.toLowerCase -> value)
           case _                   => Left(s"Invalid part: $part")
         }
       }
@@ -53,5 +54,5 @@ object Forwarded {
   }
 
   /** Serialize a list of [[Forwarded]] headers to a single string. Each header will be separated by a comma. */
-  def toString(headers: List[Forwarded]): String = headers.map(_.toString).mkString(", ")
+  def toString(headers: List[Forwarded]): String = headers.map(_.toString).mkString(",")
 }
