@@ -279,7 +279,29 @@ case class Uri(
   def fragmentSegmentEncoding(encoding: Encoding): Uri =
     copy(fragmentSegment = fragmentSegment.map(f => f.encoding(encoding)))
 
-  override def toString: String = {
+  //
+
+  /** Serializes the scheme to a string, without a trailing `:`. Might be an empty string, if no scheme is defined. */
+  def schemeToString: String = scheme.map(s => encode(Rfc3986.Scheme)(s)).getOrElse("")
+
+  /** Serializes the path to a string, encoding the segments. A leading `/` is added if the path absolute. Might be an
+    * empty string, if the path is relative and empty.
+    */
+  def pathToString: String = {
+    val pathPrefixS = pathSegments match {
+      case _ if authority.isEmpty && scheme.isDefined => ""
+      case Uri.EmptyPath                              => ""
+      case Uri.AbsolutePath(_)                        => "/"
+      case Uri.RelativePath(_)                        => ""
+    }
+    val pathS = pathSegments.segments.map(_.encoded).mkString("/")
+    pathPrefixS + pathS
+  }
+
+  /** Serializes the query to a string, encoding the segments. The leading `?` is not included. Might be an empty
+    * string, if there's no query.
+    */
+  def queryToString: String = {
     @tailrec
     def encodeQuerySegments(qss: List[QuerySegment], previousWasPlain: Boolean, sb: StringBuilder): String =
       qss match {
@@ -298,24 +320,29 @@ case class Uri(
           sb.append(kEnc(k)).append("=").append(vEnc(v))
           encodeQuerySegments(t, previousWasPlain = false, sb)
       }
+    encodeQuerySegments(querySegments.toList, previousWasPlain = true, new StringBuilder())
+  }
 
+  /** Serializes the fragment to a string, encoding the segment. The leading `#` is not included. Might be an empty
+    * string, if there's no fragment.
+    */
+  def fragmentToString: String = {
+    // https://stackoverflow.com/questions/2053132/is-a-colon-safe-for-friendly-url-use/2053640#2053640
+    fragmentSegment.fold("")(s => s.encoded)
+  }
+
+  override def toString: String = {
     val schemeS = scheme.map(s => encode(Rfc3986.Scheme)(s) + ":").getOrElse("")
     val authorityS = authority.fold("")(_.toString)
-    val pathPrefixS = pathSegments match {
-      case _ if authority.isEmpty && scheme.isDefined => ""
-      case Uri.EmptyPath                              => ""
-      case Uri.AbsolutePath(_)                        => "/"
-      case Uri.RelativePath(_)                        => ""
-    }
-    val pathS = pathSegments.segments.map(_.encoded).mkString("/")
+
+    val pathS = pathToString
+
     val queryPrefixS = if (querySegments.isEmpty) "" else "?"
+    val queryS = queryToString
 
-    val queryS = encodeQuerySegments(querySegments.toList, previousWasPlain = true, new StringBuilder())
-
-    // https://stackoverflow.com/questions/2053132/is-a-colon-safe-for-friendly-url-use/2053640#2053640
     val fragS = fragmentSegment.fold("")(s => "#" + s.encoded)
 
-    s"$schemeS$authorityS$pathPrefixS$pathS$queryPrefixS$queryS$fragS"
+    s"$schemeS$authorityS$pathS$queryPrefixS$queryS$fragS"
   }
 }
 

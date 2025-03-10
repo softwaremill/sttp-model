@@ -260,4 +260,26 @@ class UriTests extends AnyFunSuite with Matchers with TryValues with UriTestsExt
     uri"/x/y".pathSegments shouldBe Uri.AbsolutePath(List(pathSegment("x"), pathSegment("y")))
     uri"${"/x/y"}".pathSegments shouldBe Uri.AbsolutePath(List(pathSegment("x"), pathSegment("y")))
   }
+
+  test("should serialize path") {
+    uri"http://x.com/a/b/c".pathToString shouldBe "/a/b/c"
+    uri"http://x.com".pathToString shouldBe ""
+    uri"http://x.com/".pathToString shouldBe "/"
+    uri"http://x.com/a%20c".pathToString shouldBe "/a%20c"
+  }
+
+  test("should serialize query") {
+    uri"http://x.com/a/b/c".queryToString shouldBe ""
+    uri"http://x.com?a=b&c=d".queryToString shouldBe "a=b&c=d"
+    uri"http://x.com/a/b/c?p1=1%202".queryToString shouldBe "p1=1+2"
+  }
+
+  test("should serialize fragment") {
+    uri"http://x.com/a/b/c".fragmentToString shouldBe ""
+    uri"http://x.com/a/b/c#d".fragmentToString shouldBe "d"
+  }
+
+  test("should serialize scheme") {
+    uri"http://x.com/a/b/c".schemeToString shouldBe "http"
+  }
 }
