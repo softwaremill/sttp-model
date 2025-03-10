@@ -30,6 +30,9 @@ object Forwarded {
 
   /** Parses a single Forwarded header, which can contain multiple Forwarded values. */
   def parse(headerValue: String): Either[String, List[Forwarded]] = {
+    def removeApostrophes(v: String): String =
+      if (v.startsWith("\"") && v.endsWith("\"")) v.substring(1, v.length - 1) else v
+
     def parseSingle(headerValue: String): Either[String, Forwarded] = {
       val parts = headerValue.split(";").map(_.trim).toList
       val kvPairs = parts.map { part =>
@@ -41,9 +44,9 @@ object Forwarded {
 
       val pairs = kvPairs.collect { case Right(pair) => pair }
       if (pairs.size == kvPairs.size) {
-        val by = pairs.collectFirst { case ("by", v) => v }
-        val `for` = pairs.collectFirst { case ("for", v) => v }
-        val host = pairs.collectFirst { case ("host", v) => v }
+        val by = pairs.collectFirst { case ("by", v) => v }.map(removeApostrophes)
+        val `for` = pairs.collectFirst { case ("for", v) => v }.map(removeApostrophes)
+        val host = pairs.collectFirst { case ("host", v) => v }.map(removeApostrophes)
         val proto = pairs.collectFirst { case ("proto", v) => v }
         Right(Forwarded(by, `for`, host, proto))
       } else

@@ -64,9 +64,9 @@ class ForwardedTest extends AnyFlatSpec with Matchers {
     actual shouldBe "by=1.2.3.4,by=4.3.2.1"
   }
 
-  it should "parse ipv6 addresses in For" in {
+  it should "parse ipv6 addresses in 'for', removing the apostrophes" in {
     val actual = Forwarded.parse("""For="[2001:db8:cafe::17]:4711"""")
-    actual shouldBe Right(List(Forwarded(None, Some("\"[2001:db8:cafe::17]:4711\""), None, None)))
+    actual shouldBe Right(List(Forwarded(None, Some("[2001:db8:cafe::17]:4711"), None, None)))
   }
 
   it should "parse multiple ipv4 addresses" in {
