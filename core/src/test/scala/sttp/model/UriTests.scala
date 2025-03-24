@@ -129,7 +129,7 @@ class UriTests extends AnyFunSuite with Matchers with TryValues with UriTestsExt
   for {
     (segments, expected) <- querySegmentsTestData
   } {
-    test(s"$segments should serialize to$expected") {
+    test(s"$segments should serialize to $expected") {
       testUri.copy(querySegments = segments).toString should endWith(expected)
     }
   }
@@ -145,7 +145,7 @@ class UriTests extends AnyFunSuite with Matchers with TryValues with UriTestsExt
   for {
     (segments, expected) <- bodyPartEncodingTestData
   } {
-    test(s"$segments should serialize to$expected") {
+    test(s"$segments should serialize to $expected") {
       UriCompatibility.encodeBodyPart(segments, "utf-8") should endWith(expected)
     }
   }
@@ -281,5 +281,10 @@ class UriTests extends AnyFunSuite with Matchers with TryValues with UriTestsExt
 
   test("should serialize scheme") {
     uri"http://x.com/a/b/c".schemeToString shouldBe "http"
+  }
+
+  test("should serialize query safe") {
+    uri"http://x.com?a=b&c=d".toStringSafe(Set("c")) shouldBe "http://x.com?a=b&c=***"
+    uri"http://x.com/a/b/c?p1=1%202".toStringSafe(Set("p1")) shouldBe "http://x.com/a/b/c?p1=***"
   }
 }

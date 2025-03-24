@@ -301,7 +301,9 @@ case class Uri(
   /** Serializes the query to a string, encoding the segments. The leading `?` is not included. Might be an empty
     * string, if there's no query.
     */
-  def queryToString: String = {
+  def queryToString: String = queryToStringSafe()
+
+  private def queryToStringSafe(sensitiveQueryParams: Set[String] = Set.empty): String = {
     @tailrec
     def encodeQuerySegments(qss: List[QuerySegment], previousWasPlain: Boolean, sb: StringBuilder): String =
       qss match {
@@ -317,7 +319,7 @@ case class Uri(
 
         case KeyValue(k, v, kEnc, vEnc) :: t =>
           if (!previousWasPlain) sb.append("&")
-          sb.append(kEnc(k)).append("=").append(vEnc(v))
+          sb.append(kEnc(k)).append("=").append(if (sensitiveQueryParams(k)) "***" else vEnc(v))
           encodeQuerySegments(t, previousWasPlain = false, sb)
       }
     encodeQuerySegments(querySegments.toList, previousWasPlain = true, new StringBuilder())
@@ -331,14 +333,19 @@ case class Uri(
     fragmentSegment.fold("")(s => s.encoded)
   }
 
-  override def toString: String = {
+  override def toString: String = toStringSafe()
+
+  /** @return
+    *   Representation where sensitive query params value is omitted.
+    */
+  def toStringSafe(sensitiveQueryParams: Set[String] = Set.empty): String = {
     val schemeS = scheme.map(s => encode(Rfc3986.Scheme)(s) + ":").getOrElse("")
     val authorityS = authority.fold("")(_.toString)
 
     val pathS = pathToString
 
     val queryPrefixS = if (querySegments.isEmpty) "" else "?"
-    val queryS = queryToString
+    val queryS = queryToStringSafe(sensitiveQueryParams)
 
     val fragS = fragmentSegment.fold("")(s => "#" + s.encoded)
 
