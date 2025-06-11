@@ -18,6 +18,7 @@ jobs:
       java-opts: '-Xmx4G'
       sttp-native: 1
       install-libidn2: true
+      java-version: 21 # needed by Playwright (JS testing)
 
   mima:
     uses: softwaremill/github-actions-workflows/.github/workflows/mima.yml@main
