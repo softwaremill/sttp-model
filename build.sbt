@@ -87,12 +87,7 @@ lazy val core = (projectMatrix in file("core"))
   )
   .jsPlatform(
     scalaVersions = scala2 ++ scala3,
-    settings = commonJsSettings ++ browserCommonTestSetting ++ Seq(
-      Test / jsEnv := new jsenv.playwright.PWEnv(
-        browserName = "chrome",
-        headless = true,
-        showLogs = false
-      ),
+    settings = commonJsSettings ++ browserChromeTestSettings ++ Seq(
       libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.6.0"
     )
   )
