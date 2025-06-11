@@ -18,6 +18,7 @@ project/plugins/project/
 
 .idea*
 .vscode
+.cursor
 .scala-build
 
 .keys*
@@ -30,6 +31,6 @@ lowered.hnir
 # Bloop / Metals
 .bloop/
 .metals/
-project/metals.sbt
+metals.sbt
 
 .bsp
