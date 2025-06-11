@@ -87,38 +87,12 @@ lazy val core = (projectMatrix in file("core"))
   )
   .jsPlatform(
     scalaVersions = scala2 ++ scala3,
-    settings = commonJsSettings ++ downloadChromeDriverSettings ++ browserCommonTestSetting ++ Seq(
-      jsEnv in Test := {
-        val debugging = false // set to true to help debugging
-        System.setProperty("webdriver.chrome.driver", "target/chromedriver")
-        new org.scalajs.jsenv.selenium.SeleniumJSEnv(
-          {
-            val options = new org.openqa.selenium.chrome.ChromeOptions()
-            val args = Seq(
-              "auto-open-devtools-for-tabs", // devtools needs to be open to capture network requests
-              "no-sandbox",
-              "allow-file-access-from-files", // change the origin header from 'null' to 'file'
-              "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-              "headless=new"
-            ) ++ (if (debugging) Seq.empty else Seq("headless"))
-            options.addArguments(args: _*)
-            val capabilities =
-              org.openqa.selenium.remote.DesiredCapabilities.chrome()
-            capabilities.setCapability(
-              org.openqa.selenium.chrome.ChromeOptions.CAPABILITY,
-              options
-            )
-            capabilities
-          },
-          org.scalajs.jsenv.selenium.SeleniumJSEnv
-            .Config()
-            .withKeepAlive(debugging)
-        )
-      },
-      test in Test := (test in Test)
-        .dependsOn(downloadChromeDriver)
-        .value
-    ) ++ Seq(
+    settings = commonJsSettings ++ browserCommonTestSetting ++ Seq(
+      Test / jsEnv := new jsenv.playwright.PWEnv(
+        browserName = "chrome",
+        headless = true,
+        showLogs = true
+      ),
       libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.6.0"
     )
   )

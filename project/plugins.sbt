@@ -12,3 +12,5 @@ addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.1.0")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.4")
 
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.7")
+
+libraryDependencies += "io.github.gmkumar2005" %% "scala-js-env-playwright" % "0.1.11"
