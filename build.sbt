@@ -91,7 +91,7 @@ lazy val core = (projectMatrix in file("core"))
       Test / jsEnv := new jsenv.playwright.PWEnv(
         browserName = "chrome",
         headless = true,
-        showLogs = true
+        showLogs = false
       ),
       libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.6.0"
     )
