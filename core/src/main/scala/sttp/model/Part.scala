@@ -14,7 +14,12 @@ case class Part[+T](
   def dispositionParam(k: String, v: String): Part[T] = copy(otherDispositionParams = otherDispositionParams + (k -> v))
 
   def fileName(v: String): Part[T] = dispositionParam(FileNameDispositionParam, v)
-  def fileName: Option[String] = otherDispositionParams.get(FileNameDispositionParam)
+
+  // Return filename encoded in non ISO-8859-1 if available
+  // See: https://httpwg.org/specs/rfc6266.html#disposition.parameter.filename
+  def fileName: Option[String] = otherDispositionParams
+    .get(NonAsciiFileNameDispositionParam)
+    .orElse(otherDispositionParams.get(FileNameDispositionParam))
 
   def contentType(v: MediaType): Part[T] = header(Header.contentType(v), replaceExisting = true)
   def contentType(v: String): Part[T] = header(Header(HeaderNames.ContentType, v), replaceExisting = true)
@@ -89,4 +94,5 @@ object Part {
 
   val NameDispositionParam = "name"
   val FileNameDispositionParam = "filename"
+  val NonAsciiFileNameDispositionParam = "filename*"
 }
