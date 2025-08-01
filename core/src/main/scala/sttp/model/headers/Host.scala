@@ -8,6 +8,8 @@ object Host {
     * `]` characters are removed. If the port is not a number, it is discarded.
     *
     * For example, `example.com:8080` will be parsed into `("example.com", Some(8080))`.
+    *
+    * If the port is not a number, it is discarded.
     */
   def parseHostAndPort(v: String): (String, Option[Int]) = {
     val lastColonIndex = v.lastIndexOf(":")

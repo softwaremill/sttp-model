@@ -19,6 +19,8 @@ trait HasHeaders {
   def headers(h: String): Seq[String] = headers.filter(_.is(h)).map(_.value)
 
   def contentType: Option[String] = header(HeaderNames.ContentType)
+
+  /** The content length parsed into a long, if present. If the content length is not a number, `None` is returned. */
   def contentLength: Option[Long] = header(HeaderNames.ContentLength).flatMap(ParseUtils.toLongOption)
 
   def cookies: Seq[Either[String, CookieWithMeta]] = headers(HeaderNames.SetCookie).map(h => CookieWithMeta.parse(h))
