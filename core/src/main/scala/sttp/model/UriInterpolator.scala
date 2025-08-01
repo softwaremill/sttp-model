@@ -558,7 +558,17 @@ object UriInterpolator {
       }
 
       private def portFromTokens(u: Uri, tokens: ArrayView[Token]): Uri = {
-        u.port(tokensToStringOpt(tokens).flatMap(ParseUtils.toIntOption))
+        u.port(
+          tokensToStringOpt(tokens).map(s =>
+            ParseUtils
+              .toIntOption(s)
+              .getOrElse(
+                throw new IllegalArgumentException(
+                  s"Invalid port: $s. Is the port a number? Is the path separated with a / (directly in the string, not embedded)?"
+                )
+              )
+          )
+        )
       }
     }
 
