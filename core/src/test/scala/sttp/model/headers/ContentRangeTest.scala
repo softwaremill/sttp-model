@@ -6,7 +6,7 @@ import sttp.model.ContentRangeUnits
 
 class ContentRangeTest extends AnyFlatSpec with Matchers {
 
-  it should "properly pars simplest ContentRange header" in {
+  it should "properly parse simplest ContentRange header" in {
     val actual = ContentRange.parse("bytes 200-1000/1200")
     actual shouldBe Right(ContentRange(ContentRangeUnits.Bytes, Some((200, 1000)), Some(1200)))
   }
@@ -29,6 +29,22 @@ class ContentRangeTest extends AnyFlatSpec with Matchers {
 
   it should "fail parsing ContentRange without range and size" in {
     ContentRange.parse("bytes */*") shouldBe Left("Invalid Content-Range")
+  }
+
+  it should "fail parsing ContentRange with invalid range end" in {
+    ContentRange.parse("bytes 200-abc/*") shouldBe Left("Invalid end of range: abc")
+  }
+
+  it should "fail parsing ContentRange with invalid range start" in {
+    ContentRange.parse("bytes abc-200/*") shouldBe Left("Invalid start of range: abc")
+  }
+
+  it should "fail parsing ContentRange with missing range start" in {
+    ContentRange.parse("bytes -200/*") shouldBe Left("Invalid start of range: ")
+  }
+
+  it should "fail parsing ContentRange with missing range end" in {
+    ContentRange.parse("bytes 200-/*") shouldBe Left("Invalid range: 200-")
   }
 
   it should "fail parsing ContentRange with incorrect range" in {

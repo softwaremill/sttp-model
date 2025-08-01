@@ -34,18 +34,24 @@ object ContentRange {
 
   private def processString(unit: String, possibleRange: String, possibleSize: String): Either[String, ContentRange] = {
     val range = possibleRange.split("-") match {
-      case Array("*") => None
+      case Array("*") => Right(None)
       case Array(s, e) =>
-        val start = ParseUtils.toLongOption(s)
-        val end = ParseUtils.toLongOption(e)
-        if (start.isDefined && end.isDefined) Some((start.get, end.get))
-        else None
-      case _ => None
+        for {
+          start <- ParseUtils.toLongOption(s).toRight(s"Invalid start of range: $s")
+          end <- ParseUtils.toLongOption(e).toRight(s"Invalid end of range: $e")
+        } yield Some((start, end))
+      case _ => Left(s"Invalid range: $possibleRange")
     }
-    val size = if (possibleSize.equals("*")) None else ParseUtils.toLongOption(possibleSize)
-    val contentRange = ContentRange(unit, range, size)
-    if (isValid(contentRange)) Right(contentRange)
-    else Left("Invalid Content-Range")
+    val size =
+      if (possibleSize.equals("*")) Right(None)
+      else ParseUtils.toLongOption(possibleSize).map(Some(_)).toRight("Invalid size: %s".format(possibleSize))
+
+    for {
+      r <- range
+      s <- size
+      contentRange = ContentRange(unit, r, s)
+      cr <- (if (isValid(contentRange)) Right(contentRange) else Left("Invalid Content-Range"))
+    } yield cr
   }
 
   private def isValid(contentRange: ContentRange): Boolean = {
