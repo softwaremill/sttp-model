@@ -3,6 +3,7 @@ package sttp.model.headers
 import sttp.model.ContentRangeUnits
 import sttp.model.internal.ParseUtils
 import sttp.model.internal.Validate.RichEither
+import scala.annotation.tailrec
 
 case class Range(start: Option[Long], end: Option[Long], unit: String) {
 
@@ -48,20 +49,45 @@ object Range {
   def parse(str: String): Either[String, List[Range]] =
     str.split("=") match {
       case Array(unit, s) =>
-        val ranges = processString(s, unit)
-        if (ranges.forall(validateRange) && ranges.nonEmpty) Right(ranges.reverse)
-        else Left("Invalid Range")
+        for {
+          ranges <- processString(s, unit)
+          _ <- if (ranges.forall(validateRange) && ranges.nonEmpty) Right(()) else Left("Invalid Range")
+        } yield ranges
       case _ => Left("Expected range in the format: \"unit=start/end\", but got: %s".format(str))
     }
 
-  private def processString(s: String, unit: String): List[Range] =
-    s.split(",").map(parseSingleRange(_, unit)).reverse.toList // TODO: do we need `.reverse` here yet?
+  private def processString(s: String, unit: String): Either[String, List[Range]] = {
+    @tailrec
+    def run(raw: List[String], acc: List[Range]): Either[String, List[Range]] = {
+      raw match {
+        case Nil => Right(acc.reverse)
+        case head :: tail =>
+          parseSingleRange(head, unit) match {
+            case Right(r) => run(tail, r :: acc)
+            case Left(e)  => Left(e)
+          }
+      }
+    }
 
-  private def parseSingleRange(rangeString: String, unit: String): Range =
+    run(s.split(",").toList, Nil)
+  }
+
+  private def parseSingleRange(rangeString: String, unit: String): Either[String, Range] =
     rangeString.trim.split("-") match {
-      case Array(start, end) => Range(ParseUtils.toLongOption(start), ParseUtils.toLongOption(end), unit)
-      case Array(start)      => Range(ParseUtils.toLongOption(start), None, unit)
-      case _                 => Range(None, None, unit)
+      case Array(start, end) if start.trim.isEmpty =>
+        for {
+          e <- ParseUtils.toLongOption(end).toRight(s"Invalid end of range: $end")
+        } yield Range(None, Some(e), unit)
+      case Array(start, end) =>
+        for {
+          s <- ParseUtils.toLongOption(start).toRight(s"Invalid start of range: $start")
+          e <- ParseUtils.toLongOption(end).toRight(s"Invalid end of range: $end")
+        } yield Range(Some(s), Some(e), unit)
+      case Array(start) =>
+        for {
+          s <- ParseUtils.toLongOption(start).toRight(s"Invalid start of range: $start")
+        } yield Range(Some(s), None, unit)
+      case _ => Right(Range(None, None, unit))
     }
 
   private def validateRange(range: Range): Boolean =

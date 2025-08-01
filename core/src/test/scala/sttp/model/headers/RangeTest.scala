@@ -77,6 +77,14 @@ class RangeTest extends AnyFlatSpec with Matchers {
     Range.parse("bytes=700-500") shouldBe Left("Invalid Range")
   }
 
+  it should "fail parsing header when the range start is not a number" in {
+    Range.parse("bytes=abc-500") shouldBe Left("Invalid start of range: abc")
+  }
+
+  it should "fail parsing header when the range end is not a number" in {
+    Range.parse("bytes=500-abc") shouldBe Left("Invalid end of range: abc")
+  }
+
   it should "fail parsing header without correct range" in {
     Range.parse("bytes=-") shouldBe Left("Invalid Range")
   }
