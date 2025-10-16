@@ -161,6 +161,13 @@ object MediaType extends MediaTypes {
     }
     Option(minMt)
   }
+
+  // New MediaType must be added here to keep binary compatibility.
+  // MiMa will fail with ReversedMissingMethodProblem otherwise.
+
+  val ApplicationProblemJson: MediaType = MediaType("application", "problem+json")
+  val ApplicationProblemXml: MediaType = MediaType("application", "problem+xml")
+  val ApplicationYaml: MediaType = MediaType("application", "yaml")
 }
 
 // https://www.iana.org/assignments/media-types/media-types.xhtml
@@ -168,15 +175,12 @@ trait MediaTypes {
   val ApplicationGzip: MediaType = MediaType("application", "gzip")
   val ApplicationZip: MediaType = MediaType("application", "zip")
   val ApplicationJson: MediaType = MediaType("application", "json")
-  val ApplicationProblemJson: MediaType = MediaType("application", "problem+json")
   val ApplicationOctetStream: MediaType = MediaType("application", "octet-stream")
   val ApplicationPdf: MediaType = MediaType("application", "pdf")
   val ApplicationRtf: MediaType = MediaType("application", "rtf")
   val ApplicationXhtml: MediaType = MediaType("application", "xhtml+xml")
   val ApplicationXml: MediaType = MediaType("application", "xml")
-  val ApplicationProblemXml: MediaType = MediaType("application", "problem+xml")
   val ApplicationXWwwFormUrlencoded: MediaType = MediaType("application", "x-www-form-urlencoded")
-  val ApplicationYaml: MediaType = MediaType("application", "yaml")
 
   val ImageGif: MediaType = MediaType("image", "gif")
   val ImageJpeg: MediaType = MediaType("image", "jpeg")
