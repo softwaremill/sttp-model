@@ -161,6 +161,13 @@ object MediaType extends MediaTypes {
     }
     Option(minMt)
   }
+
+  // New MediaType must be added here to keep binary compatibility.
+  // MiMa will fail with ReversedMissingMethodProblem otherwise.
+
+  val ApplicationProblemJson: MediaType = MediaType("application", "problem+json")
+  val ApplicationProblemXml: MediaType = MediaType("application", "problem+xml")
+  val ApplicationYaml: MediaType = MediaType("application", "yaml")
 }
 
 // https://www.iana.org/assignments/media-types/media-types.xhtml
