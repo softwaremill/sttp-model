@@ -60,7 +60,7 @@ object Range {
     @tailrec
     def run(raw: List[String], acc: List[Range]): Either[String, List[Range]] = {
       raw match {
-        case Nil => Right(acc.reverse)
+        case Nil          => Right(acc.reverse)
         case head :: tail =>
           parseSingleRange(head, unit) match {
             case Right(r) => run(tail, r :: acc)

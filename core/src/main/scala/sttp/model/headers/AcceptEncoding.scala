@@ -21,7 +21,7 @@ object AcceptEncoding {
     else {
       @tailrec
       def go(es: List[WeightedEncoding], validated: List[WeightedEncoding]): Either[String, AcceptEncoding] = es match {
-        case Nil => Right(AcceptEncoding(validated.reverse))
+        case Nil          => Right(AcceptEncoding(validated.reverse))
         case head :: tail =>
           validate(head, str) match {
             case Left(s)  => Left(s)
@@ -38,7 +38,7 @@ object AcceptEncoding {
 
   private def parsSingleEncoding(s: String): WeightedEncoding =
     s.split(";") match {
-      case Array(algorithm) => WeightedEncoding(algorithm, None)
+      case Array(algorithm)         => WeightedEncoding(algorithm, None)
       case Array(algorithm, weight) =>
         weight.split("=") match {
           case Array(_, value) => WeightedEncoding(algorithm, Some(BigDecimal(value)))
