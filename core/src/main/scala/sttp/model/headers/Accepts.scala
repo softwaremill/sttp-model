@@ -30,7 +30,7 @@ object Accepts {
       case (Nil, Nil)            => AnyRange :: Nil
       case (Nil, (ch, _) :: Nil) => ContentTypeRange(Wildcard, Wildcard, ch, EmptyParameters) :: Nil
       case ((mt, _) :: Nil, Nil) => ContentTypeRange(mt.mainType, mt.subType, Wildcard, mt.otherParameters) :: Nil
-      case (Nil, chs) =>
+      case (Nil, chs)            =>
         chs.sortBy({ case (_, q) => -q }).map { case (ch, _) =>
           ContentTypeRange(Wildcard, Wildcard, ch, EmptyParameters)
         }
@@ -44,7 +44,7 @@ object Accepts {
           chs.map { case (ch, chQ) => (mt, ch) -> math.min(mtQ, chQ) }
         } match {
           case ((mt, ch), _) :: Nil => ContentTypeRange(mt.mainType, mt.subType, ch, mt.otherParameters) :: Nil
-          case merged =>
+          case merged               =>
             merged.sortBy({ case (_, q) => -q }).map { case ((mt, ch), _) =>
               ContentTypeRange(mt.mainType, mt.subType, ch, mt.otherParameters)
             }
@@ -74,7 +74,7 @@ object Accepts {
     val chs = List.newBuilder[(String, Float)]
     extractEntries(headers, HeaderNames.AcceptCharset).foreach { entry =>
       parseAcceptCharsetEntry(entry) match {
-        case Right(ch) => chs += ch
+        case Right(ch)   => chs += ch
         case Left(error) =>
           if (errors.length != 0) errors.append('\n')
           else ()
@@ -115,7 +115,7 @@ object Accepts {
 
   private def qValueFrom(parameters: Map[String, String]): Either[String, Float] =
     parameters.get("q") match {
-      case None => Right(1f)
+      case None    => Right(1f)
       case Some(q) =>
         val qValue = Patterns.QValue.matcher(q)
         if (qValue.matches() && qValue.groupCount() == 1) Right(qValue.group(1).toFloat)

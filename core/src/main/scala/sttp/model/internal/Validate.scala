@@ -13,7 +13,7 @@ object Validate {
       e
     } match {
       case Some(e) => Left(e)
-      case None =>
+      case None    =>
         Right(results.collect { case Right(c) =>
           c
         })

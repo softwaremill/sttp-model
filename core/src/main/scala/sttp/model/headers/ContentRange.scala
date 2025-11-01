@@ -34,7 +34,7 @@ object ContentRange {
 
   private def processString(unit: String, possibleRange: String, possibleSize: String): Either[String, ContentRange] = {
     val range = possibleRange.split("-") match {
-      case Array("*") => Right(None)
+      case Array("*")  => Right(None)
       case Array(s, e) =>
         for {
           start <- ParseUtils.toLongOption(s).toRight(s"Invalid start of range: $s")

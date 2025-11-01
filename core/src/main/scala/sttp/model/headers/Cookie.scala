@@ -278,10 +278,10 @@ object CookieWithMeta {
           case Success(maxAge) => result = result.map(_.maxAge(Some(maxAge)))
           case Failure(_)      => result = Left(s"Max-Age cookie directive is not a number: $v")
         }
-      case (ci"domain", v)   => result = result.map(_.domain(Some(v.getOrElse(""))))
-      case (ci"path", v)     => result = result.map(_.path(Some(v.getOrElse(""))))
-      case (ci"secure", _)   => result = result.map(_.secure(true))
-      case (ci"httponly", _) => result = result.map(_.httpOnly(true))
+      case (ci"domain", v)         => result = result.map(_.domain(Some(v.getOrElse(""))))
+      case (ci"path", v)           => result = result.map(_.path(Some(v.getOrElse(""))))
+      case (ci"secure", _)         => result = result.map(_.secure(true))
+      case (ci"httponly", _)       => result = result.map(_.httpOnly(true))
       case (ci"samesite", Some(v)) =>
         v.trim match {
           case ci"lax"    => result = result.map(_.sameSite(Some(SameSite.Lax)))

@@ -53,9 +53,9 @@ object CacheDirective {
       case "public"           => Right(Public)
       case "private"          => Right(Private)
       case "proxy-revalidate" => Right(ProxyRevalidate)
-      case SMaxagePattern(c) =>
+      case SMaxagePattern(c)  =>
         ParseUtils.toIntOption(c).map(s => SMaxage(s.seconds)).toRight("Unable to parse string: %s".format(c))
-      case "immutable" => Right(Immutable)
+      case "immutable"                    => Right(Immutable)
       case StaleWhileRevalidatePattern(c) =>
         ParseUtils
           .toIntOption(c)
