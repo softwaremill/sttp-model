@@ -465,7 +465,7 @@ object UriInterpolator {
     case object Scheme extends UriBuilder {
       override def fromTokens(u: Uri, t: ArrayView[Token]): (Uri, ArrayView[Token]) = {
         split(t, SchemeEnd) match {
-          case Left(_) => (u, t)
+          case Left(_)                               => (u, t)
           case Right((schemeTokens, _, otherTokens)) =>
             val scheme = tokensToString(schemeTokens)
             (u.scheme(scheme), otherTokens)
@@ -476,7 +476,7 @@ object UriInterpolator {
     case object UserInfo extends UriBuilder {
       override def fromTokens(u: Uri, t: ArrayView[Token]): (Uri, ArrayView[Token]) = {
         split(t, AtInAuthority) match {
-          case Left(tt) => (u, tt)
+          case Left(tt)                          => (u, tt)
           case Right((uiTokens, _, otherTokens)) =>
             (uiFromTokens(u, uiTokens), otherTokens)
         }
@@ -488,7 +488,7 @@ object UriInterpolator {
           case x              => x
         }
         split(uiTokensWithDots, ColonInAuthority) match {
-          case Left(tt) => uiFromTokens(u, tt, ArrayView.empty)
+          case Left(tt)                                   => uiFromTokens(u, tt, ArrayView.empty)
           case Right((usernameTokens, _, passwordTokens)) =>
             uiFromTokens(u, usernameTokens, passwordTokens)
         }
@@ -546,7 +546,7 @@ object UriInterpolator {
         }
 
         split(hpTokens, ColonInAuthority) match {
-          case Left(tt) => hostFromTokens(u, tt)
+          case Left(tt)                           => hostFromTokens(u, tt)
           case Right((hostTokens, _, portTokens)) =>
             portFromTokens(hostFromTokens(u, hostTokens), portTokens)
         }
@@ -640,7 +640,7 @@ object UriInterpolator {
             seqToQueryFragments(e)
           case Left(Singleton(ExpressionToken(mqp: QueryParams))) =>
             QF.fromQueryParams(mqp).toVector
-          case Left(t) => tokensToStringOpt(t, decodePlusAsSpace = true).map(QF.Value(_)).toVector
+          case Left(t)                     => tokensToStringOpt(t, decodePlusAsSpace = true).map(QF.Value(_)).toVector
           case Right((leftEq, _, rightEq)) =>
             tokensToStringOpt(leftEq, decodePlusAsSpace = true) match {
               case Some(k) =>
@@ -799,7 +799,7 @@ object UriInterpolator {
       def doSplit(vv: ArrayView[T]): Unit = {
         vv.indexOf(sep) match {
           case -1 => b += vv
-          case i => {
+          case i  => {
             b += vv.take(i)
             doSplit(vv.drop(i + 1))
           }
