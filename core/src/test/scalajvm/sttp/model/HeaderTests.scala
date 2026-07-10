@@ -52,6 +52,13 @@ class HeaderTests extends AnyFlatSpec with Matchers {
       .toString shouldBe "Cache-Control: no-transform, public, s-maxage=10"
   }
 
+  it should "properly create an accept-query header" in {
+    Header
+      .acceptQuery(MediaType.ApplicationJson, MediaType.ApplicationXml)
+      .toString shouldBe "Accept-Query: application/json, application/xml"
+    Header.acceptQuery("application/jsonpath").toString shouldBe "Accept-Query: application/jsonpath"
+  }
+
   "Instant" should "be formatted according to rfc1123-date1 with a leading zero for single-digit dates" in {
     Header.toHttpDateString(rfc1123DatetimeToBeChecked) shouldBe rfc1123DatetimeFormatted
   }

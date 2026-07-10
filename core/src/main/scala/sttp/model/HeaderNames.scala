@@ -7,6 +7,7 @@ trait HeaderNames {
   val AcceptEncoding = "Accept-Encoding"
   val AcceptLanguage = "Accept-Language"
   val AcceptRanges = "Accept-Ranges"
+  val AcceptQuery = "Accept-Query"
   val AccessControlAllowCredentials = "Access-Control-Allow-Credentials"
   val AccessControlAllowHeaders = "Access-Control-Allow-Headers"
   val AccessControlAllowMethods = "Access-Control-Allow-Methods"
