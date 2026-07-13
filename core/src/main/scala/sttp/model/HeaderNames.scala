@@ -7,7 +7,8 @@ trait HeaderNames {
   val AcceptEncoding = "Accept-Encoding"
   val AcceptLanguage = "Accept-Language"
   val AcceptRanges = "Accept-Ranges"
-  val AcceptQuery = "Accept-Query"
+  // a def, not a val, as adding a val to a trait breaks binary compatibility for classes implementing it
+  def AcceptQuery: String = "Accept-Query"
   val AccessControlAllowCredentials = "Access-Control-Allow-Credentials"
   val AccessControlAllowHeaders = "Access-Control-Allow-Headers"
   val AccessControlAllowMethods = "Access-Control-Allow-Methods"

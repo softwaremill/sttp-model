@@ -42,7 +42,8 @@ trait Methods {
   val POST: Method = Method("POST")
   val PUT: Method = Method("PUT")
   val DELETE: Method = Method("DELETE")
-  val QUERY: Method = Method("QUERY")
+  // a def, not a val, as adding a val to a trait breaks binary compatibility for classes implementing it
+  def QUERY: Method = Method("QUERY")
   val OPTIONS: Method = Method("OPTIONS")
   val PATCH: Method = Method("PATCH")
   val CONNECT: Method = Method("CONNECT")
