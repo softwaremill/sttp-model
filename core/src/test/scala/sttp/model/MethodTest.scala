@@ -14,5 +14,6 @@ class MethodTest extends AnyFlatSpec with Matchers {
     Method.unsafeApply("patch") shouldBe Method.unsafeApply("PATCH")
     Method.unsafeApply("connect") shouldBe Method.unsafeApply("CONNECT")
     Method.unsafeApply("trace") shouldBe Method.unsafeApply("TRACE")
+    Method.unsafeApply("query") shouldBe Method.unsafeApply("QUERY")
   }
 }

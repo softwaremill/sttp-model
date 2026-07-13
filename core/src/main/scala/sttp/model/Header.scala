@@ -80,7 +80,11 @@ object Header {
   def accept(mediaType: MediaType, additionalMediaTypes: MediaType*): Header = accept(
     s"${(mediaType :: additionalMediaTypes.toList).map(_.noCharset).mkString(", ")}"
   )
+  def acceptQuery(mediaType: MediaType, additionalMediaTypes: MediaType*): Header = acceptQuery(
+    s"${(mediaType :: additionalMediaTypes.toList).map(_.toString).mkString(", ")}"
+  )
   def accept(mediaRanges: String): Header = Header(HeaderNames.Accept, mediaRanges)
+  def acceptQuery(mediaRanges: String): Header = Header(HeaderNames.AcceptQuery, mediaRanges)
   def acceptCharset(charsetRanges: String): Header = Header(HeaderNames.AcceptCharset, charsetRanges)
   def acceptEncoding(encodingRanges: String): Header = Header(HeaderNames.AcceptEncoding, encodingRanges)
   def accessControlAllowCredentials(allow: Boolean): Header =

@@ -32,8 +32,8 @@ object Method extends Methods {
   def isSafe(m: Method): Boolean = safe.contains(m)
 
   private val idempotent: Set[Method] =
-    Set(Method.HEAD, Method.TRACE, Method.GET, Method.PUT, Method.OPTIONS, Method.DELETE)
-  private val safe: Set[Method] = Set(Method.HEAD, Method.GET, Method.OPTIONS)
+    Set(Method.HEAD, Method.TRACE, Method.GET, Method.PUT, Method.OPTIONS, Method.DELETE, Method.QUERY)
+  private val safe: Set[Method] = Set(Method.HEAD, Method.GET, Method.OPTIONS, Method.QUERY)
 }
 
 trait Methods {
@@ -42,6 +42,8 @@ trait Methods {
   val POST: Method = Method("POST")
   val PUT: Method = Method("PUT")
   val DELETE: Method = Method("DELETE")
+  // a def, not a val, as adding a val to a trait breaks binary compatibility for classes implementing it
+  def QUERY: Method = Method("QUERY")
   val OPTIONS: Method = Method("OPTIONS")
   val PATCH: Method = Method("PATCH")
   val CONNECT: Method = Method("CONNECT")
