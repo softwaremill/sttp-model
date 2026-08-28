@@ -6,22 +6,58 @@ case class ServerSentEvent(
     data: Option[String] = None,
     eventType: Option[String] = None,
     id: Option[String] = None,
-    retry: Option[Int] = None
+    retry: Option[Int] = None,
+    comments: List[String] = Nil
 ) {
+  // required for binary compatibility
+  def this(data: Option[String], eventType: Option[String], id: Option[String], retry: Option[Int]) =
+    this(data, eventType, id, retry, Nil)
+
+  def copy(
+      data: Option[String] = this.data,
+      eventType: Option[String] = this.eventType,
+      id: Option[String] = this.id,
+      retry: Option[Int] = this.retry,
+      comments: List[String] = this.comments
+  ): ServerSentEvent = ServerSentEvent(data, eventType, id, retry, comments)
+
+  // required for binary compatibility
+  def copy(
+      data: Option[String],
+      eventType: Option[String],
+      id: Option[String],
+      retry: Option[Int]
+  ): ServerSentEvent = ServerSentEvent(data, eventType, id, retry, this.comments)
+
   override def toString: String = {
+    val _comments: Array[Option[String]] = comments.map(comment => Some(s": $comment")).toArray
     val _data = data.map(_.split("\n")).map(_.map(line => Some(s"data: $line"))).getOrElse(Array.empty[Option[String]])
     val _event = eventType.map(event => s"event: $event")
     val _id = id.map(id => s"id: $id")
     val _retry = retry.map(retryCount => s"retry: $retryCount")
-    (_data :+ _event :+ _id :+ _retry).flatten.mkString("\n")
+    ((_comments ++ _data) :+ _event :+ _id :+ _retry).flatten.mkString("\n")
   }
 }
 
 object ServerSentEvent {
+  // required for binary compatibility
+  def apply(
+      data: Option[String],
+      eventType: Option[String],
+      id: Option[String],
+      retry: Option[Int]
+  ): ServerSentEvent = new ServerSentEvent(data, eventType, id, retry, Nil)
+
+  /** An event consisting of a single comment line. Such events are ignored by clients, and can be used to keep the
+    * connection alive, so that it isn't dropped by proxies.
+    */
+  def comment(comment: String): ServerSentEvent = ServerSentEvent(comments = List(comment))
+
   // https://html.spec.whatwg.org/multipage/server-sent-events.html
   def parse(event: List[String]): ServerSentEvent = {
     event.foldLeft(ServerSentEvent()) { (event, line) =>
-      if (line.startsWith("data:")) combineData(event, removeLeadingSpace(line.substring(5)))
+      if (line.startsWith(":")) event.copy(comments = event.comments :+ removeLeadingSpace(line.substring(1)))
+      else if (line.startsWith("data:")) combineData(event, removeLeadingSpace(line.substring(5)))
       else if (line.startsWith("id:")) event.copy(id = Some(removeLeadingSpace(line.substring(3))))
       else if (line.startsWith("retry:"))
         event.copy(retry = ParseUtils.toIntOption(removeLeadingSpace(line.substring(6))))
@@ -35,8 +71,8 @@ object ServerSentEvent {
 
   private def combineData(event: ServerSentEvent, newData: String): ServerSentEvent = {
     event match {
-      case e @ ServerSentEvent(Some(oldData), _, _, _) => e.copy(data = Some(s"$oldData\n$newData"))
-      case e @ ServerSentEvent(None, _, _, _)          => e.copy(data = Some(newData))
+      case e @ ServerSentEvent(Some(oldData), _, _, _, _) => e.copy(data = Some(s"$oldData\n$newData"))
+      case e @ ServerSentEvent(None, _, _, _, _)          => e.copy(data = Some(newData))
     }
   }
 

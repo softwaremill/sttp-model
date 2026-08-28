@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 
 class ServerSentEventTest extends AnyFlatSpec with Matchers {
   val data = List(
-    (List(": this is a test stream"), ServerSentEvent()),
+    (List(": this is a test stream"), ServerSentEvent(comments = List("this is a test stream"))),
     (List("data: some text"), ServerSentEvent(Some("some text"))),
     (List("data:  some text"), ServerSentEvent(Some(" some text"))),
     (List("data: another message", "data: with two lines"), ServerSentEvent(Some("another message\nwith two lines"))),
@@ -24,7 +24,17 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
     (
       List("data: event1 data", "event: event1", "id: id1", "retry: 5"),
       ServerSentEvent(Some("event1 data"), Some("event1"), Some("id1"), Some(5))
-    )
+    ),
+    (
+      List(": keep-alive", "data: with a comment"),
+      ServerSentEvent(Some("with a comment"), comments = List("keep-alive"))
+    ),
+    (
+      List(": first", "data: x", ": second"),
+      ServerSentEvent(Some("x"), comments = List("first", "second"))
+    ),
+    (List(":no leading space"), ServerSentEvent(comments = List("no leading space"))),
+    (List(":"), ServerSentEvent(comments = List("")))
   )
 
   for ((lines, expected) <- data) {
@@ -63,5 +73,31 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
       s"""data: some data info 1
          |data: some data info 2
          |data: some data info 3""".stripMargin
+  }
+
+  "composeSSE" should "serialise a comment-only event" in {
+    ServerSentEvent(comments = List("ping")).toString shouldBe ": ping"
+  }
+
+  "composeSSE" should "serialise comments before the other fields" in {
+    val sse = ServerSentEvent(Some("d"), comments = List("c1", "c2"))
+    sse.toString shouldBe
+      s""": c1
+         |: c2
+         |data: d""".stripMargin
+  }
+
+  "parse" should "round-trip an event with comments and all other fields set" in {
+    val sse = ServerSentEvent(Some("line1\nline2"), Some("evt"), Some("id1"), Some(5), List("c1", "c2"))
+    ServerSentEvent.parse(sse.toString.split("\n").toList) shouldBe sse
+  }
+
+  "comment" should "create an event carrying a single comment" in {
+    ServerSentEvent.comment("ping") shouldBe ServerSentEvent(comments = List("ping"))
+  }
+
+  "copy" should "preserve comments when another field is changed" in {
+    ServerSentEvent(comments = List("ping")).copy(data = Some("d")) shouldBe
+      ServerSentEvent(Some("d"), comments = List("ping"))
   }
 }
