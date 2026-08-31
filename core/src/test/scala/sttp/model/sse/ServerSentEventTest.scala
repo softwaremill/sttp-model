@@ -116,4 +116,20 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
     ServerSentEvent.parse(sse.toString.split("\n").toList) shouldBe
       ServerSentEvent(comments = List("x", "data: y"))
   }
+
+  "isCommentOnly" should "be true for a keep-alive event" in {
+    ServerSentEvent.comment("ping").isCommentOnly shouldBe true
+  }
+
+  "isCommentOnly" should "be true for an event with no fields set at all" in {
+    ServerSentEvent().isCommentOnly shouldBe true
+  }
+
+  "isCommentOnly" should "be false when data is set" in {
+    ServerSentEvent(Some("d"), comments = List("ping")).isCommentOnly shouldBe false
+  }
+
+  "isCommentOnly" should "be false when only retry is set" in {
+    ServerSentEvent(retry = Some(5)).isCommentOnly shouldBe false
+  }
 }
