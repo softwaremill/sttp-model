@@ -30,7 +30,7 @@ case class ServerSentEvent(
   ): ServerSentEvent = ServerSentEvent(data, eventType, id, retry, this.comments)
 
   override def toString: String = {
-    val _comments: Array[Option[String]] = comments.map(comment => Some(s": $comment")).toArray
+    val _comments = comments.flatMap(_.split("\n")).map(comment => Some(s": $comment")).toArray
     val _data = data.map(_.split("\n")).map(_.map(line => Some(s"data: $line"))).getOrElse(Array.empty[Option[String]])
     val _event = eventType.map(event => s"event: $event")
     val _id = id.map(id => s"id: $id")
