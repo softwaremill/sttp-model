@@ -74,12 +74,8 @@ object ServerSentEvent {
     }
   }
 
-  private def combineData(event: ServerSentEvent, newData: String): ServerSentEvent = {
-    event match {
-      case e @ ServerSentEvent(Some(oldData), _, _, _, _) => e.copy(data = Some(s"$oldData\n$newData"))
-      case e @ ServerSentEvent(None, _, _, _, _)          => e.copy(data = Some(newData))
-    }
-  }
+  private def combineData(event: ServerSentEvent, newData: String): ServerSentEvent =
+    event.copy(data = Some(event.data.fold(newData)(oldData => s"$oldData\n$newData")))
 
   private def removeLeadingSpace(s: String): String = if (s.startsWith(" ")) s.substring(1) else s
 }
