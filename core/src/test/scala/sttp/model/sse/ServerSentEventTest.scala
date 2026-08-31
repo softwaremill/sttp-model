@@ -34,7 +34,10 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
       ServerSentEvent(Some("x"), comments = List("first", "second"))
     ),
     (List(":no leading space"), ServerSentEvent(comments = List("no leading space"))),
-    (List(":"), ServerSentEvent(comments = List("")))
+    (List(":"), ServerSentEvent(comments = List(""))),
+    (List("foo: bar", "data: x"), ServerSentEvent(Some("x"))),
+    (List("data"), ServerSentEvent(Some(""))),
+    (List("event"), ServerSentEvent(eventType = Some("")))
   )
 
   for ((lines, expected) <- data) {
