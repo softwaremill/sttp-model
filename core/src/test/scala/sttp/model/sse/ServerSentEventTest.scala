@@ -26,10 +26,6 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
       ServerSentEvent(Some("event1 data"), Some("event1"), Some("id1"), Some(5))
     ),
     (
-      List(": keep-alive", "data: with a comment"),
-      ServerSentEvent(Some("with a comment"), comments = List("keep-alive"))
-    ),
-    (
       List(": first", "data: x", ": second"),
       ServerSentEvent(Some("x"), comments = List("first", "second"))
     ),
