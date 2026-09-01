@@ -110,6 +110,24 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
     ServerSentEvent.comment("ping\n\n").toString shouldBe ": ping"
   }
 
+  "composeSSE" should "serialise a comment containing a carriage return as multiple comment lines" in {
+    ServerSentEvent.comment("x\rdata: y").toString shouldBe
+      s""": x
+         |: data: y""".stripMargin
+  }
+
+  "composeSSE" should "serialise a comment containing CRLF as multiple comment lines" in {
+    ServerSentEvent.comment("a\r\nb").toString shouldBe
+      s""": a
+         |: b""".stripMargin
+  }
+
+  "comment" should "not allow a carriage return to inject other fields" in {
+    val sse = ServerSentEvent.comment("x\rdata: y")
+    ServerSentEvent.parse(sse.toString.split("\r\n|\r|\n").toList) shouldBe
+      ServerSentEvent(comments = List("x", "data: y"))
+  }
+
   "comment" should "not allow a newline to inject other fields" in {
     val sse = ServerSentEvent.comment("x\ndata: y")
     ServerSentEvent.parse(sse.toString.split("\n").toList) shouldBe
