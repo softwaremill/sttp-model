@@ -9,15 +9,22 @@ case class ServerSentEvent(
     retry: Option[Int] = None
 ) {
   override def toString: String = {
-    val _data = data.map(_.split("\n")).map(_.map(line => Some(s"data: $line"))).getOrElse(Array.empty[Option[String]])
-    val _event = eventType.map(event => s"event: $event")
-    val _id = id.map(id => s"id: $id")
+    val _data = data
+      .map(_.split(ServerSentEvent.LineTerminators))
+      .map(_.map(line => Some(s"data: $line")))
+      .getOrElse(Array.empty[Option[String]])
+    val _event = eventType.map(event => s"event: ${ServerSentEvent.removeLineTerminators(event)}")
+    val _id = id.map(id => s"id: ${ServerSentEvent.removeLineTerminators(id)}")
     val _retry = retry.map(retryCount => s"retry: $retryCount")
     (_data :+ _event :+ _id :+ _retry).flatten.mkString("\n")
   }
 }
 
 object ServerSentEvent {
+  private val LineTerminators = "\r\n|\r|\n"
+
+  private def removeLineTerminators(s: String): String = s.replaceAll(LineTerminators, "")
+
   // https://html.spec.whatwg.org/multipage/server-sent-events.html
   def parse(event: List[String]): ServerSentEvent = {
     event.foldLeft(ServerSentEvent()) { (event, line) =>
