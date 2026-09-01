@@ -35,7 +35,8 @@ case class ServerSentEvent(
   def isCommentOnly: Boolean = data.isEmpty && eventType.isEmpty && id.isEmpty && retry.isEmpty
 
   override def toString: String = {
-    val _comments = comments.flatMap(_.split("\r\n|\r|\n")).map(comment => Some(s": $comment")).toArray
+    val _comments =
+      comments.flatMap(_.split(ServerSentEvent.LineTerminators)).map(comment => Some(s": $comment")).toArray
     val _data = data.map(_.split("\n")).map(_.map(line => Some(s"data: $line"))).getOrElse(Array.empty[Option[String]])
     val _event = eventType.map(event => s"event: $event")
     val _id = id.map(id => s"id: $id")
@@ -45,6 +46,16 @@ case class ServerSentEvent(
 }
 
 object ServerSentEvent {
+  private val LineTerminators = "\r\n|\r|\n"
+
+  def apply(
+      data: Option[String] = None,
+      eventType: Option[String] = None,
+      id: Option[String] = None,
+      retry: Option[Int] = None,
+      comments: List[String] = Nil
+  ): ServerSentEvent = new ServerSentEvent(data, eventType, id, retry, comments.flatMap(_.split(LineTerminators)))
+
   // required for binary compatibility
   def apply(
       data: Option[String],

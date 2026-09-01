@@ -134,6 +134,24 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
       ServerSentEvent(comments = List("x", "data: y"))
   }
 
+  "apply" should "split comments containing line terminators into separate comments" in {
+    ServerSentEvent(comments = List("a\nb", "c\r\nd", "e\rf")).comments shouldBe
+      List("a", "b", "c", "d", "e", "f")
+  }
+
+  "comment" should "split a multi-line comment into separate comments" in {
+    ServerSentEvent.comment("a\nb").comments shouldBe List("a", "b")
+  }
+
+  "copy" should "split comments containing line terminators" in {
+    ServerSentEvent().copy(comments = List("a\nb")).comments shouldBe List("a", "b")
+  }
+
+  "parse" should "round-trip an event built from a multi-line comment" in {
+    val sse = ServerSentEvent.comment("a\nb")
+    ServerSentEvent.parse(sse.toString.split("\r\n|\r|\n").toList) shouldBe sse
+  }
+
   "isCommentOnly" should "be true for a keep-alive event" in {
     ServerSentEvent.comment("ping").isCommentOnly shouldBe true
   }
