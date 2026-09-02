@@ -96,4 +96,16 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
       Some(10)
     )
   }
+
+  "composeSSE" should "keep a trailing line terminator in data" in {
+    ServerSentEvent(Some("a\n")).toString shouldBe "data: a\ndata: "
+    ServerSentEvent(Some("a\r")).toString shouldBe "data: a\ndata: "
+    ServerSentEvent(Some("a\r\n")).toString shouldBe "data: a\ndata: "
+    ServerSentEvent(Some("\n")).toString shouldBe "data: \ndata: "
+  }
+
+  "composeSSE" should "round-trip data with a trailing line terminator" in {
+    val sse = ServerSentEvent(Some("a\n"))
+    ServerSentEvent.parse(sse.toString.split("\n").toList) shouldBe sse
+  }
 }
