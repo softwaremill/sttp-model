@@ -10,7 +10,7 @@ case class ServerSentEvent(
 ) {
   override def toString: String = {
     val _data = data
-      .map(_.split(ServerSentEvent.LineTerminators, -1))
+      .map(ServerSentEvent.splitOnLineTerminators)
       .map(_.map(line => Some(s"data: $line")))
       .getOrElse(Array.empty[Option[String]])
     val _event = eventType.map(event => s"event: ${ServerSentEvent.removeLineTerminators(event)}")
@@ -23,7 +23,12 @@ case class ServerSentEvent(
 object ServerSentEvent {
   private val LineTerminators = "\r\n|\r|\n"
 
-  private def removeLineTerminators(s: String): String = s.replaceAll(LineTerminators, "")
+  // performance: split("\n") skips the regex engine; with no CR, LF is the only terminator, so it's equivalent
+  private def splitOnLineTerminators(s: String): Array[String] =
+    if (s.indexOf('\r') < 0) s.split("\n", -1) else s.split(LineTerminators, -1)
+
+  private def removeLineTerminators(s: String): String =
+    if (s.indexOf('\r') < 0 && s.indexOf('\n') < 0) s else s.replaceAll(LineTerminators, "")
 
   // https://html.spec.whatwg.org/multipage/server-sent-events.html
   def parse(event: List[String]): ServerSentEvent = {
