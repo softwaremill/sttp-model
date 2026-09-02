@@ -10,7 +10,7 @@ case class ServerSentEvent(
 ) {
   override def toString: String = {
     val _data = data
-      .map(_.split(ServerSentEvent.LineTerminators))
+      .map(_.split(ServerSentEvent.LineTerminators, -1))
       .map(_.map(line => Some(s"data: $line")))
       .getOrElse(Array.empty[Option[String]])
     val _event = eventType.map(event => s"event: ${ServerSentEvent.removeLineTerminators(event)}")
