@@ -48,14 +48,6 @@ case class ServerSentEvent(
 object ServerSentEvent {
   private val LineTerminators = "\r\n|\r|\n"
 
-  def apply(
-      data: Option[String] = None,
-      eventType: Option[String] = None,
-      id: Option[String] = None,
-      retry: Option[Int] = None,
-      comments: List[String] = Nil
-  ): ServerSentEvent = new ServerSentEvent(data, eventType, id, retry, comments.flatMap(_.split(LineTerminators)))
-
   // required for binary compatibility
   def apply(
       data: Option[String],
@@ -64,10 +56,11 @@ object ServerSentEvent {
       retry: Option[Int]
   ): ServerSentEvent = new ServerSentEvent(data, eventType, id, retry, Nil)
 
-  /** An event consisting of a single comment line. Such events are ignored by clients, and can be used to keep the
-    * connection alive, so that it isn't dropped by proxies.
+  /** An event consisting of comment lines only, one per line of the given text. Such events are ignored by clients, and
+    * can be used to keep the connection alive, so that it isn't dropped by proxies.
     */
-  def comment(comment: String): ServerSentEvent = ServerSentEvent(comments = List(comment))
+  def comment(comment: String): ServerSentEvent =
+    ServerSentEvent(comments = comment.split(LineTerminators).toList)
 
   // https://html.spec.whatwg.org/multipage/server-sent-events.html
   def parse(event: List[String]): ServerSentEvent = {
