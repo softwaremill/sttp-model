@@ -44,7 +44,9 @@ case class ServerSentEvent(
     val _event = eventType.map(event => s"event: ${ServerSentEvent.removeLineTerminators(event)}")
     val _id = id.map(id => s"id: ${ServerSentEvent.removeLineTerminators(id)}")
     val _retry = retry.map(retryCount => s"retry: $retryCount")
-    ((_comments ++ _data) :+ _event :+ _id :+ _retry).flatten.mkString("\n")
+    val _fields = _data :+ _event :+ _id :+ _retry
+    val _all = if (_comments.isEmpty) _fields else _comments ++ _fields
+    _all.flatten.mkString("\n")
   }
 }
 
