@@ -191,4 +191,47 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
   "isCommentOnly" should "be false when only retry is set" in {
     ServerSentEvent(retry = Some(5)).isCommentOnly shouldBe false
   }
+  "composeSSE" should "split data on all line terminators" in {
+    val sse = ServerSentEvent(Some("line 1\r\nline 2\rline 3\nline 4"))
+
+    sse.toString shouldBe
+      s"""data: line 1
+         |data: line 2
+         |data: line 3
+         |data: line 4""".stripMargin
+  }
+
+  "composeSSE" should "remove line terminators from the event type" in {
+    val sse = ServerSentEvent(eventType = Some("a\ndata: injected\rb\r\nc"))
+    sse.toString shouldBe "event: adata: injectedbc"
+  }
+
+  "composeSSE" should "remove line terminators from the id" in {
+    val sse = ServerSentEvent(id = Some("a\ndata: injected\rb\r\nc"))
+    sse.toString shouldBe "id: adata: injectedbc"
+  }
+
+  "composeSSE" should "not allow injecting fields through data, the event type or the id" in {
+    val malicious = "x\r\nevent: injected\rid: injected\ndata: injected"
+    val sse = ServerSentEvent(Some(malicious), Some(malicious), Some(malicious), Some(10))
+
+    ServerSentEvent.parse(sse.toString.split("\n").toList) shouldBe ServerSentEvent(
+      Some("x\nevent: injected\nid: injected\ndata: injected"),
+      Some("xevent: injectedid: injecteddata: injected"),
+      Some("xevent: injectedid: injecteddata: injected"),
+      Some(10)
+    )
+  }
+
+  "composeSSE" should "keep a trailing line terminator in data" in {
+    ServerSentEvent(Some("a\n")).toString shouldBe "data: a\ndata: "
+    ServerSentEvent(Some("a\r")).toString shouldBe "data: a\ndata: "
+    ServerSentEvent(Some("a\r\n")).toString shouldBe "data: a\ndata: "
+    ServerSentEvent(Some("\n")).toString shouldBe "data: \ndata: "
+  }
+
+  "composeSSE" should "round-trip data with a trailing line terminator" in {
+    val sse = ServerSentEvent(Some("a\n"))
+    ServerSentEvent.parse(sse.toString.split("\n").toList) shouldBe sse
+  }
 }

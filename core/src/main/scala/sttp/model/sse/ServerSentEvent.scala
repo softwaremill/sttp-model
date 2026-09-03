@@ -37,9 +37,12 @@ case class ServerSentEvent(
   override def toString: String = {
     val _comments =
       comments.flatMap(_.split(ServerSentEvent.LineTerminators)).map(comment => Some(s": $comment")).toArray
-    val _data = data.map(_.split("\n")).map(_.map(line => Some(s"data: $line"))).getOrElse(Array.empty[Option[String]])
-    val _event = eventType.map(event => s"event: $event")
-    val _id = id.map(id => s"id: $id")
+    val _data = data
+      .map(ServerSentEvent.splitOnLineTerminators)
+      .map(_.map(line => Some(s"data: $line")))
+      .getOrElse(Array.empty[Option[String]])
+    val _event = eventType.map(event => s"event: ${ServerSentEvent.removeLineTerminators(event)}")
+    val _id = id.map(id => s"id: ${ServerSentEvent.removeLineTerminators(id)}")
     val _retry = retry.map(retryCount => s"retry: $retryCount")
     ((_comments ++ _data) :+ _event :+ _id :+ _retry).flatten.mkString("\n")
   }
@@ -47,6 +50,13 @@ case class ServerSentEvent(
 
 object ServerSentEvent {
   private val LineTerminators = "\r\n|\r|\n"
+
+  // performance: split("\n") skips the regex engine; with no CR, LF is the only terminator, so it's equivalent
+  private def splitOnLineTerminators(s: String): Array[String] =
+    if (s.indexOf('\r') < 0) s.split("\n", -1) else s.split(LineTerminators, -1)
+
+  private def removeLineTerminators(s: String): String =
+    if (s.indexOf('\r') < 0 && s.indexOf('\n') < 0) s else s.replaceAll(LineTerminators, "")
 
   // required for binary compatibility
   def apply(
