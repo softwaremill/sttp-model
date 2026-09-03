@@ -71,8 +71,8 @@ object ServerSentEvent {
   /** An event consisting of comment lines only, one per line of the given text. Such events are ignored by clients, and
     * can be used to keep the connection alive, so that it isn't dropped by proxies.
     */
-  def comment(comment: String): ServerSentEvent =
-    ServerSentEvent(comments = splitOnLineTerminators(comment).toList)
+  def comment(text: String): ServerSentEvent =
+    ServerSentEvent(comments = splitOnLineTerminators(text).toList)
 
   // https://html.spec.whatwg.org/multipage/server-sent-events.html
   def parse(event: List[String]): ServerSentEvent = {
