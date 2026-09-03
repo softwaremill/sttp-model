@@ -134,22 +134,46 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
       ServerSentEvent(comments = List("x", "data: y"))
   }
 
-  "apply" should "split comments containing line terminators into separate comments" in {
-    ServerSentEvent(comments = List("a\nb", "c\r\nd", "e\rf")).comments shouldBe
-      List("a", "b", "c", "d", "e", "f")
+  "apply" should "keep comments as they were given" in {
+    ServerSentEvent(comments = List("a\nb")).comments shouldBe List("a\nb")
   }
 
   "comment" should "split a multi-line comment into separate comments" in {
-    ServerSentEvent.comment("a\nb").comments shouldBe List("a", "b")
+    ServerSentEvent.comment("a\nb\rc\r\nd").comments shouldBe List("a", "b", "c", "d")
   }
 
-  "copy" should "split comments containing line terminators" in {
-    ServerSentEvent().copy(comments = List("a\nb")).comments shouldBe List("a", "b")
+  "copy" should "keep comments as they were given" in {
+    ServerSentEvent().copy(comments = List("a\nb")).comments shouldBe List("a\nb")
   }
 
   "parse" should "round-trip an event built from a multi-line comment" in {
     val sse = ServerSentEvent.comment("a\nb")
     ServerSentEvent.parse(sse.toString.split("\r\n|\r|\n").toList) shouldBe sse
+  }
+
+  val roundTripComments = List(
+    List("ping"),
+    List(""),
+    List("\n"),
+    List("\r"),
+    List("\r\n"),
+    List("ping\n\n"),
+    List("a\nb"),
+    List("a\r\nb"),
+    List("x\rdata: y"),
+    List("a\n\nb"),
+    List(" spaced"),
+    List("a", "b"),
+    List("", "b"),
+    List("", "")
+  )
+
+  for (comments <- roundTripComments) {
+    it should s"round-trip comments ${comments.map(_.replace("\r", "\\r").replace("\n", "\\n"))}" in {
+      val sse = ServerSentEvent(Some("d1\nd2"), Some("evt"), Some("id1"), Some(7), comments)
+      val serialised = sse.toString
+      ServerSentEvent.parse(serialised.split("\r\n|\r|\n").toList).toString shouldBe serialised
+    }
   }
 
   "isCommentOnly" should "be true for a keep-alive event" in {
