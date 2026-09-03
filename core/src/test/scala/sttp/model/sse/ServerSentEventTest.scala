@@ -106,8 +106,16 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
          |: b""".stripMargin
   }
 
-  "composeSSE" should "not emit a blank line for a comment ending with newlines" in {
-    ServerSentEvent.comment("ping\n\n").toString shouldBe ": ping"
+  "composeSSE" should "emit empty comment lines, not blank lines, for a comment ending with newlines" in {
+    ServerSentEvent.comment("ping\n\n").toString shouldBe ": ping\n: \n: "
+  }
+
+  "composeSSE" should "emit empty comment lines for a comment of line terminators only" in {
+    ServerSentEvent.comment("\n").toString shouldBe ": \n: "
+  }
+
+  "composeSSE" should "emit a single empty comment line for an empty comment" in {
+    ServerSentEvent.comment("").toString shouldBe ": "
   }
 
   "composeSSE" should "serialise a comment containing a carriage return as multiple comment lines" in {

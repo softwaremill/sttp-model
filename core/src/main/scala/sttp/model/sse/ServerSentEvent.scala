@@ -36,7 +36,7 @@ case class ServerSentEvent(
 
   override def toString: String = {
     val _comments =
-      comments.flatMap(_.split(ServerSentEvent.LineTerminators)).map(comment => Some(s": $comment")).toArray
+      comments.flatMap(ServerSentEvent.splitOnLineTerminators).map(comment => Some(s": $comment")).toArray
     val _data = data
       .map(ServerSentEvent.splitOnLineTerminators)
       .map(_.map(line => Some(s"data: $line")))
@@ -70,7 +70,7 @@ object ServerSentEvent {
     * can be used to keep the connection alive, so that it isn't dropped by proxies.
     */
   def comment(comment: String): ServerSentEvent =
-    ServerSentEvent(comments = comment.split(LineTerminators).toList)
+    ServerSentEvent(comments = splitOnLineTerminators(comment).toList)
 
   // https://html.spec.whatwg.org/multipage/server-sent-events.html
   def parse(event: List[String]): ServerSentEvent = {
