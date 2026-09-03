@@ -104,6 +104,15 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
       ServerSentEvent(Some("d"), comments = List("ping"))
   }
 
+  "copy" should "preserve comments when given only the four original fields" in {
+    ServerSentEvent(comments = List("ping")).copy(Some("d"), None, None, None) shouldBe
+      ServerSentEvent(Some("d"), comments = List("ping"))
+  }
+
+  "the constructor taking the four original fields" should "create an event without comments" in {
+    new ServerSentEvent(Some("d"), None, None, None) shouldBe ServerSentEvent(Some("d"))
+  }
+
   "composeSSE" should "serialise a multi-line comment as multiple comment lines" in {
     ServerSentEvent.comment("a\nb").toString shouldBe
       s""": a
