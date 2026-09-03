@@ -200,9 +200,18 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
     ServerSentEvent(Some("d"), comments = List("ping")).isCommentOnly shouldBe false
   }
 
+  "isCommentOnly" should "be false when only the event type is set" in {
+    ServerSentEvent(eventType = Some("e")).isCommentOnly shouldBe false
+  }
+
+  "isCommentOnly" should "be false when only the id is set" in {
+    ServerSentEvent(id = Some("i")).isCommentOnly shouldBe false
+  }
+
   "isCommentOnly" should "be false when only retry is set" in {
     ServerSentEvent(retry = Some(5)).isCommentOnly shouldBe false
   }
+
   "composeSSE" should "split data on all line terminators" in {
     val sse = ServerSentEvent(Some("line 1\r\nline 2\rline 3\nline 4"))
 
