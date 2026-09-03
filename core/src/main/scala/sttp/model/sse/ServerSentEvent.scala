@@ -74,7 +74,7 @@ object ServerSentEvent {
 
   // https://html.spec.whatwg.org/multipage/server-sent-events.html
   def parse(event: List[String]): ServerSentEvent = {
-    // comments are prepended and reversed once at the end for permormance
+    // comments are prepended and reversed once at the end for performance
     val parsed = event.foldLeft(ServerSentEvent()) { (event, line) =>
       if (line.startsWith(":")) event.copy(comments = removeLeadingSpace(line.substring(1)) :: event.comments)
       else if (line.startsWith("data:")) combineData(event, removeLeadingSpace(line.substring(5)))
