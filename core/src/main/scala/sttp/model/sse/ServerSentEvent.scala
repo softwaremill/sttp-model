@@ -29,10 +29,10 @@ case class ServerSentEvent(
       retry: Option[Int]
   ): ServerSentEvent = ServerSentEvent(data, eventType, id, retry, this.comments)
 
-  /** True if the event carries no data, event type, id or retry - only comments, if any. Clients ignore comments, so
-    * such events (e.g. keep-alive pings) can usually be skipped.
+  /** True if the event carries no data, event type, id or retry. Clients ignore comments, so such events - keep-alive
+    * pings, but also blocks made up of unknown fields - carry nothing for the application and can usually be skipped.
     */
-  def isCommentOnly: Boolean = data.isEmpty && eventType.isEmpty && id.isEmpty && retry.isEmpty
+  def hasNoFields: Boolean = data.isEmpty && eventType.isEmpty && id.isEmpty && retry.isEmpty
 
   override def toString: String = {
     val _comments =

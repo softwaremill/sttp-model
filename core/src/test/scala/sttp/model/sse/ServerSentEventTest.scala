@@ -192,28 +192,32 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
     }
   }
 
-  "isCommentOnly" should "be true for a keep-alive event" in {
-    ServerSentEvent.comment("ping").isCommentOnly shouldBe true
+  "hasNoFields" should "be true for a keep-alive event" in {
+    ServerSentEvent.comment("ping").hasNoFields shouldBe true
   }
 
-  "isCommentOnly" should "be true for an event with no fields set at all" in {
-    ServerSentEvent().isCommentOnly shouldBe true
+  "hasNoFields" should "be true for an empty event" in {
+    ServerSentEvent().hasNoFields shouldBe true
   }
 
-  "isCommentOnly" should "be false when data is set" in {
-    ServerSentEvent(Some("d"), comments = List("ping")).isCommentOnly shouldBe false
+  "hasNoFields" should "be true for an event of unknown fields only" in {
+    ServerSentEvent.parse(List("foo: bar")).hasNoFields shouldBe true
   }
 
-  "isCommentOnly" should "be false when only the event type is set" in {
-    ServerSentEvent(eventType = Some("e")).isCommentOnly shouldBe false
+  "hasNoFields" should "be false when data is set" in {
+    ServerSentEvent(Some("d"), comments = List("ping")).hasNoFields shouldBe false
   }
 
-  "isCommentOnly" should "be false when only the id is set" in {
-    ServerSentEvent(id = Some("i")).isCommentOnly shouldBe false
+  "hasNoFields" should "be false when only the event type is set" in {
+    ServerSentEvent(eventType = Some("e")).hasNoFields shouldBe false
   }
 
-  "isCommentOnly" should "be false when only retry is set" in {
-    ServerSentEvent(retry = Some(5)).isCommentOnly shouldBe false
+  "hasNoFields" should "be false when only the id is set" in {
+    ServerSentEvent(id = Some("i")).hasNoFields shouldBe false
+  }
+
+  "hasNoFields" should "be false when only retry is set" in {
+    ServerSentEvent(retry = Some(5)).hasNoFields shouldBe false
   }
 
   "composeSSE" should "split data on all line terminators" in {
