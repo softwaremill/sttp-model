@@ -62,7 +62,7 @@ class Header(val name: String, val value: String) {
 /** For a description of the behavior of `apply`, `safeApply` and `unsafeApply` methods, see [[sttp.model]].
   */
 object Header {
-  def unapply(h: Header): Option[(String, String)] = Some((h.name, h.value))
+  def unapply(h: Header): Some[(String, String)] = Some((h.name, h.value))
 
   /** @throws IllegalArgumentException
     *   If the header name contains illegal characters.
