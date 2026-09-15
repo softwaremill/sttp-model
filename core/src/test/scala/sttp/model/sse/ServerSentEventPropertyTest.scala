@@ -28,7 +28,8 @@ class ServerSentEventPropertyTest extends AnyFlatSpec with ScalaCheckDrivenPrope
     data <- Gen.option(value)
     eventType <- Gen.option(value)
     id <- Gen.option(value)
-    retry <- Gen.option(Gen.chooseNum(Int.MinValue, Int.MaxValue))
+    // a negative retry serialises, but the spec allows only digits, so parsing drops it - it can't round-trip
+    retry <- Gen.option(Gen.chooseNum(0, Int.MaxValue))
     comments <- Gen.listOf(value)
   } yield ServerSentEvent(data, eventType, id, retry, comments)
 
