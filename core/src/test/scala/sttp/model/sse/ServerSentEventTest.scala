@@ -112,4 +112,10 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
   "parse" should "keep an earlier retry value when a later one is not a number" in {
     ServerSentEvent.parse(List("retry: 5", "retry: x")).retry shouldBe Some(5)
   }
+
+  "parse" should "ignore a retry value that is not made up of ASCII digits" in {
+    ServerSentEvent.parse(List("retry: -1")).retry shouldBe None
+    ServerSentEvent.parse(List("retry: +5")).retry shouldBe None
+    ServerSentEvent.parse(List("retry: ٥")).retry shouldBe None
+  }
 }

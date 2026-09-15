@@ -35,11 +35,7 @@ object ServerSentEvent {
     event.foldLeft(ServerSentEvent()) { (event, line) =>
       if (line.startsWith("data:")) combineData(event, removeLeadingSpace(line.substring(5)))
       else if (line.startsWith("id:")) event.copy(id = Some(removeLeadingSpace(line.substring(3))))
-      // the spec says to ignore a retry value that isn't a number, so any previously parsed one is kept
-      else if (line.startsWith("retry:"))
-        ParseUtils
-          .toIntOption(removeLeadingSpace(line.substring(6)))
-          .fold(event)(retry => event.copy(retry = Some(retry)))
+      else if (line.startsWith("retry:")) combineRetry(event, removeLeadingSpace(line.substring(6)))
       else if (line.startsWith("event:")) event.copy(eventType = Some(removeLeadingSpace(line.substring(6))))
       else if (line == "data") combineData(event, "")
       else if (line == "id") event.copy(id = Some(""))
@@ -47,6 +43,15 @@ object ServerSentEvent {
       else event
     }
   }
+
+  /** The spec accepts only ASCII digits here, and says to ignore the field otherwise - so a value that isn't accepted
+    * leaves any previously parsed one in place. `toIntOption` is still needed to reject a value too large for an `Int`,
+    * and `isDigit` would not do instead of the range check: it, like `toIntOption`, accepts non-ASCII digits.
+    */
+  private def combineRetry(event: ServerSentEvent, newRetry: String): ServerSentEvent =
+    if (newRetry.nonEmpty && newRetry.forall(c => c >= '0' && c <= '9'))
+      ParseUtils.toIntOption(newRetry).fold(event)(retry => event.copy(retry = Some(retry)))
+    else event
 
   private def combineData(event: ServerSentEvent, newData: String): ServerSentEvent = {
     event match {
