@@ -108,4 +108,8 @@ class ServerSentEventTest extends AnyFlatSpec with Matchers {
     val sse = ServerSentEvent(Some("a\n"))
     ServerSentEvent.parse(sse.toString.split("\n").toList) shouldBe sse
   }
+
+  "parse" should "keep an earlier retry value when a later one is not a number" in {
+    ServerSentEvent.parse(List("retry: 5", "retry: x")).retry shouldBe Some(5)
+  }
 }

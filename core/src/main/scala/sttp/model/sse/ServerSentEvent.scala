@@ -35,8 +35,11 @@ object ServerSentEvent {
     event.foldLeft(ServerSentEvent()) { (event, line) =>
       if (line.startsWith("data:")) combineData(event, removeLeadingSpace(line.substring(5)))
       else if (line.startsWith("id:")) event.copy(id = Some(removeLeadingSpace(line.substring(3))))
+      // the spec says to ignore a retry value that isn't a number, so any previously parsed one is kept
       else if (line.startsWith("retry:"))
-        event.copy(retry = ParseUtils.toIntOption(removeLeadingSpace(line.substring(6))))
+        ParseUtils
+          .toIntOption(removeLeadingSpace(line.substring(6)))
+          .fold(event)(retry => event.copy(retry = Some(retry)))
       else if (line.startsWith("event:")) event.copy(eventType = Some(removeLeadingSpace(line.substring(6))))
       else if (line == "data") combineData(event, "")
       else if (line == "id") event.copy(id = Some(""))
