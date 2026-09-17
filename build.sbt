@@ -22,6 +22,9 @@ val commonSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
 )
 
 val commonJvmSettings = commonSettings ++ Seq(
+  scalacOptions ++=
+    (if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq("-Yfuture-lazy-vals", "-java-output-version", "11")
+     else Seq.empty),
   ideSkipProject := (scalaVersion.value != scala2_13),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
