@@ -1,7 +1,6 @@
 import com.softwaremill.SbtSoftwareMillBrowserTestJS._
 import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
 import com.softwaremill.Publish.ossPublishSettings
-import com.typesafe.tools.mima.core.{DirectMissingMethodProblem, ProblemFilters}
 
 val scala2_12 = "2.12.21"
 val scala2_13 = "2.13.18"
@@ -30,8 +29,6 @@ val commonJvmSettings = commonSettings ++ Seq(
     "org.scalatest" %% "scalatest" % scalaTestVersion % Test
   ),
   mimaPreviousArtifacts := previousStableVersion.value.map(organization.value %% moduleName.value % _).toSet,
-  // the old lazy val encoding, dropped by -Yfuture-lazy-vals, generated a static initialiser
-  mimaBinaryIssueFilters ++= Seq(ProblemFilters.exclude[DirectMissingMethodProblem]("*.<clinit>")),
   mimaReportBinaryIssues := { if ((publish / skip).value) {} else mimaReportBinaryIssues.value }
 )
 
