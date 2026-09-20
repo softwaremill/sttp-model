@@ -8,7 +8,7 @@ val scala2 = List(scala2_12, scala2_13)
 val scala3 = List("3.3.8")
 
 val scalaTestVersion = "3.2.20"
-val scalaTestPlusScalaCheckVersion = "3.2.19.0"
+val scalaTestPlusScalaCheckVersion = "3.2.20.0"
 
 excludeLintKeys in Global ++= Set(ideSkipProject)
 
@@ -28,7 +28,7 @@ val commonJvmSettings = commonSettings ++ Seq(
   ideSkipProject := (scalaVersion.value != scala2_13),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
-    "org.scalatestplus" %% "scalacheck-1-18" % scalaTestPlusScalaCheckVersion % Test
+    "org.scalatestplus" %% "scalacheck-1-19" % scalaTestPlusScalaCheckVersion % Test
   ),
   mimaPreviousArtifacts := previousStableVersion.value.map(organization.value %% moduleName.value % _).toSet,
   mimaReportBinaryIssues := { if ((publish / skip).value) {} else mimaReportBinaryIssues.value }
@@ -53,7 +53,7 @@ val commonJsSettings = commonSettings ++ Seq(
   libraryDependencies ++= Seq(
     "org.scala-js" %%% "scalajs-dom" % "2.8.1",
     "org.scalatest" %%% "scalatest" % scalaTestVersion % Test,
-    "org.scalatestplus" %%% "scalacheck-1-18" % scalaTestPlusScalaCheckVersion % Test
+    "org.scalatestplus" %%% "scalacheck-1-19" % scalaTestPlusScalaCheckVersion % Test
   )
 )
 
@@ -61,7 +61,7 @@ val commonNativeSettings = commonSettings ++ Seq(
   ideSkipProject := true,
   libraryDependencies ++= Seq(
     "org.scalatest" %%% "scalatest" % scalaTestVersion % Test,
-    "org.scalatestplus" %%% "scalacheck-1-18" % scalaTestPlusScalaCheckVersion % Test
+    "org.scalatestplus" %%% "scalacheck-1-19" % scalaTestPlusScalaCheckVersion % Test
   )
 )
 
