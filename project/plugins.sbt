@@ -1,13 +1,12 @@
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.22.0")
 addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.12")
-addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.11.0")
 
-val sbtSoftwareMillVersion = "2.1.2"
+val sbtSoftwareMillVersion = "3.0.0"
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-common" % sbtSoftwareMillVersion)
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-publish" % sbtSoftwareMillVersion)
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-browser-test-js" % sbtSoftwareMillVersion)
 
-addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.1.0")
+addSbtPlugin("org.jetbrains.scala" % "sbt-ide-settings" % "1.1.4")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.2.1")
 
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.8")
