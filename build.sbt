@@ -10,7 +10,7 @@ val scala3 = List("3.3.8")
 val scalaTestVersion = "3.2.20"
 val scalaTestPlusScalaCheckVersion = "3.2.20.0"
 
-excludeLintKeys in Global ++= Set(ideSkipProject)
+Global / excludeLintKeys ++= Set(ideSkipProject)
 
 def dependenciesFor(version: String)(deps: (Option[(Long, Long)] => ModuleID)*): Seq[ModuleID] =
   deps.map(_.apply(CrossVersion.partialVersion(version)))
@@ -24,7 +24,7 @@ val commonSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
 val commonJvmSettings = commonSettings ++ Seq(
   scalacOptions ++=
     (if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq("-Yfuture-lazy-vals", "-java-output-version", "11")
-     else Seq.empty),
+     else Seq("-release", "8")),
   ideSkipProject := (scalaVersion.value != scala2_13),
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
@@ -51,17 +51,17 @@ val commonJsSettings = commonSettings ++ Seq(
       }
   },
   libraryDependencies ++= Seq(
-    "org.scala-js" %%% "scalajs-dom" % "2.8.1",
-    "org.scalatest" %%% "scalatest" % scalaTestVersion % Test,
-    "org.scalatestplus" %%% "scalacheck-1-19" % scalaTestPlusScalaCheckVersion % Test
+    "org.scala-js" %% "scalajs-dom" % "2.8.1",
+    "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
+    "org.scalatestplus" %% "scalacheck-1-19" % scalaTestPlusScalaCheckVersion % Test
   )
 )
 
 val commonNativeSettings = commonSettings ++ Seq(
   ideSkipProject := true,
   libraryDependencies ++= Seq(
-    "org.scalatest" %%% "scalatest" % scalaTestVersion % Test,
-    "org.scalatestplus" %%% "scalacheck-1-19" % scalaTestPlusScalaCheckVersion % Test
+    "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
+    "org.scalatestplus" %% "scalacheck-1-19" % scalaTestPlusScalaCheckVersion % Test
   )
 )
 
@@ -80,9 +80,9 @@ lazy val allAggregates: Seq[ProjectReference] = {
 val compileAndTest = "compile->compile;test->test"
 
 lazy val rootProject = (project in file("."))
-  .settings(commonSettings: _*)
+  .settings(commonSettings*)
   .settings(publish / skip := true, name := "sttp-model", scalaVersion := scala2_13)
-  .aggregate(allAggregates: _*)
+  .aggregate(allAggregates*)
 
 lazy val core = (projectMatrix in file("core"))
   .settings(
@@ -95,7 +95,7 @@ lazy val core = (projectMatrix in file("core"))
   .jsPlatform(
     scalaVersions = scala2 ++ scala3,
     settings = commonJsSettings ++ browserChromeTestSettings ++ Seq(
-      libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.7.0"
+      libraryDependencies += "io.github.cquiroz" %% "scala-java-time" % "2.7.0"
     )
   )
   .nativePlatform(
