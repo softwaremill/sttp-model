@@ -16,4 +16,4 @@ jobs:
     secrets:
       github-token: ${{ secrets.SOFTWAREMILL_CI_PR_TOKEN }}
     with:
-      java-version: '25'
+      java-version: "21"
