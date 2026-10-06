@@ -178,9 +178,9 @@ object UriInterpolator {
   private object Tokenizer {
 
     object Scheme extends Tokenizer {
-      private val alphabet = Set(('a' to 'z'): _*) ++ Set(('A' to 'Z'): _*)
+      private val alphabet = ('a' to 'z').toSet ++ ('A' to 'Z').toSet
       private val firstChar = FastCharSet(alphabet)
-      private val nonFirstChars = FastCharSet(alphabet ++ Set(('0' to '9'): _*) ++ Set('+', '.', '-'))
+      private val nonFirstChars = FastCharSet(alphabet ++ ('0' to '9').toSet ++ Set('+', '.', '-'))
 
       // This is equivalent to such regular expression "[A-Za-z][A-Za-z0-9+.-]*"
       private def findPrefix(s: String): Option[String] = {
@@ -252,7 +252,7 @@ object UriInterpolator {
     }
 
     object Authority extends Tokenizer {
-      private val HexChars = FastCharSet(Set(('0' to '9'): _*) ++ Set(('a' to 'f'): _*) ++ Set(('A' to 'F'): _*) + ':')
+      private val HexChars = FastCharSet(('0' to '9').toSet ++ ('a' to 'f').toSet ++ ('A' to 'F').toSet + ':')
 
       private def isIpV6Like(str: String): Boolean = {
         val len = str.length()
@@ -626,7 +626,7 @@ object UriInterpolator {
             v <- anyToStringOpt(ve)
           } yield QF.KeyValue(k, v)
 
-        def seqToQueryFragments(s: Seq[_]): Vector[QF] = {
+        def seqToQueryFragments(s: Seq[Any]): Vector[QF] = {
           s.flatMap {
             case (ke, ve) => expressionPairToQueryFragment(ke, ve)
             case ve       => anyToStringOpt(ve).map(QF.Value(_))

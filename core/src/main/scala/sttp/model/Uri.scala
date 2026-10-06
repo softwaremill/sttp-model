@@ -124,7 +124,7 @@ case class Uri(
 
   /** Replace path with the given path segment. */
   @deprecated(message = "Use addPath, withPath or withWholePath", since = "1.2.0")
-  def pathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = withPathSegments(s1, s2, ss: _*)
+  def pathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = withPathSegments(s1 :: s2 :: ss.toList)
 
   /** Replace path with the given path segments. */
   @deprecated(message = "Use addPath, withPath or withWholePath", since = "1.2.0")
