@@ -124,7 +124,7 @@ case class Uri(
 
   /** Replace path with the given path segment. */
   @deprecated(message = "Use addPath, withPath or withWholePath", since = "1.2.0")
-  def pathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = withPathSegments(s1, s2, ss: _*)
+  def pathSegments(s1: Segment, s2: Segment, ss: Segment*): Uri = withPathSegments(s1 :: s2 :: ss.toList)
 
   /** Replace path with the given path segments. */
   @deprecated(message = "Use addPath, withPath or withWholePath", since = "1.2.0")
@@ -174,11 +174,11 @@ case class Uri(
 
   /** Adds the given parameters to the query. */
   @deprecated(message = "Use addParam or withParam", since = "1.2.0")
-  def params(ps: (String, String)*): Uri = addParams(ps: _*)
+  def params(ps: (String, String)*): Uri = addParams(ps*)
 
   def addParam(k: String, v: String): Uri = addParams(k -> v)
   def addParam(k: String, v: Option[String]): Uri = v.map(addParam(k, _)).getOrElse(this)
-  def addParams(ps: Map[String, String]): Uri = addParams(ps.toSeq: _*)
+  def addParams(ps: Map[String, String]): Uri = addParams(ps.toSeq*)
   def addParams(mqp: QueryParams): Uri = {
     this.copy(querySegments = querySegments ++ QuerySegment.fromQueryParams(mqp))
   }
@@ -195,7 +195,7 @@ case class Uri(
   def withParam(k: String, v: Option[String]): Uri = v.map(withParam(k, _)).getOrElse(this)
 
   /** Replace query with the given parameters. */
-  def withParams(ps: Map[String, String]): Uri = withParams(ps.toSeq: _*)
+  def withParams(ps: Map[String, String]): Uri = withParams(ps.toSeq*)
 
   /** Replace query with the given parameters. */
   def withParams(mqp: QueryParams): Uri = this.copy(querySegments = QuerySegment.fromQueryParams(mqp).toList)
