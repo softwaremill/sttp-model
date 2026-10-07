@@ -36,7 +36,7 @@ trait UriInterpolator {
       * @throws IllegalArgumentException
       *   In case of a validation error. For a safe version, see [[Uri.parse()]].
       */
-    def uri(args: Any*): Uri = UriInterpolator.interpolate(sc, args: _*)
+    def uri(args: Any*): Uri = UriInterpolator.interpolate(sc, args*)
   }
 }
 
@@ -65,7 +65,7 @@ object UriInterpolator {
     if (isScEmptyString && areArgsEmptyString) {
       throw new IllegalArgumentException("empty string is not valid uri")
     }
-    val tokens = tokenize(sc, args: _*)
+    val tokens = tokenize(sc, args*)
 
     val (uri, leftTokens) =
       builders.foldLeft((startingUri, filterNulls(tokens))) { case ((u, t), builder) =>

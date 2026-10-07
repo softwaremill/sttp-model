@@ -19,12 +19,7 @@ val commonSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "com.softwaremill.sttp.model",
   mimaPreviousArtifacts := Set.empty,
   versionScheme := Some("semver-spec"),
-  // TODO(scala-3.9): `xs: _*` vararg splices are still needed while cross-building for Scala 2.12 (no `-Xsource:3`);
-  // replace with `xs*` and drop this once Scala 2.12 support is removed
-  scalacOptions ++= {
-    if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq("-Wconf:msg=is no longer supported for vararg splices:s")
-    else Seq.empty
-  }
+  scalacOptions ++= (if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq.empty else Seq("-Xsource:3"))
 )
 
 val commonJvmSettings = commonSettings ++ Seq(
