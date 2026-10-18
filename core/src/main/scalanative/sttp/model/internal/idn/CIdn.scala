@@ -12,5 +12,5 @@ private[idn] object CIdn {
   def errorMsg(rc: CInt): CString = extern
 
   @name("idn2_free")
-  def free(ptr: Ptr[_]): Unit = extern
+  def free(ptr: Ptr[Byte]): Unit = extern
 }

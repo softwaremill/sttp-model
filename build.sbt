@@ -5,7 +5,7 @@ import com.softwaremill.Publish.ossPublishSettings
 val scala2_12 = "2.12.21"
 val scala2_13 = "2.13.18"
 val scala2 = List(scala2_12, scala2_13)
-val scala3 = List("3.3.8")
+val scala3 = List("3.9.0")
 
 val scalaTestVersion = "3.2.20"
 val scalaTestPlusScalaCheckVersion = "3.2.20.0"
@@ -18,12 +18,13 @@ def dependenciesFor(version: String)(deps: (Option[(Long, Long)] => ModuleID)*):
 val commonSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "com.softwaremill.sttp.model",
   mimaPreviousArtifacts := Set.empty,
-  versionScheme := Some("semver-spec")
+  versionScheme := Some("semver-spec"),
+  scalacOptions ++= (if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq.empty else Seq("-Xsource:3"))
 )
 
 val commonJvmSettings = commonSettings ++ Seq(
   scalacOptions ++=
-    (if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq("-Yfuture-lazy-vals", "-java-output-version", "11")
+    (if (ScalaArtifacts.isScala3(scalaVersion.value)) Seq("-java-output-version", "17")
      else Seq("-release", "8")),
   ideSkipProject := (scalaVersion.value != scala2_13),
   libraryDependencies ++= Seq(
