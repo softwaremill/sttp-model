@@ -9,4 +9,4 @@ addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-browser-tes
 addSbtPlugin("org.jetbrains.scala" % "sbt-ide-settings" % "1.1.4")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.2.1")
 
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.8")
+addSbtPlugin("com.github.sbt" % "sbt-jmh" % "0.4.9")
